@@ -27,6 +27,8 @@
         .logo { color: var(--text-primary); font-size: 28px; font-weight: bold; }
         .search-bar { display: flex; align-items: center; background-color: var(--element-bg); border-radius: 12px; padding: 0 15px; }
         .search-bar input { background: transparent; border: none; outline: none; color: var(--text-primary); padding: 12px 10px; font-size: 16px; width: 280px; }
+        .search-bar i { cursor: pointer; color: var(--text-muted); }
+        .search-bar i:hover { color: var(--text-primary); }
         .category-dropdown-container { display: flex; align-items: center; background-color: var(--element-bg); border-radius: 12px; padding: 0 15px; }
         #category-dropdown { background: transparent; border: none; outline: none; color: var(--text-primary); padding: 12px 0; font-size: 16px; width: 220px; appearance: none; -webkit-appearance: none; -moz-appearance: none; cursor: pointer; }
         #category-dropdown option { background-color: var(--container-bg); color: var(--text-primary); }
@@ -290,7 +292,7 @@
     <div class="header-left"><div class="logo">PS</div></div>
     <div class="header-center">
         <div class="search-bar">
-             <i class="fa-solid fa-magnifying-glass"></i>
+             <i class="fa-solid fa-magnifying-glass" id="search-icon"></i>
              <input type="text" id="search-input" placeholder="Cerca...">
         </div>
         <div class="category-dropdown-container">
@@ -528,19 +530,16 @@
             state.allData = newData;
             Object.assign(state, newActiveIds);
             
-            // L'operazione che potrebbe fallire è qui
             await Database.save(state.allData);
             
             localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents));
             renderUI();
         
         } catch (error) {
-            // Se si verifica un errore, lo registriamo e avvisiamo l'utente
             console.error("Errore durante il salvataggio dei dati:", error);
             Toast.show("Errore critico: impossibile salvare. Riprova.", 'error', 5000);
         
         } finally {
-            // Questo blocco viene eseguito SEMPRE, garantendo che la rotellina scompaia
             Loader.hide();
         }
     }
@@ -564,6 +563,11 @@
                 mainArea.innerHTML = `<div id="col-special-list" class="column"></div> <div id="col-special-detail" class="column"></div>`;
                 renderTagsView();
                 break;
+            case 'search':
+                mainArea.className = 'view-mode-two-column';
+                mainArea.innerHTML = `<div id="col-special-list" class="column"></div> <div id="col-special-detail" class="column"></div>`;
+                renderSearchView();
+                break;
             default: 
                 mainArea.className = 'view-mode-three-column'; 
                 renderColumnsView(); 
@@ -586,13 +590,19 @@
         categoryDropdown.appendChild(createOption('favorites', '⭐ Preferiti'));
         categoryDropdown.appendChild(createOption('recents', '🕒 Recenti'));
         categoryDropdown.appendChild(createOption('tags', '🏷️ Tag'));
+        
+        if (state.currentView === 'search') {
+            const searchOpt = createOption('search', '🔍 Risultati Ricerca');
+            searchOpt.selected = true;
+            categoryDropdown.appendChild(searchOpt);
+        }
+
         if (state.allData.length > 0) {
             const separator = createOption('separator', '──────────'); separator.disabled = true; categoryDropdown.appendChild(separator);
             state.allData.sort((a,b)=>a.name.localeCompare(b.name)).forEach(category => categoryDropdown.appendChild(createOption(category.id, category.name)));
         }
         
-        // Se siamo in una vista speciale, mostra il valore corrispondente
-        if (state.currentView !== 'columns' && ['favorites', 'recents', 'tags'].includes(state.currentView)) {
+        if (state.currentView !== 'columns' && ['favorites', 'recents', 'tags', 'search'].includes(state.currentView)) {
              categoryDropdown.value = state.currentView;
         } else if (state.activeCategoryId) {
             categoryDropdown.value = state.activeCategoryId;
@@ -692,7 +702,7 @@
     }
 
     function renderDetailColumn() {
-        const colId = (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags') ? 'col-special-detail' : 'col-detail';
+        const colId = (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags' || state.currentView === 'search') ? 'col-special-detail' : 'col-detail';
         const col = document.getElementById(colId);
         if (!col) return;
         
@@ -896,6 +906,79 @@
             listContainer.appendChild(item);
         });
     }
+
+    // --- NUOVA FUNZIONE PER LA RICERCA ---
+    function renderSearchView() {
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const colList = document.getElementById('col-special-list');
+        colList.innerHTML = `<div class="column-header"><h3>🔍 Risultati per: "${query}"</h3></div><div class="column-content"></div>`;
+        
+        if (!query) {
+            colList.querySelector('.column-content').innerHTML = '<div class="initial-message">Digita qualcosa per cercare...</div>';
+            document.getElementById('col-special-detail').innerHTML = '<div class="initial-message"></div>';
+            return;
+        }
+
+        const items = [];
+        state.allData.forEach(cat => {
+            cat.subcategories?.forEach(sub => {
+                sub.prompts?.forEach(p => {
+                    const matchTitle = p.title.toLowerCase().includes(query);
+                    const matchDesc = p.description.toLowerCase().includes(query);
+                    const matchTags = p.tags && p.tags.some(t => t.toLowerCase().includes(query));
+                    
+                    if (matchTitle || matchDesc || matchTags) {
+                        items.push({ ...p, catName: cat.name, subName: sub.name, catId: cat.id, subId: sub.id });
+                    }
+                });
+            });
+        });
+        
+        items.sort((a, b) => a.title.localeCompare(b.title));
+        
+        const listContainer = colList.querySelector('.column-content');
+        
+        if (items.length === 0) {
+            listContainer.innerHTML = '<div class="initial-message">Nessun risultato trovato</div>';
+            document.getElementById('col-special-detail').innerHTML = '<div class="initial-message">Prova con un altro termine</div>';
+            return;
+        }
+
+        // Se l'elemento attivo corrente non è nei risultati, resetta la selezione (opzionale) o mantieni se presente
+        const currentActiveInResults = items.find(p => p.id === state.activePromptId);
+        if (!currentActiveInResults && items.length > 0) {
+             // Opzionale: seleziona il primo risultato automaticamente
+             // state.activePromptId = items[0].id;
+             // state.activeCategoryId = items[0].catId;
+             // state.activeSubcategoryId = items[0].subId;
+        }
+
+        items.forEach(p => {
+            const item = document.createElement("div");
+            item.className = `item-container ${p.id === state.activePromptId ? 'active' : ''}`;
+            
+            let tagsHtml = '';
+            if (p.tags && p.tags.length > 0) {
+                tagsHtml = '<div class="tags-container">';
+                p.tags.forEach(tag => {
+                    tagsHtml += `<span class="tag-badge" style="background-color: ${getTagColor(tag)}">${tag}</span>`;
+                });
+                tagsHtml += '</div>';
+            }
+            
+            item.innerHTML = `<div class="item-name">${p.title}</div><div class="item-path">${p.catName} > ${p.subName}</div>${tagsHtml}`;
+            item.onclick = () => {
+                state.activeCategoryId = p.catId; 
+                state.activeSubcategoryId = p.subId; 
+                state.activePromptId = p.id;
+                trackRecentPrompt(p.id, p.subId, p.catId);
+                renderUI(); 
+            };
+            listContainer.appendChild(item);
+        });
+        
+        renderDetailColumn();
+    }
     
     function renderSpecialView(type) {
         const titles = { favorites: "Preferiti", recents: "Recenti" };
@@ -964,7 +1047,7 @@
     }
     
     function attachDetailViewListeners(promptItem, sub, cat) {
-        const colId = (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags') ? 'col-special-detail' : 'col-detail';
+        const colId = (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags' || state.currentView === 'search') ? 'col-special-detail' : 'col-detail';
         const col = document.getElementById(colId);
         if (!col) return;
 
@@ -1231,7 +1314,7 @@
         state.recents = state.recents.filter(r => r.promptId !== promptId);
         const newActivePromptId = sub.prompts[promptIndex]?.id || sub.prompts[promptIndex-1]?.id || sub.prompts[0]?.id || null; 
         let newActiveIds = { activePromptId: newActivePromptId };
-        if (!newActivePromptId && (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags')) { newActiveIds = { activePromptId: null, activeSubcategoryId: null, activeCategoryId: null }; }
+        if (!newActivePromptId && (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags' || state.currentView === 'search')) { newActiveIds = { activePromptId: null, activeSubcategoryId: null, activeCategoryId: null }; }
         await updateStateAndSave(newData, { newActiveIds }); 
         Toast.show("Prompt eliminato!", 'info');
     }
@@ -1297,7 +1380,7 @@
         
         categoryDropdown.addEventListener('change', () => {
             const selection = categoryDropdown.value;
-            if (selection === 'favorites' || selection === 'recents' || selection === 'tags') {
+            if (selection === 'favorites' || selection === 'recents' || selection === 'tags' || selection === 'search') {
                 state.currentView = selection;
                 state.activePromptId = null; state.activeSubcategoryId = null; state.activeCategoryId = null;
             } else if (selection === 'separator' || !selection) {
@@ -1307,8 +1390,6 @@
                 const newCat = state.allData.find(c => c.id === selection);
                 state.activeCategoryId = selection;
 
-                // --- INIZIO BLOCCO CODICE CORRETTO E ROBUSTO ---
-                // Questo codice gestisce in modo sicuro la selezione, anche se la categoria è vuota o malformata.
                 let firstSub = null;
                 if (newCat && Array.isArray(newCat.subcategories) && newCat.subcategories.length > 0) {
                     firstSub = [...newCat.subcategories].sort((a, b) => a.name.localeCompare(b.name))[0];
@@ -1322,9 +1403,30 @@
                 }
 
                 state.activePromptId = firstPrompt?.id || null;
-                // --- FINE BLOCCO CODICE CORRETTO E ROBUSTO ---
             }
             renderUI();
+        });
+        
+        // --- EVENT LISTENER RICERCA ---
+        const searchInput = document.getElementById('search-input');
+        const searchIcon = document.getElementById('search-icon');
+        
+        // Focus sull'input quando si clicca la lente
+        searchIcon.addEventListener('click', () => {
+            searchInput.focus();
+        });
+
+        // Logica di ricerca mentre si scrive
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.trim().length > 0) {
+                state.currentView = 'search';
+                renderUI();
+            } else {
+                // Se cancella tutto, torna alla vista colonne standard
+                state.currentView = 'columns';
+                renderUI();
+            }
         });
         
         imageInput.addEventListener('change', (e) => {
@@ -1393,11 +1495,9 @@
             await Database.save(state.allData);
         }
         
-        // Imposta la vista iniziale su Preferiti e seleziona il primo preferito
         state.currentView = 'favorites';
         categoryDropdown.value = 'favorites';
 
-        // Trova il primo prompt preferito e impostalo attivo
         let firstFav = null;
         outer: for (const cat of state.allData) {
             for (const sub of (cat.subcategories || [])) {
@@ -1411,7 +1511,6 @@
             state.activeSubcategoryId = firstFav.sub.id;
             state.activePromptId = firstFav.p.id;
         } else {
-            // Se non ci sono preferiti, lascia solo la vista Preferiti senza selezione
             state.activeCategoryId = null;
             state.activeSubcategoryId = null;
             state.activePromptId = null;
