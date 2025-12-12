@@ -53,9 +53,12 @@
         .column-header-title .rename-icon:hover { color: var(--primary-accent); }
         .column-header-title .delete-icon { color: var(--text-muted); cursor: pointer; font-size: 15px; margin-left: 8px; }
         .column-header-title .delete-icon:hover { color: var(--btn-red); }
-        .column-content { overflow-y: auto; padding-right: 10px; margin-right: -10px; }
+        
+        /* FIX APPLICATO QUI: Aggiunto flex-grow: 1 e min-height: 0 */
+        .column-content { overflow-y: auto; padding-right: 10px; margin-right: -10px; flex-grow: 1; min-height: 0; }
         .column-content::-webkit-scrollbar { width: 8px; }
         .column-content::-webkit-scrollbar-thumb { background-color: var(--element-bg); border-radius: 20px; }
+        
         .add-button { background-color: var(--btn-green); color: white; border: none; border-radius: 5px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; }
         .item-container { display: flex; flex-direction: column; align-items: flex-start; padding: 12px; background-color: var(--element-bg); border-radius: 6px; margin-bottom: 8px; color: var(--text-secondary); border-left: 3px solid transparent; cursor: pointer; }
         .item-container:hover { background-color: var(--element-bg-hover); }
@@ -263,7 +266,6 @@
 <div id="toast-container"></div>
 <div id="loading-overlay"><div class="loading-spinner"><i class="fa-solid fa-spinner"></i></div></div>
 
-<!-- MODAL PER LINK -->
 <div class="modal-overlay" id="linkModal">
     <div class="modal-content">
         <h4>Inserisci l'URL del Link</h4>
@@ -275,7 +277,6 @@
     </div>
 </div>
 
-<!-- MODAL PER RINOMINARE -->
 <div class="modal-overlay" id="renameModal">
     <div class="modal-content">
         <h4 id="renameModalTitle">Rinomina Elemento</h4>
@@ -1185,12 +1186,21 @@
         descriptionContainer.addEventListener('dragleave', () => { 
             descriptionContainer.classList.remove('drag-over'); 
         });
+        
+        // FIX APPLICATO QUI: Gestione corretta drop file vs testo
         descriptionContainer.addEventListener('drop', e => {
             if (descriptionContainer.contentEditable === 'true') {
-                e.preventDefault();
-                descriptionContainer.classList.remove('drag-over');
-                if (e.dataTransfer.files.length > 0) {
-                    insertBase64Image(e.dataTransfer.files[0]);
+                if (e.dataTransfer.types.includes("Files")) {
+                    // Se ci sono file, preveniamo il default per gestire l'immagine
+                    e.preventDefault();
+                    e.stopPropagation();
+                    descriptionContainer.classList.remove('drag-over');
+                    if (e.dataTransfer.files.length > 0) {
+                        insertBase64Image(e.dataTransfer.files[0]);
+                    }
+                } else {
+                    // Se è solo testo o altro, lasciamo fare al browser ma rimuoviamo la classe
+                    descriptionContainer.classList.remove('drag-over');
                 }
             }
         });
