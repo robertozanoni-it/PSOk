@@ -1365,14 +1365,22 @@
         reader.onload = async e => {
             try {
                 const data = JSON.parse(e.target.result); 
-                if (!Array.isArray(data)) throw new Error("Invalid format");
+                if (!Array.isArray(data)) throw new Error("Invalid format: Not an array");
+                
+                // Simple validation of structure
+                const isValid = data.every(cat => cat.id && cat.name && Array.isArray(cat.subcategories));
+                if (!isValid) throw new Error("Invalid format: Missing required fields");
+
                 const newCatId = data[0]?.id || null;
                 const newSubId = data[0]?.subcategories?.[0]?.id || null;
                 const newPromptId = data[0]?.subcategories?.[0]?.prompts?.[0]?.id || null;
                 await updateStateAndSave(data, { newActiveIds: { currentView: 'columns', activeCategoryId: newCatId, activeSubcategoryId: newSubId, activePromptId: newPromptId }, saveHistory: false });
                 state.history = []; state.redoStack = [];
                 Toast.show("Importazione riuscita!", 'success');
-            } catch (err) { Toast.show("File di backup non valido.", 'error'); }
+            } catch (err) { 
+                console.error(err);
+                Toast.show("File di backup non valido: " + err.message, 'error'); 
+            }
         };
         reader.readAsText(file); event.target.value = '';
     }
@@ -1467,68 +1475,98 @@
         renameModalConfirm.onclick = handleRenameConfirm;
         renameModal.addEventListener('click', (e) => { if (e.target === renameModal) hideRenameModal(); });
         renameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleRenameConfirm(); } });
+
+        // Global Drag and Drop Prevention (to avoid browser opening files)
+        window.addEventListener('dragover', e => {
+            // Allow dragover if it's text on an editable element, or if we want to allow drop (which requires preventDefault)
+            // But to prevent browser from opening file on drop, we must preventDefault on dragover/drop.
+            // Wait, if we preventDefault on dragover, we indicate we accept the drop.
+            // If we DON'T preventDefault on dragover, the browser might not allow drop (which is fine for non-targets), 
+            // BUT if it's a file, the default is "open file" if dropped? No, open file happens on DROP.
+            // To prevent open file on DROP, we must preventDefault on DROP.
+            
+            // To allow text drag-and-drop in contenteditable, we should NOT preventDefault on DROP?
+            // Actually, for native text dnd, we usually let the browser handle it.
+            // So we should only preventDefault if it is a FILE.
+            
+            if (e.dataTransfer.types.includes("Files")) {
+                 e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('drop', e => {
+            if (e.dataTransfer.types.includes("Files")) {
+                e.preventDefault();
+            }
+        });
     }
 
     // --- INITIALIZATION ---
     async function initialize() {
-        Loader.show();
-        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
-        await Database.init();
-        state.allData = await Database.load();
-        
-        try { state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || []; } catch (e) { state.recents = []; }
+        try {
+            Loader.show();
+            document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+            await Database.init();
+            state.allData = await Database.load();
+            
+            try { state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || []; } catch (e) { state.recents = []; }
 
-        if (state.allData.length === 0) {
-            state.allData = [ 
-                {
-                    id: `cat_1`, 
-                    name: 'AI Generative', 
-                    subcategories: [ 
-                        {
-                            id: `sub_1`, 
-                            name: 'Testi e Storie', 
-                            prompts: [ 
-                                {id: `p_1`, title: 'Prompt di Benvenuto', description: 'Benvenuto! Clicca l\'icona a forma di matita per modificare questo prompt. <strong>Aggiungi tag per organizzare meglio i tuoi prompt!</strong><br><br>Prova a incollare del testo con <strong>Ctrl+V</strong> o <strong>Cmd+V</strong>!', favorite: true, tags: ['tutorial', 'benvenuto']},
-                                {id: `p_2`, title: 'Genera Articolo SEO', description: 'Scrivi un articolo di 1500 parole sul tema X, con 3 titoli e bullet points.', favorite: false, tags: ['seo', 'marketing', 'contenuti']} 
-                            ]
-                        },
-                         {
-                            id: `sub_2`, 
-                            name: 'Immagini e DALL-E', 
-                            prompts: [ 
-                                {id: `p_3`, title: 'Stile Cinematografico', description: 'Crea una scena in stile cinematografico 4K, dettagliato, con luce drammatica.', favorite: true, tags: ['immagini', 'dall-e', 'cinematografico']} 
-                            ]
-                        }
-                    ]
-                } 
-            ];
-            await Database.save(state.allData);
-        }
-        
-        state.currentView = 'favorites';
-        categoryDropdown.value = 'favorites';
+            if (state.allData.length === 0) {
+                state.allData = [ 
+                    {
+                        id: `cat_1`, 
+                        name: 'AI Generative', 
+                        subcategories: [ 
+                            {
+                                id: `sub_1`, 
+                                name: 'Testi e Storie', 
+                                prompts: [ 
+                                    {id: `p_1`, title: 'Prompt di Benvenuto', description: 'Benvenuto! Clicca l\'icona a forma di matita per modificare questo prompt. <strong>Aggiungi tag per organizzare meglio i tuoi prompt!</strong><br><br>Prova a incollare del testo con <strong>Ctrl+V</strong> o <strong>Cmd+V</strong>!', favorite: true, tags: ['tutorial', 'benvenuto']},
+                                    {id: `p_2`, title: 'Genera Articolo SEO', description: 'Scrivi un articolo di 1500 parole sul tema X, con 3 titoli e bullet points.', favorite: false, tags: ['seo', 'marketing', 'contenuti']} 
+                                ]
+                            },
+                             {
+                                id: `sub_2`, 
+                                name: 'Immagini e DALL-E', 
+                                prompts: [ 
+                                    {id: `p_3`, title: 'Stile Cinematografico', description: 'Crea una scena in stile cinematografico 4K, dettagliato, con luce drammatica.', favorite: true, tags: ['immagini', 'dall-e', 'cinematografico']} 
+                                ]
+                            }
+                        ]
+                    } 
+                ];
+                await Database.save(state.allData);
+            }
+            
+            state.currentView = 'favorites';
+            categoryDropdown.value = 'favorites';
 
-        let firstFav = null;
-        outer: for (const cat of state.allData) {
-            for (const sub of (cat.subcategories || [])) {
-                for (const p of (sub.prompts || [])) {
-                    if (p.favorite) { firstFav = { p, sub, cat }; break outer; }
+            let firstFav = null;
+            outer: for (const cat of state.allData) {
+                for (const sub of (cat.subcategories || [])) {
+                    for (const p of (sub.prompts || [])) {
+                        if (p.favorite) { firstFav = { p, sub, cat }; break outer; }
+                    }
                 }
             }
+            if (firstFav) {
+                state.activeCategoryId = firstFav.cat.id;
+                state.activeSubcategoryId = firstFav.sub.id;
+                state.activePromptId = firstFav.p.id;
+            } else {
+                state.activeCategoryId = null;
+                state.activeSubcategoryId = null;
+                state.activePromptId = null;
+            }
+            
+            setupEventListeners();
+            renderUI();
+        } catch (error) {
+            console.error(error);
+            Toast.show("Errore di inizializzazione: " + error.message, 'error', 10000);
+        } finally {
+            Loader.hide();
         }
-        if (firstFav) {
-            state.activeCategoryId = firstFav.cat.id;
-            state.activeSubcategoryId = firstFav.sub.id;
-            state.activePromptId = firstFav.p.id;
-        } else {
-            state.activeCategoryId = null;
-            state.activeSubcategoryId = null;
-            state.activePromptId = null;
-        }
-        
-        setupEventListeners();
-        renderUI();
-        Loader.hide();
     }
     
     initialize();
