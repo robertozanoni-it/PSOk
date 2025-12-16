@@ -54,7 +54,6 @@
         .column-header-title .delete-icon { color: var(--text-muted); cursor: pointer; font-size: 15px; margin-left: 8px; }
         .column-header-title .delete-icon:hover { color: var(--btn-red); }
         
-        /* FIX APPLICATO QUI: Aggiunto flex-grow: 1 e min-height: 0 */
         .column-content { overflow-y: auto; padding-right: 10px; margin-right: -10px; flex-grow: 1; min-height: 0; }
         .column-content::-webkit-scrollbar { width: 8px; }
         .column-content::-webkit-scrollbar-thumb { background-color: var(--element-bg); border-radius: 20px; }
@@ -67,7 +66,6 @@
         .item-path { font-size: 12px; color: var(--text-muted); }
         .item-container.active .item-path { color: #ddd; }
         
-        /* STILI TAG */
         .tag-badge { 
             display: inline-block; 
             padding: 3px 8px; 
@@ -323,7 +321,40 @@
     // --- SYSTEMS ---
     const Loader = { el: document.getElementById('loading-overlay'), show() { this.el.style.display = 'flex'; }, hide() { this.el.style.display = 'none'; } };
     const Toast = { container: document.getElementById('toast-container'), show(message, type = 'info', duration = 3000) { const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = message; this.container.appendChild(t); setTimeout(() => t.remove(), duration); } };
-    const Database = { DB_NAME: "PromptManagerDB_v15_Tags", STORE_NAME: "promptsData", db: null, async init() { return new Promise((resolve, reject) => { const r=indexedDB.open(this.DB_NAME, 1); r.onerror=reject; r.onsuccess=e=>{this.db=e.target.result;resolve();}; r.onupgradeneeded=e=>e.target.result.createObjectStore(this.STORE_NAME, {keyPath:"id"}); }); }, async save(data) { return new Promise((resolve, reject) => { const tx=this.db.transaction([this.STORE_NAME],"readwrite"); tx.objectStore(this.STORE_NAME).put({id:"main",data}); tx.oncomplete=resolve; tx.onerror=reject; }); }, async load() { return new Promise((resolve, reject) => { const r=this.db.transaction([this.STORE_NAME]).objectStore(this.STORE_NAME).get("main"); r.onsuccess=e=>resolve(e.target.result?e.target.result.data:[]); r.onerror=reject; }); } };
+    
+    // MOTORE DATABASE MIGLIORATO
+    const Database = { 
+        DB_NAME: "PromptManagerDB_v15_Tags", 
+        STORE_NAME: "promptsData", 
+        db: null, 
+        async init() { 
+            return new Promise((resolve, reject) => { 
+                const r = indexedDB.open(this.DB_NAME, 1); 
+                r.onerror = reject; 
+                r.onsuccess = e => { this.db = e.target.result; resolve(); }; 
+                r.onupgradeneeded = e => e.target.result.createObjectStore(this.STORE_NAME, {keyPath:"id"}); 
+            }); 
+        }, 
+        async save(data) { 
+            return new Promise((resolve, reject) => { 
+                if (!this.db) return reject("DB non inizializzato");
+                const tx = this.db.transaction([this.STORE_NAME], "readwrite"); 
+                // Clonazione profonda per evitare problemi di riferimenti IndexedDB
+                const cleanData = JSON.parse(JSON.stringify(data));
+                tx.objectStore(this.STORE_NAME).put({id: "main", data: cleanData}); 
+                tx.oncomplete = () => resolve(); 
+                tx.onerror = e => reject(e); 
+            }); 
+        }, 
+        async load() { 
+            return new Promise((resolve, reject) => { 
+                if (!this.db) return reject("DB non inizializzato");
+                const r = this.db.transaction([this.STORE_NAME]).objectStore(this.STORE_NAME).get("main"); 
+                r.onsuccess = e => resolve(e.target.result ? e.target.result.data : []); 
+                r.onerror = reject; 
+            }); 
+        } 
+    };
     
     // UTILITY: Genera colore per tag
     function getTagColor(tagName) {
@@ -382,7 +413,6 @@
     const linkModalConfirm = document.getElementById('linkModalConfirm');
     const linkModalCancel = document.getElementById('linkModalCancel');
     
-    // ELEMENTI DOM PER IL MODAL DI RINOMINA
     const renameModal = document.getElementById('renameModal');
     const renameModalTitle = document.getElementById('renameModalTitle');
     const renameInput = document.getElementById('renameInput');
@@ -519,27 +549,36 @@
         reader.readAsDataURL(file);
     }
 
-    // --- CORE LOGIC ---
+    // --- FUNZIONE DI SALVATAGGIO OTTIMIZZATA ---
     async function updateStateAndSave(newData, { newActiveIds = {}, saveHistory = true } = {}) {
         Loader.show();
         try {
             if (saveHistory) {
                 state.redoStack = [];
-                state.history.push(JSON.parse(JSON.stringify({ ...state })));
+                state.history.push(JSON.parse(JSON.stringify({ 
+                    allData: state.allData,
+                    recents: state.recents,
+                    activeCategoryId: state.activeCategoryId,
+                    activeSubcategoryId: state.activeSubcategoryId,
+                    activePromptId: state.activePromptId,
+                    currentView: state.currentView
+                })));
                 if (state.history.length > 30) state.history.shift();
             }
+            
             state.allData = newData;
             Object.assign(state, newActiveIds);
             
+            // Attendiamo che IndexedDB confermi la scrittura
             await Database.save(state.allData);
             
             localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents));
             renderUI();
-        
+            return true;
         } catch (error) {
-            console.error("Errore durante il salvataggio dei dati:", error);
-            Toast.show("Errore critico: impossibile salvare. Riprova.", 'error', 5000);
-        
+            console.error("Errore critico durante il salvataggio:", error);
+            Toast.show("Errore durante il salvataggio dei dati.", 'error', 5000);
+            return false;
         } finally {
             Loader.hide();
         }
@@ -908,7 +947,6 @@
         });
     }
 
-    // --- NUOVA FUNZIONE PER LA RICERCA ---
     function renderSearchView() {
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const colList = document.getElementById('col-special-list');
@@ -943,15 +981,6 @@
             listContainer.innerHTML = '<div class="initial-message">Nessun risultato trovato</div>';
             document.getElementById('col-special-detail').innerHTML = '<div class="initial-message">Prova con un altro termine</div>';
             return;
-        }
-
-        // Se l'elemento attivo corrente non è nei risultati, resetta la selezione (opzionale) o mantieni se presente
-        const currentActiveInResults = items.find(p => p.id === state.activePromptId);
-        if (!currentActiveInResults && items.length > 0) {
-             // Opzionale: seleziona il primo risultato automaticamente
-             // state.activePromptId = items[0].id;
-             // state.activeCategoryId = items[0].catId;
-             // state.activeSubcategoryId = items[0].subId;
         }
 
         items.forEach(p => {
@@ -1012,7 +1041,6 @@
             return; 
         }
 
-        // Se non c'è un attivo coerente con la lista attuale, scegli il primo
         const currentActiveItem = items.find(p => p.id === state.activePromptId);
         if (!currentActiveItem) {
             state.activePromptId = items[0].id;
@@ -1168,11 +1196,10 @@
         col.querySelector("#fav-prompt-btn").onclick = async () => {
              const newData = JSON.parse(JSON.stringify(state.allData));
              const promptToUpdate = newData.find(c=>c.id===cat.id)?.subcategories.find(s=>s.id===sub.id)?.prompts.find(p_item=>p_item.id===promptItem.id);
-             let newActiveIds = {};
              if(promptToUpdate) {
                 promptToUpdate.favorite = !promptToUpdate.favorite;
              }
-             await updateStateAndSave(newData, { newActiveIds, saveHistory: false });
+             await updateStateAndSave(newData, { saveHistory: false });
         };
         
         descriptionContainer.addEventListener('paste', handlePaste, false);
@@ -1187,11 +1214,9 @@
             descriptionContainer.classList.remove('drag-over'); 
         });
         
-        // FIX APPLICATO QUI: Gestione corretta drop file vs testo
         descriptionContainer.addEventListener('drop', e => {
             if (descriptionContainer.contentEditable === 'true') {
                 if (e.dataTransfer.types.includes("Files")) {
-                    // Se ci sono file, preveniamo il default per gestire l'immagine
                     e.preventDefault();
                     e.stopPropagation();
                     descriptionContainer.classList.remove('drag-over');
@@ -1199,7 +1224,6 @@
                         insertBase64Image(e.dataTransfer.files[0]);
                     }
                 } else {
-                    // Se è solo testo o altro, lasciamo fare al browser ma rimuoviamo la classe
                     descriptionContainer.classList.remove('drag-over');
                 }
             }
@@ -1226,11 +1250,8 @@
     async function deleteCategory(categoryId) {
         const categoryToDelete = state.allData.find(c => c.id === categoryId);
         if (!categoryToDelete) return;
-
-        if (!window.confirm(`Sei sicuro di voler eliminare la categoria "${categoryToDelete.name}"? Tutti i suoi contenuti (sottocategorie e prompt) verranno persi per sempre.`)) return;
-
+        if (!window.confirm(`Sei sicuro di voler eliminare la categoria "${categoryToDelete.name}"? Tutti i suoi contenuti verranno persi.`)) return;
         const newData = state.allData.filter(c => c.id !== categoryId);
-
         let newActiveIds = {};
         if (state.activeCategoryId === categoryId) {
             if (newData.length > 0) {
@@ -1243,12 +1264,7 @@
                     activePromptId: firstSubcategory?.prompts?.sort((a,b) => a.title.localeCompare(b.title))[0]?.id || null
                 };
             } else {
-                 newActiveIds = {
-                    currentView: 'favorites',
-                    activeCategoryId: null,
-                    activeSubcategoryId: null,
-                    activePromptId: null
-                };
+                 newActiveIds = { currentView: 'favorites', activeCategoryId: null, activeSubcategoryId: null, activePromptId: null };
             }
         }
         await updateStateAndSave(newData, { newActiveIds });
@@ -1272,15 +1288,11 @@
         const newData = JSON.parse(JSON.stringify(state.allData));
         const cat = newData.find(c => c.id === categoryId);
         if (!cat || !Array.isArray(cat.subcategories)) return;
-
         const subToDelete = cat.subcategories.find(s => s.id === subcategoryId);
         if (!subToDelete) return;
-
-        if (!window.confirm(`Sei sicuro di voler eliminare la sottocategoria "${subToDelete.name}"? Tutti i prompt al suo interno verranno persi.`)) return;
-
+        if (!window.confirm(`Sei sicuro di voler eliminare la sottocategoria "${subToDelete.name}"?`)) return;
         const subIndex = cat.subcategories.findIndex(s => s.id === subcategoryId);
         cat.subcategories.splice(subIndex, 1);
-
         let newActiveIds = {};
         if (state.activeSubcategoryId === subcategoryId) {
             const newActiveSub = cat.subcategories[subIndex] || cat.subcategories[subIndex - 1] || cat.subcategories[0] || null;
@@ -1296,19 +1308,14 @@
     async function addNewPrompt(subcategoryId, categoryId) { 
         const title = window.prompt("Titolo nuovo prompt:"); 
         if (!title?.trim()) { Toast.show("Operazione annullata.", 'info'); return; } 
-        
         const newData = JSON.parse(JSON.stringify(state.allData)); 
         const cat = newData.find(c => c.id === categoryId);
-        if (!cat) { Toast.show("Errore: categoria non trovata.", 'error'); return; }
-        const sub = cat.subcategories.find(s => s.id === subcategoryId);
-        if (!sub) { Toast.show("Errore: sottocategoria non trovata.", 'error'); return; }
-        
+        const sub = cat?.subcategories.find(s => s.id === subcategoryId);
+        if (!sub) return;
         const newPrompt = { id: `p_${Date.now()}`, title: title.trim(), description: "", favorite: false, tags: [] }; 
         if (!Array.isArray(sub.prompts)) sub.prompts = [];
         sub.prompts.push(newPrompt); 
-        
         state.startEditingNewPrompt = true; 
-        
         await updateStateAndSave(newData, { newActiveIds: { activePromptId: newPrompt.id } }); 
         Toast.show(`Prompt "${newPrompt.title}" aggiunto!`, 'success');
     }
@@ -1324,33 +1331,49 @@
         state.recents = state.recents.filter(r => r.promptId !== promptId);
         const newActivePromptId = sub.prompts[promptIndex]?.id || sub.prompts[promptIndex-1]?.id || sub.prompts[0]?.id || null; 
         let newActiveIds = { activePromptId: newActivePromptId };
-        if (!newActivePromptId && (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags' || state.currentView === 'search')) { newActiveIds = { activePromptId: null, activeSubcategoryId: null, activeCategoryId: null }; }
         await updateStateAndSave(newData, { newActiveIds }); 
         Toast.show("Prompt eliminato!", 'info');
     }
 
     // --- TOOL FUNCTIONS ---
     function updateUndoRedoButtons() { document.getElementById('btnAnnulla').disabled = state.history.length === 0; document.getElementById('btnRipristina').disabled = state.redoStack.length === 0; }
+    
     async function performUndo() { 
         if (state.history.length === 0) return; 
         const lastState = state.history.pop(); 
-        state.redoStack.push(JSON.parse(JSON.stringify({ allData: state.allData, recents: state.recents, activeCategoryId: state.activeCategoryId, activeSubcategoryId: state.activeSubcategoryId, activePromptId: state.activePromptId, currentView: state.currentView }))); 
+        state.redoStack.push(JSON.parse(JSON.stringify({ 
+            allData: state.allData, 
+            recents: state.recents, 
+            activeCategoryId: state.activeCategoryId, 
+            activeSubcategoryId: state.activeSubcategoryId, 
+            activePromptId: state.activePromptId, 
+            currentView: state.currentView 
+        }))); 
         Object.assign(state, lastState); 
         await Database.save(state.allData); 
         localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents)); 
         renderUI(); 
         Toast.show("Annullato!", 'info', 1500);
     }
+
     async function performRedo() { 
         if (state.redoStack.length === 0) return; 
         const nextState = state.redoStack.pop(); 
-        state.history.push(JSON.parse(JSON.stringify({ allData: state.allData, recents: state.recents, activeCategoryId: state.activeCategoryId, activeSubcategoryId: state.activeSubcategoryId, activePromptId: state.activePromptId, currentView: state.currentView }))); 
+        state.history.push(JSON.parse(JSON.stringify({ 
+            allData: state.allData, 
+            recents: state.recents, 
+            activeCategoryId: state.activeCategoryId, 
+            activeSubcategoryId: state.activeSubcategoryId, 
+            activePromptId: state.activePromptId, 
+            currentView: state.currentView 
+        }))); 
         Object.assign(state, nextState); 
         await Database.save(state.allData); 
         localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents)); 
         renderUI(); 
         Toast.show("Ripristinato!", 'info', 1500);
     }
+
     function backupData() { 
         if(state.allData.length === 0) { Toast.show("Nessun dato da esportare.", "error"); return; } 
         const dataStr = JSON.stringify(state.allData, null, 2); 
@@ -1359,27 +1382,18 @@
         const a = document.createElement("a"); a.href = url; a.download = `prompts_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); 
         Toast.show("Backup scaricato!", 'success'); 
     }
+
     function importData(event) {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = async e => {
             try {
                 const data = JSON.parse(e.target.result); 
-                if (!Array.isArray(data)) throw new Error("Invalid format: Not an array");
-                
-                // Simple validation of structure
-                const isValid = data.every(cat => cat.id && cat.name && Array.isArray(cat.subcategories));
-                if (!isValid) throw new Error("Invalid format: Missing required fields");
-
-                const newCatId = data[0]?.id || null;
-                const newSubId = data[0]?.subcategories?.[0]?.id || null;
-                const newPromptId = data[0]?.subcategories?.[0]?.prompts?.[0]?.id || null;
-                await updateStateAndSave(data, { newActiveIds: { currentView: 'columns', activeCategoryId: newCatId, activeSubcategoryId: newSubId, activePromptId: newPromptId }, saveHistory: false });
-                state.history = []; state.redoStack = [];
+                if (!Array.isArray(data)) throw new Error("Formato non valido");
+                await updateStateAndSave(data, { saveHistory: false });
                 Toast.show("Importazione riuscita!", 'success');
             } catch (err) { 
-                console.error(err);
-                Toast.show("File di backup non valido: " + err.message, 'error'); 
+                Toast.show("Errore durante l'importazione", 'error'); 
             }
         };
         reader.readAsText(file); event.target.value = '';
@@ -1394,67 +1408,42 @@
             localStorage.setItem('theme', newTheme); 
             document.getElementById('themeToggle').innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
         });
-        document.getElementById('themeToggle').innerHTML = document.documentElement.getAttribute('data-theme') === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
         
         categoryDropdown.addEventListener('change', () => {
             const selection = categoryDropdown.value;
-            if (selection === 'favorites' || selection === 'recents' || selection === 'tags' || selection === 'search') {
+            if (['favorites', 'recents', 'tags', 'search'].includes(selection)) {
                 state.currentView = selection;
-                state.activePromptId = null; state.activeSubcategoryId = null; state.activeCategoryId = null;
-            } else if (selection === 'separator' || !selection) {
-                return; 
+                state.activePromptId = null; 
             } else {
                 state.currentView = 'columns';
-                const newCat = state.allData.find(c => c.id === selection);
                 state.activeCategoryId = selection;
-
-                let firstSub = null;
-                if (newCat && Array.isArray(newCat.subcategories) && newCat.subcategories.length > 0) {
-                    firstSub = [...newCat.subcategories].sort((a, b) => a.name.localeCompare(b.name))[0];
-                }
-                
+                const newCat = state.allData.find(c => c.id === selection);
+                const firstSub = newCat?.subcategories[0];
                 state.activeSubcategoryId = firstSub?.id || null;
-
-                let firstPrompt = null;
-                if (firstSub && Array.isArray(firstSub.prompts) && firstSub.prompts.length > 0) {
-                    firstPrompt = [...firstSub.prompts].sort((a, b) => a.title.localeCompare(b.title))[0];
-                }
-
-                state.activePromptId = firstPrompt?.id || null;
+                state.activePromptId = firstSub?.prompts[0]?.id || null;
             }
             renderUI();
         });
         
-        // --- EVENT LISTENER RICERCA ---
         const searchInput = document.getElementById('search-input');
-        const searchIcon = document.getElementById('search-icon');
-        
-        // Focus sull'input quando si clicca la lente
-        searchIcon.addEventListener('click', () => {
-            searchInput.focus();
-        });
-
-        // Logica di ricerca mentre si scrive
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             if (query.trim().length > 0) {
                 state.currentView = 'search';
                 renderUI();
             } else {
-                // Se cancella tutto, torna alla vista colonne standard
                 state.currentView = 'columns';
                 renderUI();
             }
         });
         
         imageInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                insertBase64Image(e.target.files[0]);
-            }
+            if (e.target.files.length > 0) insertBase64Image(e.target.files[0]);
             e.target.value = ''; 
         });
 
-        const toolBtn = document.getElementById('toolBtn'); const toolMenu = document.getElementById('toolMenu');
+        const toolBtn = document.getElementById('toolBtn');
+        const toolMenu = document.getElementById('toolMenu');
         toolBtn.addEventListener('click', e => { e.stopPropagation(); toolMenu.classList.toggle('show'); });
         window.addEventListener('click', () => toolMenu.classList.remove('show'));
         document.getElementById('btnAddCategory').onclick = addCategory;
@@ -1464,111 +1453,34 @@
         document.getElementById('btnImporta').onclick = () => document.getElementById('backupInput').click();
         document.getElementById('backupInput').onchange = importData;
 
-        // Listeners per il modal del link
         linkModalCancel.onclick = hideLinkModal;
         linkModalConfirm.onclick = () => applyLink(linkUrlInput.value.trim());
-        linkModal.addEventListener('click', (e) => { if (e.target === linkModal) hideLinkModal(); });
-        linkUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyLink(linkUrlInput.value.trim()); }});
-
-        // Listeners per il modal di rinomina
         renameModalCancel.onclick = hideRenameModal;
         renameModalConfirm.onclick = handleRenameConfirm;
-        renameModal.addEventListener('click', (e) => { if (e.target === renameModal) hideRenameModal(); });
-        renameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleRenameConfirm(); } });
-
-        // Global Drag and Drop Prevention (to avoid browser opening files)
-        window.addEventListener('dragover', e => {
-            // Allow dragover if it's text on an editable element, or if we want to allow drop (which requires preventDefault)
-            // But to prevent browser from opening file on drop, we must preventDefault on dragover/drop.
-            // Wait, if we preventDefault on dragover, we indicate we accept the drop.
-            // If we DON'T preventDefault on dragover, the browser might not allow drop (which is fine for non-targets), 
-            // BUT if it's a file, the default is "open file" if dropped? No, open file happens on DROP.
-            // To prevent open file on DROP, we must preventDefault on DROP.
-            
-            // To allow text drag-and-drop in contenteditable, we should NOT preventDefault on DROP?
-            // Actually, for native text dnd, we usually let the browser handle it.
-            // So we should only preventDefault if it is a FILE.
-            
-            if (e.dataTransfer.types.includes("Files")) {
-                 e.preventDefault();
-            }
-        });
-        
-        window.addEventListener('drop', e => {
-            if (e.dataTransfer.types.includes("Files")) {
-                e.preventDefault();
-            }
-        });
     }
 
     // --- INITIALIZATION ---
     async function initialize() {
         try {
             Loader.show();
-            document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
             await Database.init();
             state.allData = await Database.load();
-            
-            try { state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || []; } catch (e) { state.recents = []; }
+            state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || [];
 
             if (state.allData.length === 0) {
-                state.allData = [ 
-                    {
-                        id: `cat_1`, 
-                        name: 'AI Generative', 
-                        subcategories: [ 
-                            {
-                                id: `sub_1`, 
-                                name: 'Testi e Storie', 
-                                prompts: [ 
-                                    {id: `p_1`, title: 'Prompt di Benvenuto', description: 'Benvenuto! Clicca l\'icona a forma di matita per modificare questo prompt. <strong>Aggiungi tag per organizzare meglio i tuoi prompt!</strong><br><br>Prova a incollare del testo con <strong>Ctrl+V</strong> o <strong>Cmd+V</strong>!', favorite: true, tags: ['tutorial', 'benvenuto']},
-                                    {id: `p_2`, title: 'Genera Articolo SEO', description: 'Scrivi un articolo di 1500 parole sul tema X, con 3 titoli e bullet points.', favorite: false, tags: ['seo', 'marketing', 'contenuti']} 
-                                ]
-                            },
-                             {
-                                id: `sub_2`, 
-                                name: 'Immagini e DALL-E', 
-                                prompts: [ 
-                                    {id: `p_3`, title: 'Stile Cinematografico', description: 'Crea una scena in stile cinematografico 4K, dettagliato, con luce drammatica.', favorite: true, tags: ['immagini', 'dall-e', 'cinematografico']} 
-                                ]
-                            }
-                        ]
-                    } 
-                ];
+                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Primo prompt.', favorite: true, tags: ['info']}] }] }];
                 await Database.save(state.allData);
-            }
-            
-            state.currentView = 'favorites';
-            categoryDropdown.value = 'favorites';
-
-            let firstFav = null;
-            outer: for (const cat of state.allData) {
-                for (const sub of (cat.subcategories || [])) {
-                    for (const p of (sub.prompts || [])) {
-                        if (p.favorite) { firstFav = { p, sub, cat }; break outer; }
-                    }
-                }
-            }
-            if (firstFav) {
-                state.activeCategoryId = firstFav.cat.id;
-                state.activeSubcategoryId = firstFav.sub.id;
-                state.activePromptId = firstFav.p.id;
-            } else {
-                state.activeCategoryId = null;
-                state.activeSubcategoryId = null;
-                state.activePromptId = null;
             }
             
             setupEventListeners();
             renderUI();
         } catch (error) {
             console.error(error);
-            Toast.show("Errore di inizializzazione: " + error.message, 'error', 10000);
+            Toast.show("Errore di inizializzazione", 'error');
         } finally {
             Loader.hide();
         }
     }
-    
     initialize();
 })();
 </script>
