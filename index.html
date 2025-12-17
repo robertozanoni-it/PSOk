@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Manager v15 - Sistema Tagging</title>
+    <title>Prompt Manager v16 - Dynamic Variables</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
         :root {
@@ -11,13 +11,13 @@
             --element-bg: #3A3D4D; --element-bg-hover: #4a4e5a; --primary-accent: #007BFF;
             --primary-accent-dark: #0056b3; --text-primary: #FFFFFF; --text-secondary: #E0E0E0;
             --text-muted: #9E9E9E; --border-color: #3A3D4D; --star-yellow: #FFC107;
-            --btn-green: #28a745; --btn-red: #dc3545;
+            --btn-green: #28a745; --btn-red: #dc3545; --variable-text: #FF9800;
         }
         [data-theme="light"] {
             --background-dark: #F5F5F5; --container-bg: #FFFFFF; --header-bg: #E3E6F0;
             --element-bg: #F8F9FA; --element-bg-hover: #E9ECEF; --primary-accent: #0066CC;
             --text-primary: #212529; --text-secondary: #495057; --border-color: #DEE2E6;
-            --star-yellow: #FFC107; 
+            --star-yellow: #FFC107; --variable-text: #E65100;
         }
         * { box-sizing: border-box; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
         html, body { height: 100%; overflow: hidden; }
@@ -83,7 +83,7 @@
             gap: 4px;
         }
         .tag-input-section {
-            padding: 15px 20px;
+            padding: 10px 20px;
             border-bottom: 1px solid var(--border-color);
             background-color: var(--element-bg);
         }
@@ -94,7 +94,7 @@
         }
         .tag-input-wrapper input {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             background-color: var(--container-bg);
@@ -102,7 +102,7 @@
             font-size: 14px;
         }
         .tag-input-wrapper button {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background-color: var(--primary-accent);
             color: white;
             border: none;
@@ -138,6 +138,55 @@
             opacity: 0.8;
         }
         
+        /* VARIABLES SECTION STYLES */
+        .variables-container {
+            padding: 10px 20px;
+            background-color: var(--container-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: none; /* Hidden by default if no variables */
+            flex-direction: column;
+            gap: 10px;
+        }
+        .variables-container.active {
+            display: flex;
+        }
+        .variables-header {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--variable-text);
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .variable-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .variable-label {
+            min-width: 80px;
+            max-width: 120px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .variable-input {
+            flex: 1;
+            padding: 8px;
+            background-color: var(--element-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .variable-input:focus {
+            border-color: var(--primary-accent);
+            outline: none;
+        }
+
         #col-detail, #col-special-detail { padding: 0; }
         .prompt-detail-view { height: 100%; display: flex; flex-direction: column; }
         .prompt-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
@@ -548,6 +597,62 @@
         };
         reader.readAsDataURL(file);
     }
+    
+    // --- FUNZIONI VARIABILI DINAMICHE ---
+    function extractVariables(text) {
+        const regex = /\{\{(.*?)\}\}|\[(.*?)\]/g;
+        const variables = new Set();
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            const varName = match[1] || match[2];
+            if (varName && varName.trim() !== '') {
+                variables.add(varName.trim());
+            }
+        }
+        return Array.from(variables);
+    }
+    
+    function renderVariableInputs(variables) {
+        const container = document.getElementById('variables-container');
+        if (!container) return;
+        
+        if (variables.length === 0) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+        
+        // Conserva i valori esistenti
+        const existingValues = {};
+        container.querySelectorAll('.variable-input').forEach(input => {
+            existingValues[input.dataset.variable] = input.value;
+        });
+        
+        container.innerHTML = '<div class="variables-header">Variabili Dinamiche</div>';
+        
+        variables.forEach(v => {
+            const group = document.createElement('div');
+            group.className = 'variable-group';
+            
+            const label = document.createElement('div');
+            label.className = 'variable-label';
+            label.textContent = v;
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'variable-input';
+            input.placeholder = `Valore per ${v}`;
+            input.dataset.variable = v;
+            input.value = existingValues[v] || '';
+            
+            group.appendChild(label);
+            group.appendChild(input);
+            container.appendChild(group);
+        });
+        
+        container.classList.add('active');
+        container.style.display = 'flex';
+    }
 
     // --- FUNZIONE DI SALVATAGGIO OTTIMIZZATA ---
     async function updateStateAndSave(newData, { newActiveIds = {}, saveHistory = true } = {}) {
@@ -759,7 +864,7 @@
                 <div class="prompt-header"><h3>Dettagli Prompt</h3>
                     <div class="prompt-actions-toolbar">
                         <i id="edit-prompt-btn" class="fa-solid fa-pencil" title="Modifica Testo"></i>
-                        <i id="copy-prompt-btn" class="fa-solid fa-copy" title="Copia Testo"></i>
+                        <i id="copy-prompt-btn" class="fa-solid fa-copy" title="Copia Testo con Variabili"></i>
                         <i id="fav-prompt-btn" class="${promptItem.favorite ? "fa-solid" : "fa-regular"} fa-star" title="Preferito"></i>
                         <i id="delete-prompt-btn" class="fa-solid fa-trash-can" title="Elimina"></i>
                     </div>
@@ -775,6 +880,9 @@
                     </div>
                     <div class="current-tags" id="current-tags-container"></div>
                 </div>
+                
+                <div id="variables-container" class="variables-container"></div>
+
                 <div id="formatting-toolbar">
                     <button data-command="bold" title="Grassetto (B)"><i class="fa-solid fa-bold"></i></button>
                     <button data-command="italic" title="Corsivo (I)"><i class="fa-solid fa-italic"></i></button>
@@ -793,6 +901,10 @@
             </div>`;
         attachDetailViewListeners(promptItem, sub, cat);
         renderCurrentTags(promptItem);
+        
+        // Inizializza variabili
+        const initialVars = extractVariables(promptItem.description || "");
+        renderVariableInputs(initialVars);
 
         if (state.startEditingNewPrompt) {
             const descriptionContainer = document.getElementById('detail-description');
@@ -1102,6 +1214,13 @@
                 }
             };
         }
+        
+        // Listener per scansione variabili mentre si digita
+        descriptionContainer.addEventListener('input', () => {
+            const text = descriptionContainer.innerText;
+            const vars = extractVariables(text);
+            renderVariableInputs(vars);
+        });
 
         col.querySelector("#edit-prompt-btn").onclick = () => {
             const isEditing = descriptionContainer.contentEditable === 'true';
@@ -1180,18 +1299,34 @@
             savedRange = null;
         };
 
+        // COPY LOGIC CON SOSTITUZIONE VARIABILI
         col.querySelector("#copy-prompt-btn").onclick = () => {
-            const textToCopy = descriptionContainer.innerText;
+            let textToCopy = descriptionContainer.innerText;
+            const variableInputs = document.querySelectorAll('.variable-input');
+            
+            if (variableInputs.length > 0) {
+                variableInputs.forEach(input => {
+                    const varName = input.dataset.variable;
+                    const value = input.value.trim();
+                    if (value) {
+                         // Sostituisci sia {{var}} che [var]
+                         const regex = new RegExp(`\\{\\{${varName}\\}\\}|\\[${varName}\\]`, 'g');
+                         textToCopy = textToCopy.replace(regex, value);
+                    }
+                });
+            }
+
             const tempElement = document.createElement('textarea');
             tempElement.value = textToCopy;
             tempElement.style.position = 'fixed'; tempElement.style.top = '0'; tempElement.style.left = '0'; tempElement.style.opacity = '0';
             document.body.appendChild(tempElement); tempElement.focus(); tempElement.select();
             try {
                 const successful = document.execCommand('copy');
-                Toast.show(successful ? "Copiato!" : "Errore nella copia.", successful ? 'success' : 'error');
+                Toast.show(successful ? "Copiato con variabili!" : "Errore nella copia.", successful ? 'success' : 'error');
             } catch (err) { Toast.show("Errore nella copia.", 'error'); } 
             finally { document.body.removeChild(tempElement); }
         };
+        
         col.querySelector("#delete-prompt-btn").onclick = () => deletePrompt(promptItem.id, sub.id, cat.id);
         col.querySelector("#fav-prompt-btn").onclick = async () => {
              const newData = JSON.parse(JSON.stringify(state.allData));
@@ -1468,7 +1603,7 @@
             state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || [];
 
             if (state.allData.length === 0) {
-                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Primo prompt.', favorite: true, tags: ['info']}] }] }];
+                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Primo prompt con variabili: Scrivi un post su {{argomento}} con tono {{tono}}.', favorite: true, tags: ['info']}] }] }];
                 await Database.save(state.allData);
             }
             
