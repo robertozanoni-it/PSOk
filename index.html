@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Manager v16 - Dynamic Variables</title>
+    <title>Prompt Manager v17 - Variants & Dropdowns</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
         :root {
@@ -140,12 +140,12 @@
         
         /* VARIABLES SECTION STYLES */
         .variables-container {
-            padding: 10px 20px;
+            padding: 15px 20px;
             background-color: var(--container-bg);
             border-bottom: 1px solid var(--border-color);
-            display: none; /* Hidden by default if no variables */
+            display: none;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
         .variables-container.active {
             display: flex;
@@ -161,28 +161,37 @@
         .variable-group {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
         .variable-label {
-            min-width: 80px;
-            max-width: 120px;
-            font-size: 13px;
+            min-width: 100px;
+            max-width: 150px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--text-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .variable-input {
+        .variable-input, .variable-select {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             background-color: var(--element-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             color: var(--text-primary);
             font-size: 14px;
         }
-        .variable-input:focus {
+        .variable-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239E9E9E%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            padding-right: 30px;
+        }
+        .variable-input:focus, .variable-select:focus {
             border-color: var(--primary-accent);
             outline: none;
         }
@@ -414,6 +423,11 @@
         const hue = hash % 360;
         return `hsl(${hue}, 65%, 50%)`;
     }
+
+    // UTILITY: Escape regex special chars
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
     
     function handlePaste(event) {
         event.preventDefault();
@@ -598,18 +612,49 @@
         reader.readAsDataURL(file);
     }
     
-    // --- FUNZIONI VARIABILI DINAMICHE ---
+    // --- FUNZIONI VARIABILI DINAMICHE AVANZATE ---
     function extractVariables(text) {
+        // Regex cattura: {{...}} oppure [...]
         const regex = /\{\{(.*?)\}\}|\[(.*?)\]/g;
-        const variables = new Set();
+        const variables = new Map();
         let match;
+        
         while ((match = regex.exec(text)) !== null) {
-            const varName = match[1] || match[2];
-            if (varName && varName.trim() !== '') {
-                variables.add(varName.trim());
+            const content = match[1] || match[2];
+            if (!content || content.trim() === '') continue;
+
+            const trimmedContent = content.trim();
+            // Parse for options: VariableName:Option1|Option2 or VariableName:DefaultValue
+            // Se c'è ':' dividiamo nome e opzioni/default
+            let varName = trimmedContent;
+            let options = null;
+            let defaultValue = "";
+
+            if (trimmedContent.includes(':')) {
+                const parts = trimmedContent.split(':');
+                varName = parts[0].trim();
+                const rest = parts.slice(1).join(':').trim(); // Ricomponi se c'erano altri :
+                
+                if (rest.includes('|')) {
+                    // È una lista di varianti (dropdown)
+                    options = rest.split('|').map(o => o.trim());
+                    defaultValue = options[0];
+                } else {
+                    // È un valore di default
+                    defaultValue = rest;
+                }
+            }
+
+            if (!variables.has(varName)) {
+                variables.set(varName, {
+                    name: varName,
+                    originalMatch: trimmedContent, // Ci serve per capire se è una variante
+                    options: options,
+                    defaultValue: defaultValue
+                });
             }
         }
-        return Array.from(variables);
+        return Array.from(variables.values());
     }
     
     function renderVariableInputs(variables) {
@@ -622,13 +667,13 @@
             return;
         }
         
-        // Conserva i valori esistenti
+        // Conserva i valori esistenti per nome
         const existingValues = {};
-        container.querySelectorAll('.variable-input').forEach(input => {
-            existingValues[input.dataset.variable] = input.value;
+        container.querySelectorAll('.variable-input, .variable-select').forEach(el => {
+            existingValues[el.dataset.variable] = el.value;
         });
         
-        container.innerHTML = '<div class="variables-header">Variabili Dinamiche</div>';
+        container.innerHTML = '<div class="variables-header">Variabili Dinamiche & Varianti</div>';
         
         variables.forEach(v => {
             const group = document.createElement('div');
@@ -636,17 +681,42 @@
             
             const label = document.createElement('div');
             label.className = 'variable-label';
-            label.textContent = v;
+            label.textContent = v.name;
+            label.title = v.name;
             
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'variable-input';
-            input.placeholder = `Valore per ${v}`;
-            input.dataset.variable = v;
-            input.value = existingValues[v] || '';
+            let inputElement;
+
+            if (v.options && v.options.length > 0) {
+                // Render Select Dropdown
+                inputElement = document.createElement('select');
+                inputElement.className = 'variable-select';
+                v.options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    inputElement.appendChild(option);
+                });
+            } else {
+                // Render Text Input
+                inputElement = document.createElement('input');
+                inputElement.type = 'text';
+                inputElement.className = 'variable-input';
+                inputElement.placeholder = `Valore per ${v.name}`;
+                // Set default value if exists and no user input yet
+                if (v.defaultValue) {
+                    inputElement.value = v.defaultValue;
+                }
+            }
+
+            inputElement.dataset.variable = v.name;
+            
+            // Restore existing value if valid
+            if (existingValues[v.name]) {
+                inputElement.value = existingValues[v.name];
+            }
             
             group.appendChild(label);
-            group.appendChild(input);
+            group.appendChild(inputElement);
             container.appendChild(group);
         });
         
@@ -1299,18 +1369,23 @@
             savedRange = null;
         };
 
-        // COPY LOGIC CON SOSTITUZIONE VARIABILI
+        // COPY LOGIC AVANZATA CON SOSTITUZIONE VARIABILI E VARIANTI
         col.querySelector("#copy-prompt-btn").onclick = () => {
             let textToCopy = descriptionContainer.innerText;
-            const variableInputs = document.querySelectorAll('.variable-input');
+            const variableInputs = document.querySelectorAll('.variable-input, .variable-select');
             
             if (variableInputs.length > 0) {
                 variableInputs.forEach(input => {
                     const varName = input.dataset.variable;
                     const value = input.value.trim();
+                    
                     if (value) {
-                         // Sostituisci sia {{var}} che [var]
-                         const regex = new RegExp(`\\{\\{${varName}\\}\\}|\\[${varName}\\]`, 'g');
+                         // Sostituisci {{Nome}}, {{Nome:Opz1|Opz2}} e [Nome...]
+                         // Utilizziamo una regex più permissiva per trovare il blocco originale
+                         // (La regex deve trovare {{Name}} o {{Name:...}} o [Name] o [Name:...])
+                         const escapedName = escapeRegExp(varName);
+                         const regex = new RegExp(`(\\{\\{|\\[)\\s*${escapedName}(\\s*|:.*?)(\\]|\\}\\})`, 'g');
+                         
                          textToCopy = textToCopy.replace(regex, value);
                     }
                 });
@@ -1603,7 +1678,7 @@
             state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || [];
 
             if (state.allData.length === 0) {
-                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Primo prompt con variabili: Scrivi un post su {{argomento}} con tono {{tono}}.', favorite: true, tags: ['info']}] }] }];
+                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Benvenuto! Prova le nuove variabili.<br><br>Scrivi un post su {{Argomento}} con tono {{Tono:Formale|Amichevole|Divertente}}.<br>La lingua di output è {{Lingua:Italiano}}.', favorite: true, tags: ['info']}] }] }];
                 await Database.save(state.allData);
             }
             
