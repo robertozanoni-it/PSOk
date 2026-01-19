@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Manager v18 - Best & Prova Top Ranking</title>
+    <title>Prompt Manager v18.5 - Best Fix</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
         :root {
@@ -818,13 +818,13 @@
         if (state.allData.length > 0) {
             const separator1 = createOption('separator', '──────────'); separator1.disabled = true; categoryDropdown.appendChild(separator1);
             
-            // Logica per mettere "Best" e "Prova" in cima
-            const priorityNames = ["Best", "Prova"];
+            // Logica per mettere "Best" e "Prova" in cima (CASE INSENSITIVE)
+            const priorityNames = ["best", "prova"];
             const priorityCats = [];
             const otherCats = [];
 
             state.allData.forEach(cat => {
-                if (priorityNames.includes(cat.name.trim())) {
+                if (priorityNames.includes(cat.name.trim().toLowerCase())) {
                     priorityCats.push(cat);
                 } else {
                     otherCats.push(cat);
@@ -833,7 +833,10 @@
 
             // Ordina priority (Best prima di Prova)
             priorityCats.sort((a, b) => {
-                return priorityNames.indexOf(a.name.trim()) - priorityNames.indexOf(b.name.trim());
+                const nameA = a.name.trim().toLowerCase();
+                const nameB = b.name.trim().toLowerCase();
+                // "best" deve essere prima di "prova"
+                return priorityNames.indexOf(nameA) - priorityNames.indexOf(nameB);
             });
 
             // Ordina altri alfabeticamente
@@ -856,9 +859,18 @@
         } else if (state.activeCategoryId) {
             categoryDropdown.value = state.activeCategoryId;
         } else if (state.allData.length > 0) {
-            // Seleziona il primo disponibile (priorità o altro)
-            const firstAvailable = state.allData.find(c => c.name === "Best") || state.allData.find(c => c.name === "Prova") || state.allData[0];
-            if (firstAvailable) categoryDropdown.value = firstAvailable.id;
+            // Seleziona il primo disponibile nel dropdown
+            if (categoryDropdown.options.length > 3) {
+                 // Salta i primi 3 statici (preferiti, recenti, tag) e il separatore
+                 let firstRealOption = null;
+                 for(let i=0; i<categoryDropdown.options.length; i++) {
+                     if (!categoryDropdown.options[i].disabled && !['favorites','recents','tags','search'].includes(categoryDropdown.options[i].value)) {
+                         firstRealOption = categoryDropdown.options[i];
+                         break;
+                     }
+                 }
+                 if(firstRealOption) categoryDropdown.value = firstRealOption.value;
+            }
         }
     }
     
@@ -1468,13 +1480,18 @@
                 
                 const newData = JSON.parse(JSON.stringify(state.allData));
                 
-                // 2. Cerca o Crea Categoria Target
+                // 2. Cerca o Crea Categoria Target (Case Insensitive Match)
                 let catIndex = newData.findIndex(c => c.name.trim().toLowerCase() === targetCategoryName.toLowerCase());
                 
                 if (catIndex === -1) {
                     const newCat = { id: `cat_${Date.now()}_${targetCategoryName}`, name: targetCategoryName, subcategories: [] };
                     newData.push(newCat);
                     catIndex = newData.length - 1;
+                }
+                
+                // Safety check: ensure subcategories array exists
+                if (!newData[catIndex].subcategories) {
+                    newData[catIndex].subcategories = [];
                 }
                 
                 // 3. Cerca o Crea Sottocategoria "Inbox"
@@ -1484,6 +1501,11 @@
                     const newSub = { id: `sub_${Date.now()}_inbox`, name: 'Inbox', prompts: [] };
                     newData[catIndex].subcategories.push(newSub);
                     subIndex = newData[catIndex].subcategories.length - 1;
+                }
+                
+                // Safety check: ensure prompts array exists
+                if (!newData[catIndex].subcategories[subIndex].prompts) {
+                    newData[catIndex].subcategories[subIndex].prompts = [];
                 }
                 
                 // 4. Crea nuovo Prompt come copia
@@ -1499,10 +1521,11 @@
                 
                 // 5. Salva
                 await updateStateAndSave(newData, { saveHistory: false });
-                Toast.show(`Salvato in ${targetCategoryName} > Inbox!`, "success");
+                Toast.show(`Salvato in ${newData[catIndex].name} > Inbox!`, "success");
                 
             } catch (e) {
                 console.error(e);
+                alert("Errore nel salvataggio: " + e.message); // Fallback alert
                 Toast.show("Errore nel salvataggio automatico.", "error");
             } finally {
                 Loader.hide();
