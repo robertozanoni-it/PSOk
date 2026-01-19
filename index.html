@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Manager v18.5 - Best Fix</title>
+    <title>Prompt Manager v19 - Smart Best & Prova</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
         :root {
@@ -984,8 +984,8 @@
                         <i id="edit-prompt-btn" class="fa-solid fa-pencil" title="Modifica Testo"></i>
                         <i id="copy-prompt-btn" class="fa-solid fa-copy" title="Copia Testo con Variabili"></i>
                         <i id="fav-prompt-btn" class="${promptItem.favorite ? "fa-solid" : "fa-regular"} fa-star" title="Preferito"></i>
-                        <i id="quick-save-best-btn" class="fa-solid fa-trophy" title="Salva in 'Best' 🏆"></i>
-                        <i id="quick-save-prova-btn" class="fa-solid fa-vial" title="Salva in 'Prova'"></i>
+                        <i id="quick-save-best-btn" class="fa-solid fa-trophy" title="Salva in 'Best' 🏆 (Copia Sottocategoria)"></i>
+                        <i id="quick-save-prova-btn" class="fa-solid fa-vial" title="Salva in 'Prova' (Inbox)"></i>
                         <i id="delete-prompt-btn" class="fa-solid fa-trash-can" title="Elimina"></i>
                     </div>
                 </div>
@@ -1461,23 +1461,24 @@
              await updateStateAndSave(newData, { saveHistory: false });
         };
         
-        // --- LOGICA SALVATAGGIO AUTOMATICO: PROVA ---
+        // --- LOGICA SALVATAGGIO AUTOMATICO: PROVA (USA INBOX) ---
         col.querySelector("#quick-save-prova-btn").onclick = async () => {
-            quickSaveToCategory('Prova');
+            quickSaveToCategory('Prova', false);
         };
 
-        // --- LOGICA SALVATAGGIO AUTOMATICO: BEST ---
+        // --- LOGICA SALVATAGGIO AUTOMATICO: BEST (USA NOME SOTTOCATEGORIA ORIGINALE) ---
         col.querySelector("#quick-save-best-btn").onclick = async () => {
-            quickSaveToCategory('Best');
+            quickSaveToCategory('Best', true);
         };
 
         // Helper function per il quick save
-        async function quickSaveToCategory(targetCategoryName) {
+        async function quickSaveToCategory(targetCategoryName, useSourceSubcategoryName = false) {
              Loader.show();
             try {
                 // 1. Catturiamo il contenuto attuale
                 const currentContent = descriptionContainer.innerHTML || promptItem.description;
-                
+                const currentSubName = sub ? sub.name : 'Inbox';
+
                 const newData = JSON.parse(JSON.stringify(state.allData));
                 
                 // 2. Cerca o Crea Categoria Target (Case Insensitive Match)
@@ -1489,21 +1490,23 @@
                     catIndex = newData.length - 1;
                 }
                 
-                // Safety check: ensure subcategories array exists
                 if (!newData[catIndex].subcategories) {
                     newData[catIndex].subcategories = [];
                 }
                 
-                // 3. Cerca o Crea Sottocategoria "Inbox"
-                let subIndex = newData[catIndex].subcategories.findIndex(s => s.name === 'Inbox');
+                // 3. Determina il nome della sottocategoria target
+                // Se useSourceSubcategoryName è true, usa il nome originale, altrimenti 'Inbox'
+                const targetSubName = useSourceSubcategoryName ? currentSubName : 'Inbox';
+                
+                // Cerca o Crea Sottocategoria Target
+                let subIndex = newData[catIndex].subcategories.findIndex(s => s.name.trim().toLowerCase() === targetSubName.trim().toLowerCase());
                 
                 if (subIndex === -1) {
-                    const newSub = { id: `sub_${Date.now()}_inbox`, name: 'Inbox', prompts: [] };
+                    const newSub = { id: `sub_${Date.now()}_${targetSubName.replace(/\s+/g, '')}`, name: targetSubName, prompts: [] };
                     newData[catIndex].subcategories.push(newSub);
                     subIndex = newData[catIndex].subcategories.length - 1;
                 }
                 
-                // Safety check: ensure prompts array exists
                 if (!newData[catIndex].subcategories[subIndex].prompts) {
                     newData[catIndex].subcategories[subIndex].prompts = [];
                 }
@@ -1521,11 +1524,11 @@
                 
                 // 5. Salva
                 await updateStateAndSave(newData, { saveHistory: false });
-                Toast.show(`Salvato in ${newData[catIndex].name} > Inbox!`, "success");
+                Toast.show(`Salvato in ${newData[catIndex].name} > ${targetSubName}!`, "success");
                 
             } catch (e) {
                 console.error(e);
-                alert("Errore nel salvataggio: " + e.message); // Fallback alert
+                alert("Errore nel salvataggio: " + e.message);
                 Toast.show("Errore nel salvataggio automatico.", "error");
             } finally {
                 Loader.hide();
