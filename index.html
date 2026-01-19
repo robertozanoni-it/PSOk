@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Manager v17.5 - Auto Save Prova</title>
+    <title>Prompt Manager v18 - Best & Prova Top Ranking</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
         :root {
@@ -12,7 +12,7 @@
             --primary-accent-dark: #0056b3; --text-primary: #FFFFFF; --text-secondary: #E0E0E0;
             --text-muted: #9E9E9E; --border-color: #3A3D4D; --star-yellow: #FFC107;
             --btn-green: #28a745; --btn-red: #dc3545; --variable-text: #FF9800;
-            --btn-pink: #e84393;
+            --btn-pink: #e84393; --btn-gold: #f39c12;
         }
         [data-theme="light"] {
             --background-dark: #F5F5F5; --container-bg: #FFFFFF; --header-bg: #E3E6F0;
@@ -204,6 +204,7 @@
         .prompt-actions-toolbar i { cursor: pointer; font-size: 18px; }
         .prompt-actions-toolbar .fa-star.fa-solid { color: var(--star-yellow); }
         .prompt-actions-toolbar .fa-vial { color: var(--btn-pink); }
+        .prompt-actions-toolbar .fa-trophy { color: var(--btn-gold); }
         .prompt-title-section { display: flex; align-items: center; gap: 15px; padding: 15px 20px; }
         .prompt-title-section h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
         .prompt-title-section .rename-icon { color: var(--text-muted); cursor: pointer; font-size: 20px; }
@@ -815,8 +816,39 @@
         }
 
         if (state.allData.length > 0) {
-            const separator = createOption('separator', '──────────'); separator.disabled = true; categoryDropdown.appendChild(separator);
-            state.allData.sort((a,b)=>a.name.localeCompare(b.name)).forEach(category => categoryDropdown.appendChild(createOption(category.id, category.name)));
+            const separator1 = createOption('separator', '──────────'); separator1.disabled = true; categoryDropdown.appendChild(separator1);
+            
+            // Logica per mettere "Best" e "Prova" in cima
+            const priorityNames = ["Best", "Prova"];
+            const priorityCats = [];
+            const otherCats = [];
+
+            state.allData.forEach(cat => {
+                if (priorityNames.includes(cat.name.trim())) {
+                    priorityCats.push(cat);
+                } else {
+                    otherCats.push(cat);
+                }
+            });
+
+            // Ordina priority (Best prima di Prova)
+            priorityCats.sort((a, b) => {
+                return priorityNames.indexOf(a.name.trim()) - priorityNames.indexOf(b.name.trim());
+            });
+
+            // Ordina altri alfabeticamente
+            otherCats.sort((a, b) => a.name.localeCompare(b.name));
+
+            // Render Priority
+            priorityCats.forEach(cat => categoryDropdown.appendChild(createOption(cat.id, cat.name)));
+
+            // Separatore se ci sono altre categorie
+            if (priorityCats.length > 0 && otherCats.length > 0) {
+                 const separator2 = createOption('separator2', '──────────'); separator2.disabled = true; categoryDropdown.appendChild(separator2);
+            }
+
+            // Render Altri
+            otherCats.forEach(cat => categoryDropdown.appendChild(createOption(cat.id, cat.name)));
         }
         
         if (state.currentView !== 'columns' && ['favorites', 'recents', 'tags', 'search'].includes(state.currentView)) {
@@ -824,7 +856,9 @@
         } else if (state.activeCategoryId) {
             categoryDropdown.value = state.activeCategoryId;
         } else if (state.allData.length > 0) {
-            categoryDropdown.value = state.allData[0].id;
+            // Seleziona il primo disponibile (priorità o altro)
+            const firstAvailable = state.allData.find(c => c.name === "Best") || state.allData.find(c => c.name === "Prova") || state.allData[0];
+            if (firstAvailable) categoryDropdown.value = firstAvailable.id;
         }
     }
     
@@ -938,7 +972,8 @@
                         <i id="edit-prompt-btn" class="fa-solid fa-pencil" title="Modifica Testo"></i>
                         <i id="copy-prompt-btn" class="fa-solid fa-copy" title="Copia Testo con Variabili"></i>
                         <i id="fav-prompt-btn" class="${promptItem.favorite ? "fa-solid" : "fa-regular"} fa-star" title="Preferito"></i>
-                        <i id="quick-save-prova-btn" class="fa-solid fa-vial" title="Salva in 'Prova' (Test)"></i>
+                        <i id="quick-save-best-btn" class="fa-solid fa-trophy" title="Salva in 'Best' 🏆"></i>
+                        <i id="quick-save-prova-btn" class="fa-solid fa-vial" title="Salva in 'Prova'"></i>
                         <i id="delete-prompt-btn" class="fa-solid fa-trash-can" title="Elimina"></i>
                     </div>
                 </div>
@@ -1414,39 +1449,41 @@
              await updateStateAndSave(newData, { saveHistory: false });
         };
         
-        // --- NUOVA LOGICA SALVATAGGIO AUTOMATICO ---
+        // --- LOGICA SALVATAGGIO AUTOMATICO: PROVA ---
         col.querySelector("#quick-save-prova-btn").onclick = async () => {
-            Loader.show();
+            quickSaveToCategory('Prova');
+        };
+
+        // --- LOGICA SALVATAGGIO AUTOMATICO: BEST ---
+        col.querySelector("#quick-save-best-btn").onclick = async () => {
+            quickSaveToCategory('Best');
+        };
+
+        // Helper function per il quick save
+        async function quickSaveToCategory(targetCategoryName) {
+             Loader.show();
             try {
-                // 1. Catturiamo il contenuto attuale (utile se stiamo modificando e non abbiamo salvato)
+                // 1. Catturiamo il contenuto attuale
                 const currentContent = descriptionContainer.innerHTML || promptItem.description;
                 
                 const newData = JSON.parse(JSON.stringify(state.allData));
                 
-                // 2. Cerca o Crea Categoria "Prova"
-                let catIndex = newData.findIndex(c => c.name.trim().toLowerCase() === 'prova');
-                let catId;
+                // 2. Cerca o Crea Categoria Target
+                let catIndex = newData.findIndex(c => c.name.trim().toLowerCase() === targetCategoryName.toLowerCase());
                 
                 if (catIndex === -1) {
-                    const newCat = { id: `cat_${Date.now()}_prova`, name: 'Prova', subcategories: [] };
+                    const newCat = { id: `cat_${Date.now()}_${targetCategoryName}`, name: targetCategoryName, subcategories: [] };
                     newData.push(newCat);
-                    catId = newCat.id;
                     catIndex = newData.length - 1;
-                } else {
-                    catId = newData[catIndex].id;
                 }
                 
                 // 3. Cerca o Crea Sottocategoria "Inbox"
                 let subIndex = newData[catIndex].subcategories.findIndex(s => s.name === 'Inbox');
-                let subId;
                 
                 if (subIndex === -1) {
                     const newSub = { id: `sub_${Date.now()}_inbox`, name: 'Inbox', prompts: [] };
                     newData[catIndex].subcategories.push(newSub);
-                    subId = newSub.id;
                     subIndex = newData[catIndex].subcategories.length - 1;
-                } else {
-                    subId = newData[catIndex].subcategories[subIndex].id;
                 }
                 
                 // 4. Crea nuovo Prompt come copia
@@ -1462,7 +1499,7 @@
                 
                 // 5. Salva
                 await updateStateAndSave(newData, { saveHistory: false });
-                Toast.show("Salvato in Prova > Inbox!", "success");
+                Toast.show(`Salvato in ${targetCategoryName} > Inbox!`, "success");
                 
             } catch (e) {
                 console.error(e);
@@ -1470,7 +1507,7 @@
             } finally {
                 Loader.hide();
             }
-        };
+        }
 
         descriptionContainer.addEventListener('paste', handlePaste, false);
         
