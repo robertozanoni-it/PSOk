@@ -617,13 +617,15 @@
     
     // --- FUNZIONI VARIABILI DINAMICHE AVANZATE ---
     function extractVariables(text) {
-        // Regex cattura: {{...}} oppure [...]
-        const regex = /\{\{(.*?)\}\}|\[(.*?)\]/g;
+        // Regex cattura: {{...}} oppure [...] oppure {...}
+        // Nota: Le parentesi graffe doppie {{}} devono venire prima nella regex per essere catturate correttamente come gruppo separato
+        const regex = /\{\{(.*?)\}\}|\[(.*?)\]|\{(.*?)\}/g;
         const variables = new Map();
         let match;
         
         while ((match = regex.exec(text)) !== null) {
-            const content = match[1] || match[2];
+            // match[1] = {{...}}, match[2] = [...], match[3] = {...}
+            const content = match[1] || match[2] || match[3];
             if (!content || content.trim() === '') continue;
 
             const trimmedContent = content.trim();
@@ -1430,10 +1432,11 @@
                     const value = input.value.trim();
                     
                     if (value) {
-                         // Sostituisci {{Nome}}, {{Nome:Opz1|Opz2}} e [Nome...]
+                         // Sostituisci {{Nome}}, {{Nome:Opz1|Opz2}}, [Nome...] e {Nome...}
                          // Utilizziamo una regex più permissiva per trovare il blocco originale
                          const escapedName = escapeRegExp(varName);
-                         const regex = new RegExp(`(\\{\\{|\\[)\\s*${escapedName}(\\s*|:.*?)(\\]|\\}\\})`, 'g');
+                         // Updated regex to include single curly braces { }
+                         const regex = new RegExp(`(\\{\\{|\\[|\\{)\\s*${escapedName}(\\s*|:.*?)(\\]|\\}\\}|\\})`, 'g');
                          
                          textToCopy = textToCopy.replace(regex, value);
                     }
@@ -1801,7 +1804,7 @@
             state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || [];
 
             if (state.allData.length === 0) {
-                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Benvenuto! Prova le nuove variabili.<br><br>Scrivi un post su {{Argomento}} con tono {{Tono:Formale|Amichevole|Divertente}}.<br>La lingua di output è {{Lingua:Italiano}}.', favorite: true, tags: ['info']}] }] }];
+                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Benvenuto! Prova le nuove variabili.<br><br>Scrivi un post su {{Argomento}} con tono {{Tono:Formale|Amichevole|Divertente}}.<br>La lingua di output è {Lingua:Italiano}.', favorite: true, tags: ['info']}] }] }];
                 await Database.save(state.allData);
             }
             
