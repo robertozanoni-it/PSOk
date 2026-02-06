@@ -1,1823 +1,462 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" data-theme="dark">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompt Manager v19 - Smart Best & Prova</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <style>
-        :root {
-            --background-dark: #121417; --container-bg: #22252A; --header-bg: #2D2F3E;
-            --element-bg: #3A3D4D; --element-bg-hover: #4a4e5a; --primary-accent: #007BFF;
-            --primary-accent-dark: #0056b3; --text-primary: #FFFFFF; --text-secondary: #E0E0E0;
-            --text-muted: #9E9E9E; --border-color: #3A3D4D; --star-yellow: #FFC107;
-            --btn-green: #28a745; --btn-red: #dc3545; --variable-text: #FF9800;
-            --btn-pink: #e84393; --btn-gold: #f39c12;
-        }
-        [data-theme="light"] {
-            --background-dark: #F5F5F5; --container-bg: #FFFFFF; --header-bg: #E3E6F0;
-            --element-bg: #F8F9FA; --element-bg-hover: #E9ECEF; --primary-accent: #0066CC;
-            --text-primary: #212529; --text-secondary: #495057; --border-color: #DEE2E6;
-            --star-yellow: #FFC107; --variable-text: #E65100;
-        }
-        * { box-sizing: border-box; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
-        html, body { height: 100%; overflow: hidden; }
-        body { background-color: var(--background-dark); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; color: var(--text-primary); display: flex; flex-direction: column; }
-        .app-header { background-color: var(--header-bg); border-radius: 16px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,.2); margin-bottom: 20px; flex-shrink: 0; }
-        .header-left, .header-center, .header-right { display: flex; align-items: center; gap: 16px; }
-        .logo { color: var(--text-primary); font-size: 28px; font-weight: bold; }
-        .search-bar { display: flex; align-items: center; background-color: var(--element-bg); border-radius: 12px; padding: 0 15px; }
-        .search-bar input { background: transparent; border: none; outline: none; color: var(--text-primary); padding: 12px 10px; font-size: 16px; width: 280px; }
-        .search-bar i { cursor: pointer; color: var(--text-muted); }
-        .search-bar i:hover { color: var(--text-primary); }
-        .category-dropdown-container { display: flex; align-items: center; background-color: var(--element-bg); border-radius: 12px; padding: 0 15px; }
-        #category-dropdown { background: transparent; border: none; outline: none; color: var(--text-primary); padding: 12px 0; font-size: 16px; width: 220px; appearance: none; -webkit-appearance: none; -moz-appearance: none; cursor: pointer; }
-        #category-dropdown option { background-color: var(--container-bg); color: var(--text-primary); }
-        .tool-button { background-color: #7A69E9; color: #FFFFFF; border: none; border-radius: 12px; padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .theme-toggle { background-color: var(--element-bg); color: var(--text-primary); border: none; border-radius: 12px; padding: 10px 16px; font-size: 18px; cursor: pointer; }
-        .header-right { position: relative; }
-        .toolbar-dropdown-menu { display: none; position: absolute; top: 110%; right: 0; background-color: var(--container-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; z-index: 1000; width: 360px; box-shadow: 0 8px 16px rgba(0,0,0,.4); grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .toolbar-dropdown-menu.show { display: grid; }
-        .toolbar-btn { color: white; border: none; border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; min-height: 70px; }
-        .toolbar-btn:disabled { background-color: #555 !important; cursor: not-allowed; opacity: .5; }
-        .btn-green { background-color: var(--btn-green); } .btn-yellow { background-color: #f7b731; color: #333; } .btn-blue { background-color: #007bff; } .btn-dark-blue { background-color: #0d47a1; } .btn-red { background-color: var(--btn-red); }
-        
-        main { display: grid; gap: 20px; flex-grow: 1; min-height: 0; }
-        main.view-mode-three-column { grid-template-columns: 320px 320px 1fr; }
-        main.view-mode-two-column { grid-template-columns: 400px 1fr; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Studio v21</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
 
-        .column { background-color: var(--container-bg); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
-        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--element-bg); padding-bottom: 10px; flex-shrink: 0; }
-        .column-header-title { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .column-header h3 { margin: 0; font-size: 18px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .column-header-title .rename-icon { color: var(--text-muted); cursor: pointer; font-size: 15px; }
-        .column-header-title .rename-icon:hover { color: var(--primary-accent); }
-        .column-header-title .delete-icon { color: var(--text-muted); cursor: pointer; font-size: 15px; margin-left: 8px; }
-        .column-header-title .delete-icon:hover { color: var(--btn-red); }
-        
-        .column-content { overflow-y: auto; padding-right: 10px; margin-right: -10px; flex-grow: 1; min-height: 0; }
-        .column-content::-webkit-scrollbar { width: 8px; }
-        .column-content::-webkit-scrollbar-thumb { background-color: var(--element-bg); border-radius: 20px; }
-        
-        .add-button { background-color: var(--btn-green); color: white; border: none; border-radius: 5px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; }
-        .item-container { display: flex; flex-direction: column; align-items: flex-start; padding: 12px; background-color: var(--element-bg); border-radius: 6px; margin-bottom: 8px; color: var(--text-secondary); border-left: 3px solid transparent; cursor: pointer; }
-        .item-container:hover { background-color: var(--element-bg-hover); }
-        .item-container.active { background-color: var(--primary-accent-dark); border-left-color: var(--star-yellow); color: white; }
-        .item-name { font-weight: 500; margin-bottom: 4px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-path { font-size: 12px; color: var(--text-muted); }
-        .item-container.active .item-path { color: #ddd; }
-        
-        .tag-badge { 
-            display: inline-block; 
-            padding: 3px 8px; 
-            border-radius: 12px; 
-            font-size: 11px; 
-            font-weight: 600; 
-            margin: 2px 4px 2px 0; 
-            color: white;
-            white-space: nowrap;
-        }
-        .tags-container { 
-            display: flex; 
-            flex-wrap: wrap; 
-            margin-top: 6px; 
-            gap: 4px;
-        }
-        .tag-input-section {
-            padding: 10px 20px;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--element-bg);
-        }
-        .tag-input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .tag-input-wrapper input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background-color: var(--container-bg);
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        .tag-input-wrapper button {
-            padding: 8px 16px;
-            background-color: var(--primary-accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .tag-input-wrapper button:hover {
-            background-color: var(--primary-accent-dark);
-        }
-        .current-tags {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .tag-badge-removable {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-        }
-        .tag-badge-removable i {
-            font-size: 10px;
-            opacity: 0.8;
-        }
-        .tag-badge-removable:hover {
-            opacity: 0.8;
-        }
-        
-        /* VARIABLES SECTION STYLES */
-        .variables-container {
-            padding: 15px 20px;
-            background-color: var(--container-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .variables-container.active {
-            display: flex;
-        }
-        .variables-header {
-            font-size: 12px;
-            text-transform: uppercase;
-            color: var(--variable-text);
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-        }
-        .variable-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .variable-label {
-            min-width: 100px;
-            max-width: 150px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .variable-input, .variable-select {
-            flex: 1;
-            padding: 10px;
-            background-color: var(--element-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        .variable-select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239E9E9E%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 12px;
-            padding-right: 30px;
-        }
-        .variable-input:focus, .variable-select:focus {
-            border-color: var(--primary-accent);
-            outline: none;
-        }
+:root{--bg:#0f1117;--sf:#1a1d27;--sf2:#242836;--el:#2e3345;--elh:#3a3f54;--ac:#6366f1;--ach:#4f46e5;--acg:rgba(99,102,241,.25);--t1:#f1f5f9;--t2:#cbd5e1;--t3:#64748b;--bd:#2e3345;--gn:#22c55e;--rd:#ef4444;--yl:#eab308;--ylb:rgba(234,179,8,.12);--pk:#ec4899;--gd:#f59e0b;--or:#f97316;--rs:6px;--rm:10px;--rl:14px;--tr:.18s ease}
+[data-theme="light"]{--bg:#f0f2f5;--sf:#fff;--sf2:#f8f9fb;--el:#eef0f4;--elh:#e2e5ea;--ac:#4f46e5;--ach:#4338ca;--acg:rgba(79,70,229,.15);--t1:#1e293b;--t2:#475569;--t3:#94a3b8;--bd:#e2e5ea;--gn:#16a34a;--rd:#dc2626;--yl:#ca8a04;--ylb:rgba(202,138,4,.08)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--t1);display:flex;flex-direction:column;transition:background var(--tr),color var(--tr)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--el);border-radius:20px}
+.hd{background:var(--sf);border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0;z-index:100}
+.logo{font-size:22px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,var(--ac),var(--pk));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex-shrink:0}
+.hc{display:flex;align-items:center;gap:12px;flex:1;max-width:600px}
+.hs{display:flex;align-items:center;background:var(--el);border:1px solid var(--bd);border-radius:var(--rm);padding:0 12px;flex:1;transition:border-color var(--tr)}.hs:focus-within{border-color:var(--ac)}
+.hs i{color:var(--t3);font-size:14px}
+.hs input{background:transparent;border:none;outline:none;color:var(--t1);padding:9px 10px;font-size:14px;width:100%}.hs input::placeholder{color:var(--t3)}
+.hsel{background:var(--el);border:1px solid var(--bd);border-radius:var(--rm);color:var(--t1);padding:9px 32px 9px 12px;font-size:14px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;min-width:180px}
+.hsel option{background:var(--sf);color:var(--t1)}
+.hr{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ib{background:var(--el);border:1px solid var(--bd);color:var(--t2);border-radius:var(--rs);width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all var(--tr)}.ib:hover{background:var(--elh);color:var(--t1)}
+.tw{position:relative}
+.tm{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:8px;z-index:1000;box-shadow:0 8px 24px rgba(0,0,0,.5);width:320px;grid-template-columns:repeat(3,1fr);gap:6px}.tm.show{display:grid}
+.tb{color:#fff;border:none;border-radius:var(--rs);padding:10px 6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-height:60px;transition:opacity var(--tr)}.tb:hover{opacity:.85}.tb:disabled{opacity:.4;cursor:not-allowed}.tb i{font-size:16px}
+.mn{display:grid;gap:16px;flex:1;min-height:0;padding:16px}.mn.v3{grid-template-columns:280px 280px 1fr}.mn.v2{grid-template-columns:340px 1fr}
+.co{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;gap:8px}
+.chl{display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0}
+.ch h3{font-size:15px;font-weight:600;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb{color:var(--t3);background:none;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:4px;transition:color var(--tr);flex-shrink:0}.sb:hover{color:var(--ac)}.sb.dg:hover{color:var(--rd)}
+.cl{flex:1;overflow-y:auto;padding:8px;min-height:0}
+.ab{background:var(--gn);color:#fff;border:none;border-radius:var(--rs);padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity var(--tr)}.ab:hover{opacity:.85}
+.it{padding:10px 12px;background:var(--el);border-radius:var(--rs);margin-bottom:4px;cursor:pointer;border-left:3px solid transparent;transition:all var(--tr)}.it:hover{background:var(--elh)}.it.ac{background:var(--ac);border-left-color:var(--yl);color:#fff}.it.ac .ip,.it.ac .iv{color:rgba(255,255,255,.65)}
+.in{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip{font-size:11px;color:var(--t3);margin-top:2px}
+.iv{font-size:12px;color:var(--t3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.tg{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;white-space:nowrap}
+.tgr{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;transition:opacity var(--tr)}.tgr:hover{opacity:.75}.tgr i{font-size:9px}
+.dc{padding:0}.det{height:100%;display:flex;flex-direction:column}
+.dh{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd);flex-shrink:0}
+.da{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.da button{background:none;border:none;cursor:pointer;font-size:16px;color:var(--t3);padding:6px;border-radius:4px;transition:all var(--tr);min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center}.da button:hover{color:var(--t1);background:var(--el)}
+.da .ys{color:var(--yl)!important}.da .gt{color:var(--gd)!important}.da .pv{color:var(--pk)!important}
+.dti{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd)}
+.dti h1{font-size:20px;font-weight:700;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dti .sb{font-size:16px}
+.di{padding:10px 16px;background:var(--sf2);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t3);line-height:1.7}.di b{color:var(--t2);font-weight:600}
+.tgs{padding:10px 16px;border-bottom:1px solid var(--bd);background:var(--sf2)}
+.tgi{display:flex;gap:8px;align-items:center}.tgi input{flex:1;padding:7px 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--sf);color:var(--t1);font-size:13px;outline:none}.tgi input:focus{border-color:var(--ac)}
+.tgi button{padding:7px 14px;background:var(--ac);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700}
+.tgc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.vs{padding:12px 16px;background:var(--sf2);border-bottom:1px solid var(--bd);display:none;flex-direction:column;gap:10px}.vs.ac{display:flex}
+.vl{font-size:11px;text-transform:uppercase;color:var(--or);font-weight:700;letter-spacing:.5px}
+.vg{display:flex;align-items:center;gap:12px}
+.vn{min-width:90px;max-width:130px;font-size:13px;font-weight:600;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vi,.vse{flex:1;padding:8px;background:var(--el);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t1);font-size:13px}
+.vse{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px}
+.vi:focus,.vse:focus{border-color:var(--ac);outline:none}
+.eb{display:none;padding:8px 16px;background:var(--ylb);border-bottom:1px solid var(--bd);font-size:13px;font-weight:600;color:var(--yl);align-items:center;gap:8px}.eb.show{display:flex}
+.fb{padding:8px 16px;display:none;gap:6px;align-items:center;flex-wrap:wrap;background:var(--el);border-bottom:1px solid var(--bd)}.fb.show{display:flex}
+.fb button{background:var(--elh);border:none;color:var(--t1);padding:7px 10px;border-radius:4px;cursor:pointer;font-size:14px}.fb button:hover{background:var(--ac);color:#fff}
+.fs{background:var(--ac)!important;color:#fff!important;display:none;margin-left:auto;font-weight:700;font-size:13px!important;padding:7px 16px!important}.fs.show{display:inline-block}
+.dd{padding:16px;line-height:1.7;flex:1;overflow-y:auto;min-height:0;font-size:15px}.dd:focus{outline:none}
+.dd[contenteditable="true"]{outline:2px dashed var(--ac);outline-offset:-2px}
+.dd[contenteditable="true"].drag-over{outline-color:var(--yl);background:var(--ylb)}
+.dd a{color:var(--or);text-decoration:underline}.dd a:hover{color:var(--gd)}
+.dd img{max-width:100%;height:auto;border-radius:var(--rm);margin:8px 0;display:block}
+.em{text-align:center;color:var(--t3);font-size:14px;padding:24px;height:100%;display:flex;align-items:center;justify-content:center}
+.tw2{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.to{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--ac);padding:12px 16px;border-radius:var(--rm);box-shadow:0 4px 12px rgba(0,0,0,.4);font-size:14px;animation:si .25s ease;max-width:360px}
+.to.ok{border-left-color:var(--gn)}.to.er{border-left-color:var(--rd)}
+@keyframes si{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center;z-index:10001}.mo.show{display:flex}
+.mc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:24px;width:90%;max-width:460px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.mc h4{font-size:18px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bd)}
+.mc input[type="text"],.mc select{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--el);color:var(--t1);font-size:15px;outline:none;margin-bottom:12px}
+.mc select{cursor:pointer;appearance:auto}.mc input:focus,.mc select:focus{border-color:var(--ac)}
+.mc label{display:block;font-size:13px;font-weight:600;color:var(--t2);margin-bottom:6px}
+.mm{margin-bottom:16px;font-size:14px;color:var(--t2);line-height:1.5}
+.mf{display:flex;justify-content:flex-end;gap:8px}
+.mb{padding:9px 18px;border:none;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:14px}
+.mb.cc{background:var(--el);color:var(--t2)}.mb.cc:hover{background:var(--elh)}
+.mb.cf{background:var(--ac);color:#fff}.mb.cf:hover{background:var(--ach)}
+.mb.dn{background:var(--rd);color:#fff}.mb.dn:hover{opacity:.85}
+.lo{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10002}.lo.show{display:flex}
+.sp{font-size:40px;color:var(--ac);animation:sn 1s linear infinite}@keyframes sn{to{transform:rotate(360deg)}}
+.sh{font-size:11px;color:var(--t3);padding:6px 16px;border-top:1px solid var(--bd);background:var(--sf2);text-align:center;flex-shrink:0}
+@media(max-width:900px){.mn.v3{grid-template-columns:1fr}.mn.v2{grid-template-columns:1fr}.hc{display:none}}
 
-        #col-detail, #col-special-detail { padding: 0; }
-        .prompt-detail-view { height: 100%; display: flex; flex-direction: column; }
-        .prompt-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
-        .prompt-actions-toolbar { display: flex; gap: 15px; }
-        .prompt-actions-toolbar i { cursor: pointer; font-size: 18px; }
-        .prompt-actions-toolbar .fa-star.fa-solid { color: var(--star-yellow); }
-        .prompt-actions-toolbar .fa-vial { color: var(--btn-pink); }
-        .prompt-actions-toolbar .fa-trophy { color: var(--btn-gold); }
-        .prompt-title-section { display: flex; align-items: center; gap: 15px; padding: 15px 20px; }
-        .prompt-title-section h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
-        .prompt-title-section .rename-icon { color: var(--text-muted); cursor: pointer; font-size: 20px; }
-        .prompt-title-section .rename-icon:hover { color: var(--primary-accent); }
-
-        #formatting-toolbar { padding: 10px 20px; display: none; gap: 8px; align-items: center; flex-wrap: wrap; background-color: var(--element-bg); border-bottom: 1px solid var(--border-color); }
-        #formatting-toolbar.show { display: flex; }
-        #formatting-toolbar button { 
-            background: var(--element-bg-hover); 
-            border: none; 
-            color: var(--text-primary); 
-            padding: 8px 12px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #formatting-toolbar button:hover { background: var(--primary-accent-dark); }
-        #btnSaveChanges { background-color: var(--primary-accent); display: none; margin-left: auto; color: #FFFFFF; }
-        #btnSaveChanges.show { display: inline-block; }
-        .prompt-description-container { padding: 20px; line-height: 1.7; flex-grow: 1; overflow-y: auto; min-height: 0; }
-        .prompt-description-container:focus { outline: none; }
-        .prompt-description-container[contenteditable="true"] { outline: 2px dashed var(--primary-accent); }
-        .initial-message { text-align: center; color: var(--text-muted); font-size: 16px; padding: 20px; height: 100%; display: flex; align-items: center; justify-content: center; }
-
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background-color: var(--container-bg); border-left: 4px solid var(--primary-accent); padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
-        .toast.error { border-left-color: var(--btn-red); } .toast.success { border-left-color: var(--btn-green); }
-        #loading-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 10000; }
-        .loading-spinner i { font-size: 48px; color: var(--primary-accent); animation: spin 1s linear infinite; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        .prompt-description-container[contenteditable="true"].drag-over {
-            outline: 3px dashed var(--star-yellow);
-            background-color: rgba(255, 193, 7, 0.1);
-        }
-
-        .prompt-description-container a {
-            color: #FFA500;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        .prompt-description-container a:hover {
-            color: #FF8C00;
-            text-decoration: underline;
-        }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center; align-items: center;
-            z-index: 10001;
-        }
-
-        .modal-content {
-            background-color: var(--container-bg);
-            border-radius: 12px;
-            padding: 30px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content h4 {
-            margin-top: 0;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            font-size: 1.25rem;
-        }
-
-        .modal-content input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            margin: 15px 0 25px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background-color: var(--element-bg);
-            color: var(--text-primary);
-            font-size: 16px;
-            outline: none;
-        }
-        
-        .modal-content input[type="text"]:focus {
-            border-color: var(--primary-accent);
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .modal-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .modal-btn.cancel {
-            background-color: var(--element-bg-hover);
-            color: var(--text-secondary);
-        }
-
-        .modal-btn.confirm {
-            background-color: var(--primary-accent);
-            color: white;
-        }
-    </style>
+</style>
 </head>
 <body>
-
-<div id="toast-container"></div>
-<div id="loading-overlay"><div class="loading-spinner"><i class="fa-solid fa-spinner"></i></div></div>
-
-<div class="modal-overlay" id="linkModal">
-    <div class="modal-content">
-        <h4>Inserisci l'URL del Link</h4>
-        <input type="text" id="linkUrlInput" placeholder="Es: https://www.google.it" value="">
-        <div class="modal-actions">
-            <button class="modal-btn cancel" id="linkModalCancel">Annulla</button>
-            <button class="modal-btn confirm" id="linkModalConfirm">Conferma</button>
-        </div>
-    </div>
+<div class="tw2" id="T" aria-live="polite"></div>
+<div class="lo" id="L"><i class="fa-solid fa-spinner sp"></i></div>
+<div class="mo" id="mI" role="dialog" aria-modal="true"><div class="mc"><h4 id="mIt"></h4><input type="text" id="mIf"><div class="mf"><button class="mb cc" id="mIc">Annulla</button><button class="mb cf" id="mIk">Conferma</button></div></div></div>
+<div class="mo" id="mC" role="alertdialog" aria-modal="true"><div class="mc"><h4 id="mCt"></h4><div class="mm" id="mCm"></div><div class="mf"><button class="mb cc" id="mCc">Annulla</button><button class="mb dn" id="mCk">Conferma</button></div></div></div>
+<div class="mo" id="mL" role="dialog" aria-modal="true"><div class="mc"><h4>Inserisci URL</h4><input type="text" id="mLu" placeholder="https://esempio.it"><div class="mf"><button class="mb cc" id="mLc">Annulla</button><button class="mb cf" id="mLk">Conferma</button></div></div></div>
+<div class="mo" id="mM" role="dialog" aria-modal="true"><div class="mc"><h4>Sposta Prompt</h4><label for="mvC">Categoria destinazione</label><select id="mvC"></select><label for="mvS">Sottocategoria destinazione</label><select id="mvS"></select><div class="mf"><button class="mb cc" id="mMc">Annulla</button><button class="mb cf" id="mMk">Sposta</button></div></div></div>
+<header class="hd" role="banner">
+<div class="logo">Prompt Studio</div>
+<div class="hc">
+<div class="hs"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="text" id="sI" placeholder="Cerca... (Ctrl+F)" aria-label="Cerca"></div>
+<select id="cS" class="hsel" aria-label="Categoria"></select>
 </div>
-
-<div class="modal-overlay" id="renameModal">
-    <div class="modal-content">
-        <h4 id="renameModalTitle">Rinomina Elemento</h4>
-        <input type="text" id="renameInput" placeholder="Inserisci il nuovo nome...">
-        <div class="modal-actions">
-            <button class="modal-btn cancel" id="renameModalCancel">Annulla</button>
-            <button class="modal-btn confirm" id="renameModalConfirm">Conferma</button>
-        </div>
-    </div>
-</div>
-
-
-<header class="app-header">
-    <div class="header-left"><div class="logo">PS</div></div>
-    <div class="header-center">
-        <div class="search-bar">
-             <i class="fa-solid fa-magnifying-glass" id="search-icon"></i>
-             <input type="text" id="search-input" placeholder="Cerca...">
-        </div>
-        <div class="category-dropdown-container">
-            <i class="fa-solid fa-list"></i>
-            <select id="category-dropdown" title="Seleziona una categoria"></select>
-        </div>
-    </div>
-    <div class="header-right">
-        <button class="theme-toggle" id="themeToggle" title="Cambia tema"><i class="fa-solid fa-moon"></i></button>
-        <button class="tool-button" id="toolBtn"><i class="fa-solid fa-screwdriver-wrench"></i><span>Tool</span></button>
-        <div class="toolbar-dropdown-menu" id="toolMenu">
-            <button class="toolbar-btn btn-green" id="btnAddCategory"><i class="fa-solid fa-plus"></i><span>Aggiungi Categoria</span></button>
-            <button class="toolbar-btn btn-yellow" id="btnAnnulla"><i class="fa-solid fa-arrow-rotate-left"></i><span>Annulla</span></button>
-            <button class="toolbar-btn btn-yellow" id="btnRipristina"><i class="fa-solid fa-arrow-rotate-right"></i><span>Ripristina</span></button>
-            <button class="toolbar-btn btn-blue" id="btnBackup"><i class="fa-solid fa-download"></i><span>Backup</span></button>
-            <button class="toolbar-btn btn-dark-blue" id="btnImporta"><i class="fa-solid fa-upload"></i><span>Importa</span></button>
-        </div>
-    </div>
+<div class="hr">
+<button class="ib" id="thB" title="Tema" aria-label="Cambia tema"><i class="fa-solid fa-moon"></i></button>
+<div class="tw"><button class="ib" id="toB" title="Strumenti" aria-label="Strumenti"><i class="fa-solid fa-screwdriver-wrench"></i></button>
+<div class="tm" id="toM" role="menu">
+<button class="tb" style="background:var(--gn)" id="bAC"><i class="fa-solid fa-plus"></i>Nuova Categoria</button>
+<button class="tb" style="background:#f59e0b" id="bU" disabled><i class="fa-solid fa-rotate-left"></i>Annulla</button>
+<button class="tb" style="background:#f59e0b" id="bR" disabled><i class="fa-solid fa-rotate-right"></i>Ripristina</button>
+<button class="tb" style="background:#3b82f6" id="bBk"><i class="fa-solid fa-download"></i>Backup</button>
+<button class="tb" style="background:#1d4ed8" id="bIm"><i class="fa-solid fa-upload"></i>Importa</button>
+</div></div></div>
 </header>
-<input type="file" id="backupInput" style="display:none" accept=".json">
-<input type="file" id="imageInput" style="display:none" accept="image/*">
-
-<main id="main-content-area"></main>
-
+<input type="file" id="fB" style="display:none" accept=".json"><input type="file" id="fI" style="display:none" accept="image/*">
+<main id="MA" class="mn v3" role="main"></main>
+<div class="sh">Ctrl+S Salva &middot; Ctrl+Z Annulla &middot; Ctrl+Y Ripristina &middot; Ctrl+F Cerca &middot; Ctrl+N Nuovo &middot; Esc Chiudi</div>
 <script>
-(async () => {
-    // --- SYSTEMS ---
-    const Loader = { el: document.getElementById('loading-overlay'), show() { this.el.style.display = 'flex'; }, hide() { this.el.style.display = 'none'; } };
-    const Toast = { container: document.getElementById('toast-container'), show(message, type = 'info', duration = 3000) { const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = message; this.container.appendChild(t); setTimeout(() => t.remove(), duration); } };
-    
-    // MOTORE DATABASE MIGLIORATO
-    const Database = { 
-        DB_NAME: "PromptManagerDB_v15_Tags", 
-        STORE_NAME: "promptsData", 
-        db: null, 
-        async init() { 
-            return new Promise((resolve, reject) => { 
-                const r = indexedDB.open(this.DB_NAME, 1); 
-                r.onerror = reject; 
-                r.onsuccess = e => { this.db = e.target.result; resolve(); }; 
-                r.onupgradeneeded = e => e.target.result.createObjectStore(this.STORE_NAME, {keyPath:"id"}); 
-            }); 
-        }, 
-        async save(data) { 
-            return new Promise((resolve, reject) => { 
-                if (!this.db) return reject("DB non inizializzato");
-                const tx = this.db.transaction([this.STORE_NAME], "readwrite"); 
-                // Clonazione profonda per evitare problemi di riferimenti IndexedDB
-                const cleanData = JSON.parse(JSON.stringify(data));
-                tx.objectStore(this.STORE_NAME).put({id: "main", data: cleanData}); 
-                tx.oncomplete = () => resolve(); 
-                tx.onerror = e => reject(e); 
-            }); 
-        }, 
-        async load() { 
-            return new Promise((resolve, reject) => { 
-                if (!this.db) return reject("DB non inizializzato");
-                const r = this.db.transaction([this.STORE_NAME]).objectStore(this.STORE_NAME).get("main"); 
-                r.onsuccess = e => resolve(e.target.result ? e.target.result.data : []); 
-                r.onerror = reject; 
-            }); 
-        } 
-    };
-    
-    // UTILITY: Genera colore per tag
-    function getTagColor(tagName) {
-        let hash = 0;
-        for (let i = 0; i < tagName.length; i++) {
-            hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const hue = hash % 360;
-        return `hsl(${hue}, 65%, 50%)`;
-    }
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const uid=()=>crypto.randomUUID?crypto.randomUUID():`${Date.now()}_${Math.random().toString(36).slice(2,9)}`;
+const esc=s=>{const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};return String(s).replace(/[&<>"']/g,c=>m[c])};
+function san(h){const t=document.createElement('div');t.innerHTML=h;const ok={'B':[],'I':[],'U':[],'STRONG':[],'EM':[],'BR':[],'P':[],'DIV':[],'SPAN':['style'],'UL':[],'OL':[],'LI':[],'A':['href','target'],'IMG':['src','alt','style'],'FONT':['color','size'],'H1':[],'H2':[],'H3':[],'H4':[],'H5':[],'H6':[]};(function cl(n){Array.from(n.childNodes).forEach(c=>{if(c.nodeType===3)return;if(c.nodeType===1){if(!(c.tagName in ok)){n.replaceChild(document.createTextNode(c.textContent),c);return}Array.from(c.attributes).forEach(a=>{if(!ok[c.tagName].includes(a.name))c.removeAttribute(a.name)});if(c.hasAttribute('href')&&c.getAttribute('href').trim().toLowerCase().startsWith('javascript:'))c.setAttribute('href','#');if(c.hasAttribute('src')){const s=c.getAttribute('src');if(s&&!s.startsWith('data:')&&!s.startsWith('http'))c.removeAttribute('src')}cl(c)}else n.removeChild(c)})})(t);return t.innerHTML}
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function tc(n){let h=0;for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);return`hsl(${h%360},60%,48%)`}
+function tp(h,m=60){const t=document.createElement('div');t.innerHTML=h||'';const x=t.textContent||'';return x.length>m?x.slice(0,m)+'\u2026':x}
 
-    // UTILITY: Escape regex special chars
-    function escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const Toast={el:$('T'),show(m,t='',ms=3000){const d=document.createElement('div');d.className='to '+t;d.textContent=m;this.el.appendChild(d);setTimeout(()=>d.remove(),ms)}};
+const Loader={el:$('L'),show(){this.el.classList.add('show')},hide(){this.el.classList.remove('show')}};
+
+const Modal={
+    _ir:null,_cr:null,_lr:null,_mr:null,
+    prompt(t,ph,def){return new Promise(r=>{this._ir=r;$('mIt').textContent=t;const f=$('mIf');f.placeholder=ph||'';f.value=def||'';$('mI').classList.add('show');setTimeout(()=>f.focus(),50)})},
+    _ci(v){$('mI').classList.remove('show');if(this._ir){this._ir(v);this._ir=null}},
+    confirm(t,msg){return new Promise(r=>{this._cr=r;$('mCt').textContent=t;$('mCm').textContent=msg;$('mC').classList.add('show');setTimeout(()=>$('mCk').focus(),50)})},
+    _cc(v){$('mC').classList.remove('show');if(this._cr){this._cr(v);this._cr=null}},
+    link(){return new Promise(r=>{this._lr=r;$('mLu').value='';$('mL').classList.add('show');setTimeout(()=>$('mLu').focus(),50)})},
+    _cl(v){$('mL').classList.remove('show');if(this._lr){this._lr(v);this._lr=null}},
+    move(cats,curCat,curSub){return new Promise(r=>{
+        this._mr=r;const cs=$('mvC'),ss=$('mvS');cs.innerHTML='';
+        cats.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;cs.appendChild(o)});
+        cs.value=curCat||cats[0]?.id;
+        const fill=()=>{ss.innerHTML='';const cat=cats.find(c=>c.id===cs.value);(cat?.subcategories||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;ss.appendChild(o)})};
+        fill();cs.onchange=fill;$('mM').classList.add('show')})},
+    _cm(v){$('mM').classList.remove('show');if(this._mr){this._mr(v);this._mr=null}},
+    closeAll(){this._ci(null);this._cc(false);this._cl(null);this._cm(null)},
+    init(){
+        $('mIk').onclick=()=>this._ci($('mIf').value.trim());$('mIc').onclick=()=>this._ci(null);
+        $('mIf').onkeydown=e=>{if(e.key==='Enter')this._ci($('mIf').value.trim());if(e.key==='Escape')this._ci(null)};
+        $('mCk').onclick=()=>this._cc(true);$('mCc').onclick=()=>this._cc(false);$('mC').onkeydown=e=>{if(e.key==='Escape')this._cc(false)};
+        $('mLk').onclick=()=>this._cl($('mLu').value.trim());$('mLc').onclick=()=>this._cl(null);
+        $('mLu').onkeydown=e=>{if(e.key==='Enter')this._cl($('mLu').value.trim());if(e.key==='Escape')this._cl(null)};
+        $('mMk').onclick=()=>{const c=$('mvC').value,s=$('mvS').value;this._cm(c&&s?{catId:c,subId:s}:null)};$('mMc').onclick=()=>this._cm(null);
+        [$('mI'),$('mC'),$('mL'),$('mM')].forEach(m=>{m.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const f=m.querySelectorAll('input,button,select');if(!f.length)return;const fi=f[0],la=f[f.length-1];if(e.shiftKey&&document.activeElement===fi){e.preventDefault();la.focus()}else if(!e.shiftKey&&document.activeElement===la){e.preventDefault();fi.focus()}})});
     }
-    
-    function handlePaste(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        let text = '';
-        if (event.clipboardData && event.clipboardData.getData) {
-            text = event.clipboardData.getData('text/plain');
-        } else if (window.clipboardData && window.clipboardData.getData) {
-            text = window.clipboardData.getData('Text');
-        }
-        
-        if (text) {
-            if (document.queryCommandSupported('insertText')) {
-                document.execCommand('insertText', false, text);
-            } else {
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    range.deleteContents();
-                    const textNode = document.createTextNode(text);
-                    range.insertNode(textNode);
-                    range.setStartAfter(textNode);
-                    range.setEndAfter(textNode);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
+};
+
+const DB={
+    N:'PromptStudio_v21',S:'data',B:'backups',db:null,
+    init(){return new Promise((ok,no)=>{const r=indexedDB.open(this.N,2);r.onerror=()=>no(r.error);r.onsuccess=()=>{this.db=r.result;ok()};r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(this.S))d.createObjectStore(this.S,{keyPath:'id'});if(!d.objectStoreNames.contains(this.B))d.createObjectStore(this.B,{keyPath:'id'})}})},
+    save(d){return new Promise((ok,no)=>{const t=this.db.transaction([this.S],'readwrite');t.objectStore(this.S).put({id:'main',data:structuredClone(d)});t.oncomplete=ok;t.onerror=()=>no(t.error)})},
+    load(){return new Promise((ok,no)=>{const r=this.db.transaction([this.S]).objectStore(this.S).get('main');r.onsuccess=()=>ok(r.result?r.result.data:[]);r.onerror=()=>no(r.error)})},
+    saveR(d){return new Promise((ok,no)=>{const t=this.db.transaction([this.S],'readwrite');t.objectStore(this.S).put({id:'recents',data:structuredClone(d)});t.oncomplete=ok;t.onerror=()=>no(t.error)})},
+    loadR(){return new Promise((ok,no)=>{const r=this.db.transaction([this.S]).objectStore(this.S).get('recents');r.onsuccess=()=>ok(r.result?r.result.data:[]);r.onerror=()=>no(r.error)})},
+    bk(d){try{const t=this.db.transaction([this.B],'readwrite'),s=t.objectStore(this.B);s.put({id:'bk_'+Date.now(),data:structuredClone(d),ts:Date.now()});const g=s.getAll();g.onsuccess=()=>{g.result.sort((a,b)=>b.ts-a.ts).slice(5).forEach(b=>s.delete(b.id))}}catch(e){}}
+};
+
+function FP(data,pid){if(!pid)return null;for(const c of data)for(const s of(c.subcategories||[]))for(const p of(s.prompts||[]))if(p.id===pid)return{cat:c,sub:s,prompt:p};return null}
+function FC(data,cid){return data.find(c=>c.id===cid)||null}
+function FS(data,cid,sid){return FC(data,cid)?.subcategories?.find(s=>s.id===sid)||null}
+
+function validate(data){
+    if(!Array.isArray(data))return false;
+    for(const c of data){
+        if(!c||typeof c.name!=='string')return false;
+        if(!c.id)c.id=uid();if(!Array.isArray(c.subcategories))c.subcategories=[];
+        for(const s of c.subcategories){
+            if(!s||typeof s.name!=='string')return false;
+            if(!s.id)s.id=uid();if(!Array.isArray(s.prompts))s.prompts=[];
+            for(const p of s.prompts){
+                if(!p||typeof p.title!=='string')return false;
+                if(!p.id)p.id=uid();if(typeof p.description!=='string')p.description=p.description||'';
+                if(!Array.isArray(p.tags))p.tags=p.tags?[p.tags]:[];if(typeof p.favorite!=='boolean')p.favorite=!!p.favorite;
             }
         }
-        
-        return false;
+    }return true;
+}
+
+function exVars(text){
+    const rx=/\{\{(.*?)\}\}|\[(.*?)\]|\{(.*?)\}/g,vars=new Map();let m;
+    while((m=rx.exec(text))!==null){const c=(m[1]||m[2]||m[3]||'').trim();if(!c)continue;
+        let n=c,opts=null,def='';if(c.includes(':')){const p=c.split(':');n=p[0].trim();const r=p.slice(1).join(':').trim();if(r.includes('|')){opts=r.split('|').map(o=>o.trim());def=opts[0]}else def=r}
+        if(!vars.has(n))vars.set(n,{name:n,options:opts,defaultValue:def});}
+    return Array.from(vars.values());
+}
+
+const S={allData:[],recents:[],hist:[],redo:[],view:'favorites',catId:null,subId:null,pid:null,tag:null,dirty:false,editNew:false};
+let saving=false,dac=null;
+
+async function save(nd,opts={}){
+    const{ids={},hist:pushH=true}=opts;
+    if(saving){Toast.show('Salvataggio in corso...','',1500);return false}
+    saving=true;Loader.show();
+    try{if(pushH){S.redo=[];S.hist.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));if(S.hist.length>30)S.hist.shift()}
+        S.allData=nd;Object.assign(S,ids);S.dirty=false;await DB.save(S.allData);await DB.saveR(S.recents);render();return true}
+    catch(e){console.error(e);Toast.show('Errore salvataggio.','er',5000);return false}
+    finally{saving=false;Loader.hide()}
+}
+async function doUndo(){if(!S.hist.length)return;const p=S.hist.pop();S.redo.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));Object.assign(S,p);await DB.save(S.allData);await DB.saveR(S.recents);render();Toast.show('Annullato!','',1500)}
+async function doRedo(){if(!S.redo.length)return;const n=S.redo.pop();S.hist.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));Object.assign(S,n);await DB.save(S.allData);await DB.saveR(S.recents);render();Toast.show('Ripristinato!','',1500)}
+function trackR(pid,sid,cid){S.recents=S.recents.filter(r=>r.pid!==pid);S.recents.unshift({pid,sid,cid,ts:Date.now()});if(S.recents.length>25)S.recents.pop();DB.saveR(S.recents).catch(()=>{})}
+async function dirtyCheck(){if(!S.dirty)return true;const ok=await Modal.confirm('Modifiche non salvate','Hai modifiche non salvate. Vuoi perderle?');if(ok)S.dirty=false;return ok}
+
+const MA=$('MA'),cS=$('cS'),sI=$('sI');
+
+function render(){
+    renderDD();const v=S.view;
+    if(v==='favorites'||v==='recents'){MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';renderSpec(v)}
+    else if(v==='tags'){MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';renderTags()}
+    else if(v==='search'){MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';renderSearch()}
+    else{MA.className='mn v3';MA.innerHTML='<div id="c1" class="co"></div><div id="c2" class="co"></div><div id="c3" class="co dc"></div>';renderC1();renderC2();renderDet()}
+    $('bU').disabled=!S.hist.length;$('bR').disabled=!S.redo.length;
+}
+
+function renderDD(){
+    cS.innerHTML='';const o=(v,t)=>{const e=document.createElement('option');e.value=v;e.textContent=t;return e};
+    cS.appendChild(o('favorites','\u2B50 Preferiti'));cS.appendChild(o('recents','\uD83D\uDD52 Recenti'));cS.appendChild(o('tags','\uD83C\uDFF7\uFE0F Tag'));
+    if(S.view==='search')cS.appendChild(o('search','\uD83D\uDD0D Ricerca'));
+    if(S.allData.length){const sep=o('','──────────');sep.disabled=true;cS.appendChild(sep);
+        const pri=['best','prova'],pc=[],oc=[];S.allData.forEach(c=>{if(pri.includes(c.name.trim().toLowerCase()))pc.push(c);else oc.push(c)});
+        pc.sort((a,b)=>pri.indexOf(a.name.trim().toLowerCase())-pri.indexOf(b.name.trim().toLowerCase()));oc.sort((a,b)=>a.name.localeCompare(b.name));
+        pc.forEach(c=>cS.appendChild(o(c.id,c.name)));if(pc.length&&oc.length){const s2=o('','──────────');s2.disabled=true;cS.appendChild(s2)}
+        oc.forEach(c=>cS.appendChild(o(c.id,c.name)));
     }
-    
-    // --- STATE ---
-    let state = { allData: [], history: [], redoStack: [], recents: [], currentView: 'favorites', activeCategoryId: null, activeSubcategoryId: null, activePromptId: null, activeTag: null, startEditingNewPrompt: false };
-    let savedRange = null;
-    let itemToRename = null;
-    
-    // --- DOM ELEMENTS ---
-    const mainArea = document.getElementById("main-content-area");
-    const categoryDropdown = document.getElementById("category-dropdown");
-    const imageInput = document.getElementById('imageInput');
-
-    const linkModal = document.getElementById('linkModal');
-    const linkUrlInput = document.getElementById('linkUrlInput');
-    const linkModalConfirm = document.getElementById('linkModalConfirm');
-    const linkModalCancel = document.getElementById('linkModalCancel');
-    
-    const renameModal = document.getElementById('renameModal');
-    const renameModalTitle = document.getElementById('renameModalTitle');
-    const renameInput = document.getElementById('renameInput');
-    const renameModalConfirm = document.getElementById('renameModalConfirm');
-    const renameModalCancel = document.getElementById('renameModalCancel');
-
-    // --- FUNZIONI MODAL LINK ---
-    function showLinkModal() {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0 && selection.toString().length > 0) {
-            savedRange = selection.getRangeAt(0);
-        } else {
-             Toast.show("Seleziona il testo da trasformare in link.", 'error');
-             return false;
-        }
-
-        linkUrlInput.value = '';
-        linkModal.style.display = 'flex';
-        setTimeout(() => linkUrlInput.focus(), 50);
-        return true;
-    }
-
-    function hideLinkModal() {
-        linkModal.style.display = 'none';
-        savedRange = null;
-    }
-    
-    function applyLink(url) {
-        if (!url || url.trim().length < 5) {
-            Toast.show("URL non valido.", 'error');
-            return;
-        }
-        
-        let finalUrl = url.trim();
-        if (!finalUrl.match(/^[a-zA-Z]+:\/\//)) {
-            finalUrl = 'https://' + finalUrl;
-        }
-
-        if (savedRange) {
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(savedRange);
-
-            const selectedText = savedRange.toString();
-            const linkHtml = `<a href="${finalUrl}" target="_blank">${selectedText}</a>`;
-            document.execCommand('insertHTML', false, linkHtml);
-            
-            document.querySelector('.prompt-description-container[contenteditable="true"]').focus();
-
-            hideLinkModal();
-            Toast.show("Link arancione creato con successo!", 'success', 2000);
-        } else {
-             Toast.show("Errore: Nessun testo selezionato.", 'error');
-             hideLinkModal();
-        }
-    }
-
-    // --- FUNZIONI PER RINOMINARE ---
-    function showRenameModal(type, id, currentName, extraIds = {}) {
-        itemToRename = { type, id, ...extraIds };
-        const titles = {
-            category: 'Rinomina Categoria',
-            subcategory: 'Rinomina Sottocategoria',
-            prompt: 'Rinomina Prompt'
-        };
-        renameModalTitle.textContent = titles[type] || 'Rinomina Elemento';
-        renameInput.value = currentName;
-        renameModal.style.display = 'flex';
-        setTimeout(() => renameInput.focus(), 50);
-    }
-
-    function hideRenameModal() {
-        renameModal.style.display = 'none';
-        itemToRename = null;
-    }
-
-    async function handleRenameConfirm() {
-        if (!itemToRename) return;
-        const newName = renameInput.value.trim();
-        if (!newName) {
-            Toast.show("Il nome non può essere vuoto.", 'error');
-            return;
-        }
-
-        const { type, id, categoryId } = itemToRename;
-        const newData = JSON.parse(JSON.stringify(state.allData));
-        let success = false;
-
-        if (type === 'category') {
-            const item = newData.find(c => c.id === id);
-            if (item) { item.name = newName; success = true; }
-        } else if (type === 'subcategory') {
-            const cat = newData.find(c => c.id === categoryId);
-            const item = cat?.subcategories.find(s => s.id === id);
-            if (item) { item.name = newName; success = true; }
-        } else if (type === 'prompt') {
-            const cat = newData.find(c => c.id === state.activeCategoryId);
-            const sub = cat?.subcategories.find(s => s.id === state.activeSubcategoryId);
-            const item = sub?.prompts.find(p => p.id === id);
-            if (item) { item.title = newName; success = true; }
-        }
-
-        if (success) {
-            hideRenameModal();
-            await updateStateAndSave(newData);
-            Toast.show("Elemento rinominato con successo!", 'success');
-        } else {
-            Toast.show("Errore: elemento non trovato.", 'error');
-        }
-    }
-
-    // --- UTILS PER IMMAGINI ---
-    function insertBase64Image(file) {
-        if (!file.type.startsWith('image/')) {
-            Toast.show("Il file non è un'immagine.", 'error');
-            return;
-        }
-        if (file.size > 2 * 1024 * 1024) {
-            Toast.show("Immagine troppo grande (Max 2MB).", 'error');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const descriptionContainer = document.querySelector('.prompt-description-container[contenteditable="true"]');
-            if (!descriptionContainer) return;
-            
-            const imgHtml = `<img src="${e.target.result}" style="max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 8px;" alt="Immagine allegata al prompt">`;
-            
-            document.execCommand('insertHTML', false, imgHtml);
-            descriptionContainer.focus();
-            Toast.show("Immagine inserita (Base64).", 'success', 2000);
-        };
-        reader.readAsDataURL(file);
-    }
-    
-    // --- FUNZIONI VARIABILI DINAMICHE AVANZATE ---
-    function extractVariables(text) {
-        // Regex cattura: {{...}} oppure [...] oppure {...}
-        // Nota: Le parentesi graffe doppie {{}} devono venire prima nella regex per essere catturate correttamente come gruppo separato
-        const regex = /\{\{(.*?)\}\}|\[(.*?)\]|\{(.*?)\}/g;
-        const variables = new Map();
-        let match;
-        
-        while ((match = regex.exec(text)) !== null) {
-            // match[1] = {{...}}, match[2] = [...], match[3] = {...}
-            const content = match[1] || match[2] || match[3];
-            if (!content || content.trim() === '') continue;
-
-            const trimmedContent = content.trim();
-            // Parse for options: VariableName:Option1|Option2 or VariableName:DefaultValue
-            // Se c'è ':' dividiamo nome e opzioni/default
-            let varName = trimmedContent;
-            let options = null;
-            let defaultValue = "";
-
-            if (trimmedContent.includes(':')) {
-                const parts = trimmedContent.split(':');
-                varName = parts[0].trim();
-                const rest = parts.slice(1).join(':').trim(); // Ricomponi se c'erano altri :
-                
-                if (rest.includes('|')) {
-                    // È una lista di varianti (dropdown)
-                    options = rest.split('|').map(o => o.trim());
-                    defaultValue = options[0];
-                } else {
-                    // È un valore di default
-                    defaultValue = rest;
-                }
-            }
-
-            if (!variables.has(varName)) {
-                variables.set(varName, {
-                    name: varName,
-                    originalMatch: trimmedContent, // Ci serve per capire se è una variante
-                    options: options,
-                    defaultValue: defaultValue
-                });
-            }
-        }
-        return Array.from(variables.values());
-    }
-    
-    function renderVariableInputs(variables) {
-        const container = document.getElementById('variables-container');
-        if (!container) return;
-        
-        if (variables.length === 0) {
-            container.style.display = 'none';
-            container.innerHTML = '';
-            return;
-        }
-        
-        // Conserva i valori esistenti per nome
-        const existingValues = {};
-        container.querySelectorAll('.variable-input, .variable-select').forEach(el => {
-            existingValues[el.dataset.variable] = el.value;
-        });
-        
-        container.innerHTML = '<div class="variables-header">Variabili Dinamiche & Varianti</div>';
-        
-        variables.forEach(v => {
-            const group = document.createElement('div');
-            group.className = 'variable-group';
-            
-            const label = document.createElement('div');
-            label.className = 'variable-label';
-            label.textContent = v.name;
-            label.title = v.name;
-            
-            let inputElement;
-
-            if (v.options && v.options.length > 0) {
-                // Render Select Dropdown
-                inputElement = document.createElement('select');
-                inputElement.className = 'variable-select';
-                v.options.forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt;
-                    option.textContent = opt;
-                    inputElement.appendChild(option);
-                });
-            } else {
-                // Render Text Input
-                inputElement = document.createElement('input');
-                inputElement.type = 'text';
-                inputElement.className = 'variable-input';
-                inputElement.placeholder = `Valore per ${v.name}`;
-                // Set default value if exists and no user input yet
-                if (v.defaultValue) {
-                    inputElement.value = v.defaultValue;
-                }
-            }
-
-            inputElement.dataset.variable = v.name;
-            
-            // Restore existing value if valid
-            if (existingValues[v.name]) {
-                inputElement.value = existingValues[v.name];
-            }
-            
-            group.appendChild(label);
-            group.appendChild(inputElement);
-            container.appendChild(group);
-        });
-        
-        container.classList.add('active');
-        container.style.display = 'flex';
-    }
-
-    // --- FUNZIONE DI SALVATAGGIO OTTIMIZZATA ---
-    async function updateStateAndSave(newData, { newActiveIds = {}, saveHistory = true } = {}) {
-        Loader.show();
-        try {
-            if (saveHistory) {
-                state.redoStack = [];
-                state.history.push(JSON.parse(JSON.stringify({ 
-                    allData: state.allData,
-                    recents: state.recents,
-                    activeCategoryId: state.activeCategoryId,
-                    activeSubcategoryId: state.activeSubcategoryId,
-                    activePromptId: state.activePromptId,
-                    currentView: state.currentView
-                })));
-                if (state.history.length > 30) state.history.shift();
-            }
-            
-            state.allData = newData;
-            Object.assign(state, newActiveIds);
-            
-            // Attendiamo che IndexedDB confermi la scrittura
-            await Database.save(state.allData);
-            
-            localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents));
-            renderUI();
-            return true;
-        } catch (error) {
-            console.error("Errore critico durante il salvataggio:", error);
-            Toast.show("Errore durante il salvataggio dei dati.", 'error', 5000);
-            return false;
-        } finally {
-            Loader.hide();
-        }
-    }
-    
-    // --- RENDER FUNCTIONS ---
-    function renderUI() {
-        renderCategoryDropdown();
-        switch(state.currentView) {
-            case 'favorites': 
-                mainArea.className = 'view-mode-two-column'; 
-                mainArea.innerHTML = `<div id="col-special-list" class="column"></div> <div id="col-special-detail" class="column"></div>`; 
-                renderSpecialView('favorites'); 
-                break;
-            case 'recents': 
-                mainArea.className = 'view-mode-two-column'; 
-                mainArea.innerHTML = `<div id="col-special-list" class="column"></div> <div id="col-special-detail" class="column"></div>`; 
-                renderSpecialView('recents'); 
-                break;
-            case 'tags':
-                mainArea.className = 'view-mode-two-column';
-                mainArea.innerHTML = `<div id="col-special-list" class="column"></div> <div id="col-special-detail" class="column"></div>`;
-                renderTagsView();
-                break;
-            case 'search':
-                mainArea.className = 'view-mode-two-column';
-                mainArea.innerHTML = `<div id="col-special-list" class="column"></div> <div id="col-special-detail" class="column"></div>`;
-                renderSearchView();
-                break;
-            default: 
-                mainArea.className = 'view-mode-three-column'; 
-                renderColumnsView(); 
-                break;
-        }
-        updateUndoRedoButtons();
-    }
-
-    function renderColumnsView() {
-        mainArea.innerHTML = `<div id="col-subcategories" class="column"></div> <div id="col-prompts" class="column"></div> <div id="col-detail" class="column"></div>`;
-        renderSubcategoryColumn();
-        renderPromptColumn();
-        renderDetailColumn();
-    }
-    
-    function renderCategoryDropdown() {
-        categoryDropdown.innerHTML = "";
-        const createOption = (value, text) => { const opt = document.createElement('option'); opt.value = value; opt.textContent = text; return opt; };
-        
-        categoryDropdown.appendChild(createOption('favorites', '⭐ Preferiti'));
-        categoryDropdown.appendChild(createOption('recents', '🕒 Recenti'));
-        categoryDropdown.appendChild(createOption('tags', '🏷️ Tag'));
-        
-        if (state.currentView === 'search') {
-            const searchOpt = createOption('search', '🔍 Risultati Ricerca');
-            searchOpt.selected = true;
-            categoryDropdown.appendChild(searchOpt);
-        }
-
-        if (state.allData.length > 0) {
-            const separator1 = createOption('separator', '──────────'); separator1.disabled = true; categoryDropdown.appendChild(separator1);
-            
-            // Logica per mettere "Best" e "Prova" in cima (CASE INSENSITIVE)
-            const priorityNames = ["best", "prova"];
-            const priorityCats = [];
-            const otherCats = [];
-
-            state.allData.forEach(cat => {
-                if (priorityNames.includes(cat.name.trim().toLowerCase())) {
-                    priorityCats.push(cat);
-                } else {
-                    otherCats.push(cat);
-                }
-            });
-
-            // Ordina priority (Best prima di Prova)
-            priorityCats.sort((a, b) => {
-                const nameA = a.name.trim().toLowerCase();
-                const nameB = b.name.trim().toLowerCase();
-                // "best" deve essere prima di "prova"
-                return priorityNames.indexOf(nameA) - priorityNames.indexOf(nameB);
-            });
-
-            // Ordina altri alfabeticamente
-            otherCats.sort((a, b) => a.name.localeCompare(b.name));
-
-            // Render Priority
-            priorityCats.forEach(cat => categoryDropdown.appendChild(createOption(cat.id, cat.name)));
-
-            // Separatore se ci sono altre categorie
-            if (priorityCats.length > 0 && otherCats.length > 0) {
-                 const separator2 = createOption('separator2', '──────────'); separator2.disabled = true; categoryDropdown.appendChild(separator2);
-            }
-
-            // Render Altri
-            otherCats.forEach(cat => categoryDropdown.appendChild(createOption(cat.id, cat.name)));
-        }
-        
-        if (state.currentView !== 'columns' && ['favorites', 'recents', 'tags', 'search'].includes(state.currentView)) {
-             categoryDropdown.value = state.currentView;
-        } else if (state.activeCategoryId) {
-            categoryDropdown.value = state.activeCategoryId;
-        } else if (state.allData.length > 0) {
-            // Seleziona il primo disponibile nel dropdown
-            if (categoryDropdown.options.length > 3) {
-                 // Salta i primi 3 statici (preferiti, recenti, tag) e il separatore
-                 let firstRealOption = null;
-                 for(let i=0; i<categoryDropdown.options.length; i++) {
-                     if (!categoryDropdown.options[i].disabled && !['favorites','recents','tags','search'].includes(categoryDropdown.options[i].value)) {
-                         firstRealOption = categoryDropdown.options[i];
-                         break;
-                     }
-                 }
-                 if(firstRealOption) categoryDropdown.value = firstRealOption.value;
-            }
-        }
-    }
-    
-    function renderSubcategoryColumn() {
-        const col = document.getElementById('col-subcategories');
-        const activeCategory = state.allData.find(c => c.id === state.activeCategoryId);
-        if (!activeCategory) { col.innerHTML = '<div class="initial-message">Seleziona una categoria</div>'; return; }
-        col.innerHTML = `
-            <div class="column-header">
-                <div class="column-header-title">
-                    <h3>${activeCategory.name}</h3>
-                    <i class="fa-solid fa-pen-to-square rename-icon" id="rename-cat-btn" title="Rinomina Categoria"></i>
-                    <i class="fa-solid fa-trash-can delete-icon" id="delete-cat-btn" title="Elimina Categoria"></i>
-                </div>
-                <button class="add-button" id="add-subcat-btn" title="Aggiungi Sottocategoria">
-                    <i class="fa-solid fa-plus"></i> Sottocategoria
-                </button>
-            </div>
-            <div class="column-content"></div>`;
-        document.getElementById('add-subcat-btn').onclick = () => addSubcategory(activeCategory.id);
-        document.getElementById('rename-cat-btn').onclick = () => showRenameModal('category', activeCategory.id, activeCategory.name);
-        document.getElementById('delete-cat-btn').onclick = () => deleteCategory(activeCategory.id);
-
-        const listContainer = col.querySelector('.column-content');
-        if (!activeCategory.subcategories?.length) { listContainer.innerHTML = '<div class="initial-message">Nessuna sottocategoria</div>'; return; }
-        activeCategory.subcategories.sort((a,b)=>a.name.localeCompare(b.name)).forEach(sub => { 
-            const item = document.createElement("div"); 
-            item.className = `item-container ${sub.id===state.activeSubcategoryId?'active':''}`; 
-            item.innerHTML = `<span class="item-name">${sub.name}</span>`; 
-            item.onclick = () => { 
-                state.currentView = 'columns';
-                state.activeSubcategoryId = sub.id; 
-                state.activePromptId = sub.prompts?.sort((a,b)=>a.title.localeCompare(b.title))[0]?.id || null; 
-                renderUI(); 
-            }; 
-            listContainer.appendChild(item); 
-        });
-    }
-
-    function renderPromptColumn() {
-        const col = document.getElementById('col-prompts');
-        const activeCategory = state.allData.find(c=>c.id===state.activeCategoryId);
-        const activeSub = activeCategory?.subcategories.find(s=>s.id===state.activeSubcategoryId);
-        if (!activeSub) { col.innerHTML = '<div class="initial-message">Seleziona una sottocategoria</div>'; return; }
-        col.innerHTML = `
-            <div class="column-header">
-                 <div class="column-header-title">
-                    <h3>${activeSub.name}</h3>
-                    <i class="fa-solid fa-pen-to-square rename-icon" id="rename-subcat-btn" title="Rinomina Sottocategoria"></i>
-                    <i class="fa-solid fa-trash-can delete-icon" id="delete-subcat-btn" title="Elimina Sottocategoria"></i>
-                </div>
-                <button class="add-button" id="add-prompt-btn" title="Aggiungi Prompt">
-                    <i class="fa-solid fa-plus"></i> Prompt
-                </button>
-            </div>
-            <div class="column-content"></div>`;
-        
-        document.getElementById('rename-subcat-btn').onclick = () => showRenameModal('subcategory', activeSub.id, activeSub.name, { categoryId: activeCategory.id });
-        document.getElementById('delete-subcat-btn').onclick = () => deleteSubcategory(activeSub.id, activeCategory.id);
-        const addPromptBtn = document.getElementById('add-prompt-btn');
-        if (addPromptBtn) {
-            addPromptBtn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                addNewPrompt(activeSub.id, state.activeCategoryId);
-            };
-        }
-        
-        const listContainer = col.querySelector('.column-content');
-        if (!activeSub.prompts?.length) { listContainer.innerHTML = '<div class="initial-message">Nessun prompt</div>'; return; }
-        activeSub.prompts.sort((a,b)=>a.title.localeCompare(b.title)).forEach(p => { 
-            const item = document.createElement("div"); 
-            item.className = `item-container ${p.id===state.activePromptId?'active':''}`; 
-            
-            let tagsHtml = '';
-            if (p.tags && p.tags.length > 0) {
-                tagsHtml = '<div class="tags-container">';
-                p.tags.forEach(tag => {
-                    tagsHtml += `<span class="tag-badge" style="background-color: ${getTagColor(tag)}">${tag}</span>`;
-                });
-                tagsHtml += '</div>';
-            }
-            
-            item.innerHTML = `<div class="item-name">${p.title}</div>${tagsHtml}`; 
-            item.onclick = () => { 
-                state.activePromptId = p.id; 
-                trackRecentPrompt(p.id, activeSub.id, state.activeCategoryId); 
-                renderUI(); 
-            }; 
-            listContainer.appendChild(item); 
-        });
-    }
-
-    function renderDetailColumn() {
-        const colId = (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags' || state.currentView === 'search') ? 'col-special-detail' : 'col-detail';
-        const col = document.getElementById(colId);
-        if (!col) return;
-        
-        const cat = state.allData.find(c => c.id === state.activeCategoryId);
-        const sub = cat?.subcategories?.find(s => s.id === state.activeSubcategoryId);
-        const promptItem = sub?.prompts?.find(p => p.id === state.activePromptId);
-
-        if (!promptItem) { col.innerHTML = '<div class="initial-message">Seleziona un prompt</div>'; return; }
-        
-        if (!promptItem.tags) promptItem.tags = [];
-        
-        col.innerHTML = `
-            <div class="prompt-detail-view">
-                <div class="prompt-header"><h3>Dettagli Prompt</h3>
-                    <div class="prompt-actions-toolbar">
-                        <i id="edit-prompt-btn" class="fa-solid fa-pencil" title="Modifica Testo"></i>
-                        <i id="copy-prompt-btn" class="fa-solid fa-copy" title="Copia Testo con Variabili"></i>
-                        <i id="fav-prompt-btn" class="${promptItem.favorite ? "fa-solid" : "fa-regular"} fa-star" title="Preferito"></i>
-                        <i id="quick-save-best-btn" class="fa-solid fa-trophy" title="Salva in 'Best' 🏆 (Copia Sottocategoria)"></i>
-                        <i id="quick-save-prova-btn" class="fa-solid fa-vial" title="Salva in 'Prova' (Inbox)"></i>
-                        <i id="delete-prompt-btn" class="fa-solid fa-trash-can" title="Elimina"></i>
-                    </div>
-                </div>
-                <div class="prompt-title-section">
-                    <h1>${promptItem.title}</h1>
-                    <i class="fa-solid fa-pen-to-square rename-icon" id="rename-prompt-btn" title="Rinomina Prompt"></i>
-                </div>
-                <div class="tag-input-section">
-                    <div class="tag-input-wrapper">
-                        <input type="text" id="tag-input" placeholder="Aggiungi un tag (es: SEO, Marketing, AI)">
-                        <button id="add-tag-btn"><i class="fa-solid fa-plus"></i> Aggiungi</button>
-                    </div>
-                    <div class="current-tags" id="current-tags-container"></div>
-                </div>
-                
-                <div id="variables-container" class="variables-container"></div>
-
-                <div id="formatting-toolbar">
-                    <button data-command="bold" title="Grassetto (B)"><i class="fa-solid fa-bold"></i></button>
-                    <button data-command="italic" title="Corsivo (I)"><i class="fa-solid fa-italic"></i></button>
-                    <button data-command="underline" title="Sottolineato (U)"><i class="fa-solid fa-underline"></i></button>
-                    <button data-command="insertUnorderedList" title="Lista puntata"><i class="fa-solid fa-list-ul"></i></button>
-                    <button data-command="fontSizeUp" title="Aumenta dimensione testo (+)"><i class="fa-solid fa-plus"></i></button>
-                    <button data-command="fontSizeDown" title="Diminuisci dimensione testo (-)"><i class="fa-solid fa-minus"></i></button>
-                    <button data-command="showLinkModal" id="btn-create-link" title="Aggiungi Link (@)"><i class="fa-solid fa-link"></i></button>
-                    <button data-command="unlink" title="Rimuovi Link"><i class="fa-solid fa-link-slash"></i></button>
-                    <button data-command="insertImage" id="btn-insert-image" title="Aggiungi Immagine (Carica)"><i class="fa-regular fa-image"></i></button>
-                    <button id="color-btn" title="Colore Testo"><i class="fa-solid fa-palette"></i></button>
-                    <input type="color" id="colorPicker" value="#FFFFFF" style="visibility: hidden; width: 0; height: 0; padding: 0; border: none;">
-                    <button id="btnSaveChanges" class="add-button">Salva</button>
-                </div>
-                <div class="prompt-description-container" contenteditable="false" id="detail-description">${promptItem.description || ""}</div>
-            </div>`;
-        attachDetailViewListeners(promptItem, sub, cat);
-        renderCurrentTags(promptItem);
-        
-        // Inizializza variabili
-        const initialVars = extractVariables(promptItem.description || "");
-        renderVariableInputs(initialVars);
-
-        if (state.startEditingNewPrompt) {
-            const descriptionContainer = document.getElementById('detail-description');
-            if (descriptionContainer) {
-                descriptionContainer.contentEditable = 'true';
-                document.getElementById('formatting-toolbar')?.classList.add('show');
-                document.getElementById('btnSaveChanges')?.classList.add('show');
-                descriptionContainer.focus();
-            }
-            state.startEditingNewPrompt = false;
-        }
-    }
-    
-    function renderCurrentTags(promptItem) {
-        const container = document.getElementById('current-tags-container');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        if (promptItem.tags && promptItem.tags.length > 0) {
-            promptItem.tags.forEach(tag => {
-                const tagEl = document.createElement('span');
-                tagEl.className = 'tag-badge-removable';
-                tagEl.style.backgroundColor = getTagColor(tag);
-                tagEl.innerHTML = `${tag} <i class="fa-solid fa-xmark"></i>`;
-                tagEl.onclick = () => removeTag(promptItem, tag);
-                container.appendChild(tagEl);
-            });
-        }
-    }
-    
-    async function addTag(promptItem, tagName) {
-        if (!tagName || tagName.trim().length === 0) {
-            Toast.show("Inserisci un nome per il tag.", 'error');
-            return;
-        }
-        
-        const cleanTag = tagName.trim().toLowerCase();
-        
-        if (!promptItem.tags) promptItem.tags = [];
-        
-        if (promptItem.tags.includes(cleanTag)) {
-            Toast.show("Tag già presente!", 'info');
-            return;
-        }
-        
-        const newData = JSON.parse(JSON.stringify(state.allData));
-        const cat = newData.find(c => c.id === state.activeCategoryId);
-        const sub = cat?.subcategories.find(s => s.id === state.activeSubcategoryId);
-        const prompt = sub?.prompts.find(p => p.id === promptItem.id);
-        
-        if (prompt) {
-            if (!prompt.tags) prompt.tags = [];
-            prompt.tags.push(cleanTag);
-            await updateStateAndSave(newData, { saveHistory: false });
-            Toast.show(`Tag "${cleanTag}" aggiunto!`, 'success', 1500);
-        }
-    }
-    
-    async function removeTag(promptItem, tagName) {
-        const newData = JSON.parse(JSON.stringify(state.allData));
-        const cat = newData.find(c => c.id === state.activeCategoryId);
-        const sub = cat?.subcategories.find(s => s.id === state.activeSubcategoryId);
-        const prompt = sub?.prompts.find(p => p.id === promptItem.id);
-        
-        if (prompt && prompt.tags) {
-            prompt.tags = prompt.tags.filter(t => t !== tagName);
-            await updateStateAndSave(newData, { saveHistory: false });
-            Toast.show(`Tag "${tagName}" rimosso!`, 'info', 1500);
-        }
-    }
-    
-    function renderTagsView() {
-        const colList = document.getElementById('col-special-list');
-        colList.innerHTML = `<div class="column-header"><h3>🏷️ Filtra per Tag</h3></div><div class="column-content"></div>`;
-        
-        const allTags = new Set();
-        state.allData.forEach(cat => {
-            cat.subcategories?.forEach(sub => {
-                sub.prompts?.forEach(p => {
-                    if (p.tags) {
-                        p.tags.forEach(tag => allTags.add(tag));
-                    }
-                });
-            });
-        });
-        
-        const listContainer = colList.querySelector('.column-content');
-        
-        if (allTags.size === 0) {
-            listContainer.innerHTML = '<div class="initial-message">Nessun tag disponibile</div>';
-            document.getElementById('col-special-detail').innerHTML = '<div class="initial-message">Aggiungi tag ai tuoi prompt</div>';
-            return;
-        }
-        
-        const sortedTags = Array.from(allTags).sort();
-        
-        if (!state.activeTag || !allTags.has(state.activeTag)) {
-            state.activeTag = sortedTags[0];
-        }
-        
-        sortedTags.forEach(tag => {
-            const item = document.createElement('div');
-            item.className = `item-container ${tag === state.activeTag ? 'active' : ''}`;
-            item.innerHTML = `<span class="tag-badge" style="background-color: ${getTagColor(tag)}">${tag}</span>`;
-            item.onclick = () => {
-                state.activeTag = tag;
-                renderTagsView();
-            };
-            listContainer.appendChild(item);
-        });
-        
-        renderPromptsForTag(state.activeTag);
-    }
-    
-    function renderPromptsForTag(tagName) {
-        const colDetail = document.getElementById('col-special-detail');
-        colDetail.innerHTML = `<div class="column-header"><h3>Prompt con tag: <span class="tag-badge" style="background-color: ${getTagColor(tagName)}">${tagName}</span></h3></div><div class="column-content"></div>`;
-        
-        const items = [];
-        state.allData.forEach(cat => {
-            cat.subcategories?.forEach(sub => {
-                sub.prompts?.forEach(p => {
-                    if (p.tags && p.tags.includes(tagName)) {
-                        items.push({ ...p, catName: cat.name, subName: sub.name, catId: cat.id, subId: sub.id });
-                    }
-                });
-            });
-        });
-        
-        items.sort((a, b) => a.title.localeCompare(b.title));
-        
-        const listContainer = colDetail.querySelector('.column-content');
-        
-        if (items.length === 0) {
-            listContainer.innerHTML = '<div class="initial-message">Nessun prompt con questo tag</div>';
-            return;
-        }
-        
-        items.forEach(p => {
-            const item = document.createElement('div');
-            item.className = 'item-container';
-            item.innerHTML = `<div class="item-name">${p.title}</div><div class="item-path">${p.catName} > ${p.subName}</div>`;
-            item.onclick = () => {
-                state.activeCategoryId = p.catId;
-                state.activeSubcategoryId = p.subId;
-                state.activePromptId = p.id;
-                state.currentView = 'tags';
-                trackRecentPrompt(p.id, p.subId, p.catId);
-                renderUI();
-            };
-            listContainer.appendChild(item);
-        });
-    }
-
-    function renderSearchView() {
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const colList = document.getElementById('col-special-list');
-        colList.innerHTML = `<div class="column-header"><h3>🔍 Risultati per: "${query}"</h3></div><div class="column-content"></div>`;
-        
-        if (!query) {
-            colList.querySelector('.column-content').innerHTML = '<div class="initial-message">Digita qualcosa per cercare...</div>';
-            document.getElementById('col-special-detail').innerHTML = '<div class="initial-message"></div>';
-            return;
-        }
-
-        const items = [];
-        state.allData.forEach(cat => {
-            cat.subcategories?.forEach(sub => {
-                sub.prompts?.forEach(p => {
-                    const matchTitle = p.title.toLowerCase().includes(query);
-                    const matchDesc = p.description.toLowerCase().includes(query);
-                    const matchTags = p.tags && p.tags.some(t => t.toLowerCase().includes(query));
-                    
-                    if (matchTitle || matchDesc || matchTags) {
-                        items.push({ ...p, catName: cat.name, subName: sub.name, catId: cat.id, subId: sub.id });
-                    }
-                });
-            });
-        });
-        
-        items.sort((a, b) => a.title.localeCompare(b.title));
-        
-        const listContainer = colList.querySelector('.column-content');
-        
-        if (items.length === 0) {
-            listContainer.innerHTML = '<div class="initial-message">Nessun risultato trovato</div>';
-            document.getElementById('col-special-detail').innerHTML = '<div class="initial-message">Prova con un altro termine</div>';
-            return;
-        }
-
-        items.forEach(p => {
-            const item = document.createElement("div");
-            item.className = `item-container ${p.id === state.activePromptId ? 'active' : ''}`;
-            
-            let tagsHtml = '';
-            if (p.tags && p.tags.length > 0) {
-                tagsHtml = '<div class="tags-container">';
-                p.tags.forEach(tag => {
-                    tagsHtml += `<span class="tag-badge" style="background-color: ${getTagColor(tag)}">${tag}</span>`;
-                });
-                tagsHtml += '</div>';
-            }
-            
-            item.innerHTML = `<div class="item-name">${p.title}</div><div class="item-path">${p.catName} > ${p.subName}</div>${tagsHtml}`;
-            item.onclick = () => {
-                state.activeCategoryId = p.catId; 
-                state.activeSubcategoryId = p.subId; 
-                state.activePromptId = p.id;
-                trackRecentPrompt(p.id, p.subId, p.catId);
-                renderUI(); 
-            };
-            listContainer.appendChild(item);
-        });
-        
-        renderDetailColumn();
-    }
-    
-    function renderSpecialView(type) {
-        const titles = { favorites: "Preferiti", recents: "Recenti" };
-        const colList = document.getElementById('col-special-list');
-        colList.innerHTML = `<div class="column-header"><h3>${titles[type]}</h3></div><div class="column-content"></div>`;
-        
-        let items = [];
-        if (type === 'favorites') {
-            state.allData.forEach(cat => cat.subcategories?.forEach(sub => sub.prompts?.forEach(p => { 
-                if (p.favorite) items.push({ ...p, catName: cat.name, subName: sub.name, catId: cat.id, subId: sub.id }); 
-            })));
-            items.sort((a,b)=>a.title.localeCompare(b.title));
-        } else {
-            state.recents.forEach(r => {
-                const cat = state.allData.find(c => c.id === r.catId);
-                const sub = cat?.subcategories.find(s => s.id === r.subId);
-                const p = sub?.prompts.find(p_item => p_item.id === r.promptId);
-                if (p) items.push({ ...p, catName: cat.name, subName: sub.name, catId: cat.id, subId: sub.id, accessTime: r.timestamp || 0 });
-            });
-            items.sort((a,b)=>b.accessTime - a.accessTime); 
-        }
-        
-        const listContainer = colList.querySelector('.column-content');
-        if (!items.length) { 
-            listContainer.innerHTML = `<div class="initial-message">Nessun elemento in ${titles[type]}</div>`; 
-            document.getElementById('col-special-detail').innerHTML = '<div class="initial-message">Nessun prompt da visualizzare</div>'; 
-            state.activePromptId = null;
-            state.activeSubcategoryId = null;
-            state.activeCategoryId = null;
-            return; 
-        }
-
-        const currentActiveItem = items.find(p => p.id === state.activePromptId);
-        if (!currentActiveItem) {
-            state.activePromptId = items[0].id;
-            state.activeSubcategoryId = items[0].subId;
-            state.activeCategoryId = items[0].catId;
-        }
-
-        items.forEach(p => {
-            const item = document.createElement("div");
-            item.className = `item-container ${p.id === state.activePromptId ? 'active' : ''}`;
-            
-            let tagsHtml = '';
-            if (p.tags && p.tags.length > 0) {
-                tagsHtml = '<div class="tags-container">';
-                p.tags.forEach(tag => {
-                    tagsHtml += `<span class="tag-badge" style="background-color: ${getTagColor(tag)}">${tag}</span>`;
-                });
-                tagsHtml += '</div>';
-            }
-            
-            item.innerHTML = `<div class="item-name">${p.title}</div><div class="item-path">${p.catName} > ${p.subName}</div>${tagsHtml}`;
-            item.onclick = () => {
-                state.activeCategoryId = p.catId; 
-                state.activeSubcategoryId = p.subId; 
-                state.activePromptId = p.id;
-                trackRecentPrompt(p.id, p.subId, p.catId);
-                renderUI(); 
-            };
-            listContainer.appendChild(item);
-        });
-        
-        renderDetailColumn();
-    }
-    
-    function attachDetailViewListeners(promptItem, sub, cat) {
-        const colId = (state.currentView === 'favorites' || state.currentView === 'recents' || state.currentView === 'tags' || state.currentView === 'search') ? 'col-special-detail' : 'col-detail';
-        const col = document.getElementById(colId);
-        if (!col) return;
-
-        const descriptionContainer = col.querySelector("#detail-description");
-        if (!descriptionContainer) return;
-        
-        document.getElementById('rename-prompt-btn').onclick = () => showRenameModal('prompt', promptItem.id, promptItem.title);
-
-        const tagInput = document.getElementById('tag-input');
-        const addTagBtn = document.getElementById('add-tag-btn');
-        
-        if (tagInput && addTagBtn) {
-            addTagBtn.onclick = () => {
-                addTag(promptItem, tagInput.value);
-                tagInput.value = '';
-            };
-            
-            tagInput.onkeypress = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTag(promptItem, tagInput.value);
-                    tagInput.value = '';
-                }
-            };
-        }
-        
-        // Listener per scansione variabili mentre si digita
-        descriptionContainer.addEventListener('input', () => {
-            const text = descriptionContainer.innerText;
-            const vars = extractVariables(text);
-            renderVariableInputs(vars);
-        });
-
-        col.querySelector("#edit-prompt-btn").onclick = () => {
-            const isEditing = descriptionContainer.contentEditable === 'true';
-            descriptionContainer.contentEditable = isEditing ? 'false' : 'true';
-            descriptionContainer.setAttribute('contenteditable', isEditing ? 'false' : 'true');
-
-            col.querySelector("#formatting-toolbar").classList.toggle("show", !isEditing);
-            col.querySelector("#btnSaveChanges").classList.toggle("show", !isEditing);
-            if (!isEditing) {
-                 descriptionContainer.focus();
-            } else {
-                 Toast.show("Modifica annullata. Ricorda di cliccare Salva.", 'info');
-            }
-        };
-
-        col.querySelector("#btnSaveChanges").onclick = async () => {
-            const newData = JSON.parse(JSON.stringify(state.allData));
-            const promptToUpdate = newData.find(c=>c.id===cat.id)?.subcategories.find(s=>s.id===sub.id)?.prompts.find(p_item=>p_item.id===promptItem.id);
-            if(promptToUpdate) {
-                promptToUpdate.description = descriptionContainer.innerHTML;
-            }
-            descriptionContainer.contentEditable = 'false'; 
-            descriptionContainer.setAttribute('contenteditable', 'false');
-            col.querySelector("#formatting-toolbar").classList.remove("show");
-            col.querySelector("#btnSaveChanges").classList.remove("show");
-
-            await updateStateAndSave(newData);
-            Toast.show("Prompt salvato!", 'success');
-        };
-
-        col.querySelectorAll("#formatting-toolbar button[data-command]").forEach(btn => {
-            btn.onclick = e => { 
-                e.preventDefault(); 
-                const command = btn.dataset.command;
-
-                if (command === 'showLinkModal') {
-                    showLinkModal();
-                } 
-                else if (command === 'fontSizeUp') {
-                    document.execCommand('fontSize', false, '7'); 
-                } 
-                else if (command === 'fontSizeDown') {
-                    document.execCommand('fontSize', false, '1');
-                }
-                else if (command === 'insertImage') {
-                    imageInput.click();
-                }
-                else {
-                    document.execCommand(command, false, null); 
-                }
-                if (command !== 'showLinkModal') {
-                    descriptionContainer.focus(); 
-                }
-            };
-        });
-        
-        const colorPicker = col.querySelector("#colorPicker");
-        col.querySelector("#color-btn").onclick = () => {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0 && selection.toString().length > 0) {
-                savedRange = selection.getRangeAt(0);
-            } else {
-                savedRange = null;
-            }
-            colorPicker.click();
-        };
-
-        colorPicker.onchange = () => {
-            descriptionContainer.focus();
-            if (savedRange) {
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(savedRange);
-            }
-            document.execCommand('foreColor', false, colorPicker.value);
-            savedRange = null;
-        };
-
-        // COPY LOGIC AVANZATA CON SOSTITUZIONE VARIABILI E VARIANTI
-        col.querySelector("#copy-prompt-btn").onclick = () => {
-            let textToCopy = descriptionContainer.innerText;
-            const variableInputs = document.querySelectorAll('.variable-input, .variable-select');
-            
-            if (variableInputs.length > 0) {
-                variableInputs.forEach(input => {
-                    const varName = input.dataset.variable;
-                    const value = input.value.trim();
-                    
-                    if (value) {
-                         // Sostituisci {{Nome}}, {{Nome:Opz1|Opz2}}, [Nome...] e {Nome...}
-                         // Utilizziamo una regex più permissiva per trovare il blocco originale
-                         const escapedName = escapeRegExp(varName);
-                         // Updated regex to include single curly braces { }
-                         const regex = new RegExp(`(\\{\\{|\\[|\\{)\\s*${escapedName}(\\s*|:.*?)(\\]|\\}\\}|\\})`, 'g');
-                         
-                         textToCopy = textToCopy.replace(regex, value);
-                    }
-                });
-            }
-
-            const tempElement = document.createElement('textarea');
-            tempElement.value = textToCopy;
-            tempElement.style.position = 'fixed'; tempElement.style.top = '0'; tempElement.style.left = '0'; tempElement.style.opacity = '0';
-            document.body.appendChild(tempElement); tempElement.focus(); tempElement.select();
-            try {
-                const successful = document.execCommand('copy');
-                Toast.show(successful ? "Copiato con variabili!" : "Errore nella copia.", successful ? 'success' : 'error');
-            } catch (err) { Toast.show("Errore nella copia.", 'error'); } 
-            finally { document.body.removeChild(tempElement); }
-        };
-        
-        col.querySelector("#delete-prompt-btn").onclick = () => deletePrompt(promptItem.id, sub.id, cat.id);
-        col.querySelector("#fav-prompt-btn").onclick = async () => {
-             const newData = JSON.parse(JSON.stringify(state.allData));
-             const promptToUpdate = newData.find(c=>c.id===cat.id)?.subcategories.find(s=>s.id===sub.id)?.prompts.find(p_item=>p_item.id===promptItem.id);
-             if(promptToUpdate) {
-                promptToUpdate.favorite = !promptToUpdate.favorite;
-             }
-             await updateStateAndSave(newData, { saveHistory: false });
-        };
-        
-        // --- LOGICA SALVATAGGIO AUTOMATICO: PROVA (USA INBOX) ---
-        col.querySelector("#quick-save-prova-btn").onclick = async () => {
-            quickSaveToCategory('Prova', false);
-        };
-
-        // --- LOGICA SALVATAGGIO AUTOMATICO: BEST (USA NOME SOTTOCATEGORIA ORIGINALE) ---
-        col.querySelector("#quick-save-best-btn").onclick = async () => {
-            quickSaveToCategory('Best', true);
-        };
-
-        // Helper function per il quick save
-        async function quickSaveToCategory(targetCategoryName, useSourceSubcategoryName = false) {
-             Loader.show();
-            try {
-                // 1. Catturiamo il contenuto attuale
-                const currentContent = descriptionContainer.innerHTML || promptItem.description;
-                const currentSubName = sub ? sub.name : 'Inbox';
-
-                const newData = JSON.parse(JSON.stringify(state.allData));
-                
-                // 2. Cerca o Crea Categoria Target (Case Insensitive Match)
-                let catIndex = newData.findIndex(c => c.name.trim().toLowerCase() === targetCategoryName.toLowerCase());
-                
-                if (catIndex === -1) {
-                    const newCat = { id: `cat_${Date.now()}_${targetCategoryName}`, name: targetCategoryName, subcategories: [] };
-                    newData.push(newCat);
-                    catIndex = newData.length - 1;
-                }
-                
-                if (!newData[catIndex].subcategories) {
-                    newData[catIndex].subcategories = [];
-                }
-                
-                // 3. Determina il nome della sottocategoria target
-                // Se useSourceSubcategoryName è true, usa il nome originale, altrimenti 'Inbox'
-                const targetSubName = useSourceSubcategoryName ? currentSubName : 'Inbox';
-                
-                // Cerca o Crea Sottocategoria Target
-                let subIndex = newData[catIndex].subcategories.findIndex(s => s.name.trim().toLowerCase() === targetSubName.trim().toLowerCase());
-                
-                if (subIndex === -1) {
-                    const newSub = { id: `sub_${Date.now()}_${targetSubName.replace(/\s+/g, '')}`, name: targetSubName, prompts: [] };
-                    newData[catIndex].subcategories.push(newSub);
-                    subIndex = newData[catIndex].subcategories.length - 1;
-                }
-                
-                if (!newData[catIndex].subcategories[subIndex].prompts) {
-                    newData[catIndex].subcategories[subIndex].prompts = [];
-                }
-                
-                // 4. Crea nuovo Prompt come copia
-                const newPrompt = { 
-                    id: `p_${Date.now()}`, 
-                    title: promptItem.title + " (Copy)", 
-                    description: currentContent, 
-                    favorite: false, 
-                    tags: [...(promptItem.tags || [])] 
-                };
-                
-                newData[catIndex].subcategories[subIndex].prompts.push(newPrompt);
-                
-                // 5. Salva
-                await updateStateAndSave(newData, { saveHistory: false });
-                Toast.show(`Salvato in ${newData[catIndex].name} > ${targetSubName}!`, "success");
-                
-            } catch (e) {
-                console.error(e);
-                alert("Errore nel salvataggio: " + e.message);
-                Toast.show("Errore nel salvataggio automatico.", "error");
-            } finally {
-                Loader.hide();
-            }
-        }
-
-        descriptionContainer.addEventListener('paste', handlePaste, false);
-        
-        descriptionContainer.addEventListener('dragover', e => { 
-            if (descriptionContainer.contentEditable === 'true') {
-                e.preventDefault(); 
-                descriptionContainer.classList.add('drag-over'); 
-            }
-        });
-        descriptionContainer.addEventListener('dragleave', () => { 
-            descriptionContainer.classList.remove('drag-over'); 
-        });
-        
-        descriptionContainer.addEventListener('drop', e => {
-            if (descriptionContainer.contentEditable === 'true') {
-                if (e.dataTransfer.types.includes("Files")) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    descriptionContainer.classList.remove('drag-over');
-                    if (e.dataTransfer.files.length > 0) {
-                        insertBase64Image(e.dataTransfer.files[0]);
-                    }
-                } else {
-                    descriptionContainer.classList.remove('drag-over');
-                }
-            }
-        });
-    }
-    
-    function trackRecentPrompt(promptId, subId, catId) {
-        const timestamp = Date.now();
-        state.recents = state.recents.filter(r => r.promptId !== promptId);
-        state.recents.unshift({ promptId, subId, catId, timestamp });
-        if (state.recents.length > 20) state.recents.pop();
-    }
-    
-    // --- DATA MANIPULATION ---
-    async function addCategory() { 
-        const name = window.prompt("Nome nuova categoria:"); 
-        if (!name?.trim()) { Toast.show("Operazione annullata.", 'info'); return; } 
-        const newCategory = { id: `cat_${Date.now()}`, name: name.trim(), subcategories: [] }; 
-        const newData = [...state.allData, newCategory]; 
-        await updateStateAndSave(newData, { newActiveIds: { currentView: 'columns', activeCategoryId: newCategory.id, activeSubcategoryId: null, activePromptId: null } }); 
-        Toast.show(`Categoria "${newCategory.name}" aggiunta!`, 'success');
-    }
-
-    async function deleteCategory(categoryId) {
-        const categoryToDelete = state.allData.find(c => c.id === categoryId);
-        if (!categoryToDelete) return;
-        if (!window.confirm(`Sei sicuro di voler eliminare la categoria "${categoryToDelete.name}"? Tutti i suoi contenuti verranno persi.`)) return;
-        const newData = state.allData.filter(c => c.id !== categoryId);
-        let newActiveIds = {};
-        if (state.activeCategoryId === categoryId) {
-            if (newData.length > 0) {
-                const firstCategory = newData.sort((a,b) => a.name.localeCompare(b.name))[0];
-                const firstSubcategory = firstCategory.subcategories?.sort((a,b) => a.name.localeCompare(b.name))[0];
-                newActiveIds = {
-                    currentView: 'columns',
-                    activeCategoryId: firstCategory.id,
-                    activeSubcategoryId: firstSubcategory?.id || null,
-                    activePromptId: firstSubcategory?.prompts?.sort((a,b) => a.title.localeCompare(b.title))[0]?.id || null
-                };
-            } else {
-                 newActiveIds = { currentView: 'favorites', activeCategoryId: null, activeSubcategoryId: null, activePromptId: null };
-            }
-        }
-        await updateStateAndSave(newData, { newActiveIds });
-        Toast.show(`Categoria "${categoryToDelete.name}" eliminata!`, 'info');
-    }
-    
-    async function addSubcategory(categoryId) { 
-        const name = window.prompt("Nome nuova sottocategoria:"); 
-        if (!name?.trim()) { Toast.show("Operazione annullata.", 'info'); return; } 
-        const newData = JSON.parse(JSON.stringify(state.allData)); 
-        const cat = newData.find(c => c.id === categoryId); 
-        if (!cat) { Toast.show("Errore: categoria non trovata.", 'error'); return; }
-        const newSub = { id: `sub_${Date.now()}`, name: name.trim(), prompts: [] }; 
-        if (!Array.isArray(cat.subcategories)) cat.subcategories = [];
-        cat.subcategories.push(newSub); 
-        await updateStateAndSave(newData, { newActiveIds: { activeSubcategoryId: newSub.id, activePromptId: null } }); 
-        Toast.show(`Sottocategoria "${newSub.name}" aggiunta!`, 'success');
-    }
-
-    async function deleteSubcategory(subcategoryId, categoryId) {
-        const newData = JSON.parse(JSON.stringify(state.allData));
-        const cat = newData.find(c => c.id === categoryId);
-        if (!cat || !Array.isArray(cat.subcategories)) return;
-        const subToDelete = cat.subcategories.find(s => s.id === subcategoryId);
-        if (!subToDelete) return;
-        if (!window.confirm(`Sei sicuro di voler eliminare la sottocategoria "${subToDelete.name}"?`)) return;
-        const subIndex = cat.subcategories.findIndex(s => s.id === subcategoryId);
-        cat.subcategories.splice(subIndex, 1);
-        let newActiveIds = {};
-        if (state.activeSubcategoryId === subcategoryId) {
-            const newActiveSub = cat.subcategories[subIndex] || cat.subcategories[subIndex - 1] || cat.subcategories[0] || null;
-            newActiveIds = {
-                activeSubcategoryId: newActiveSub?.id || null,
-                activePromptId: newActiveSub?.prompts?.sort((a,b) => a.title.localeCompare(b.title))[0]?.id || null
-            };
-        }
-        await updateStateAndSave(newData, { newActiveIds });
-        Toast.show(`Sottocategoria "${subToDelete.name}" eliminata!`, 'info');
-    }
-    
-    async function addNewPrompt(subcategoryId, categoryId) { 
-        const title = window.prompt("Titolo nuovo prompt:"); 
-        if (!title?.trim()) { Toast.show("Operazione annullata.", 'info'); return; } 
-        const newData = JSON.parse(JSON.stringify(state.allData)); 
-        const cat = newData.find(c => c.id === categoryId);
-        const sub = cat?.subcategories.find(s => s.id === subcategoryId);
-        if (!sub) return;
-        const newPrompt = { id: `p_${Date.now()}`, title: title.trim(), description: "", favorite: false, tags: [] }; 
-        if (!Array.isArray(sub.prompts)) sub.prompts = [];
-        sub.prompts.push(newPrompt); 
-        state.startEditingNewPrompt = true; 
-        await updateStateAndSave(newData, { newActiveIds: { activePromptId: newPrompt.id } }); 
-        Toast.show(`Prompt "${newPrompt.title}" aggiunto!`, 'success');
-    }
-    
-    async function deletePrompt(promptId, subId, catId) { 
-        if (!window.confirm("Sei sicuro di voler eliminare questo prompt?")) return; 
-        const newData = JSON.parse(JSON.stringify(state.allData)); 
-        const sub = newData.find(c=>c.id===catId)?.subcategories.find(s=>s.id===subId); 
-        if (!sub || !Array.isArray(sub.prompts)) return;
-        const promptIndex = sub.prompts.findIndex(p_item => p_item.id === promptId); 
-        if (promptIndex === -1) return;
-        sub.prompts.splice(promptIndex, 1); 
-        state.recents = state.recents.filter(r => r.promptId !== promptId);
-        const newActivePromptId = sub.prompts[promptIndex]?.id || sub.prompts[promptIndex-1]?.id || sub.prompts[0]?.id || null; 
-        let newActiveIds = { activePromptId: newActivePromptId };
-        await updateStateAndSave(newData, { newActiveIds }); 
-        Toast.show("Prompt eliminato!", 'info');
-    }
-
-    // --- TOOL FUNCTIONS ---
-    function updateUndoRedoButtons() { document.getElementById('btnAnnulla').disabled = state.history.length === 0; document.getElementById('btnRipristina').disabled = state.redoStack.length === 0; }
-    
-    async function performUndo() { 
-        if (state.history.length === 0) return; 
-        const lastState = state.history.pop(); 
-        state.redoStack.push(JSON.parse(JSON.stringify({ 
-            allData: state.allData, 
-            recents: state.recents, 
-            activeCategoryId: state.activeCategoryId, 
-            activeSubcategoryId: state.activeSubcategoryId, 
-            activePromptId: state.activePromptId, 
-            currentView: state.currentView 
-        }))); 
-        Object.assign(state, lastState); 
-        await Database.save(state.allData); 
-        localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents)); 
-        renderUI(); 
-        Toast.show("Annullato!", 'info', 1500);
-    }
-
-    async function performRedo() { 
-        if (state.redoStack.length === 0) return; 
-        const nextState = state.redoStack.pop(); 
-        state.history.push(JSON.parse(JSON.stringify({ 
-            allData: state.allData, 
-            recents: state.recents, 
-            activeCategoryId: state.activeCategoryId, 
-            activeSubcategoryId: state.activeSubcategoryId, 
-            activePromptId: state.activePromptId, 
-            currentView: state.currentView 
-        }))); 
-        Object.assign(state, nextState); 
-        await Database.save(state.allData); 
-        localStorage.setItem('promptManagerRecents', JSON.stringify(state.recents)); 
-        renderUI(); 
-        Toast.show("Ripristinato!", 'info', 1500);
-    }
-
-    function backupData() { 
-        if(state.allData.length === 0) { Toast.show("Nessun dato da esportare.", "error"); return; } 
-        const dataStr = JSON.stringify(state.allData, null, 2); 
-        const blob = new Blob([dataStr], { type: "application/json" }); 
-        const url = URL.createObjectURL(blob); 
-        const a = document.createElement("a"); a.href = url; a.download = `prompts_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); 
-        Toast.show("Backup scaricato!", 'success'); 
-    }
-
-    function importData(event) {
-        const file = event.target.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async e => {
-            try {
-                const data = JSON.parse(e.target.result); 
-                if (!Array.isArray(data)) throw new Error("Formato non valido");
-                await updateStateAndSave(data, { saveHistory: false });
-                Toast.show("Importazione riuscita!", 'success');
-            } catch (err) { 
-                Toast.show("Errore durante l'importazione", 'error'); 
-            }
-        };
-        reader.readAsText(file); event.target.value = '';
-    }
-    
-    // --- EVENT LISTENERS ---
-    function setupEventListeners() {
-        document.getElementById('themeToggle').addEventListener('click', () => { 
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light'; 
-            document.documentElement.setAttribute('data-theme', newTheme); 
-            localStorage.setItem('theme', newTheme); 
-            document.getElementById('themeToggle').innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
-        });
-        
-        categoryDropdown.addEventListener('change', () => {
-            const selection = categoryDropdown.value;
-            if (['favorites', 'recents', 'tags', 'search'].includes(selection)) {
-                state.currentView = selection;
-                state.activePromptId = null; 
-            } else {
-                state.currentView = 'columns';
-                state.activeCategoryId = selection;
-                const newCat = state.allData.find(c => c.id === selection);
-                const firstSub = newCat?.subcategories[0];
-                state.activeSubcategoryId = firstSub?.id || null;
-                state.activePromptId = firstSub?.prompts[0]?.id || null;
-            }
-            renderUI();
-        });
-        
-        const searchInput = document.getElementById('search-input');
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            if (query.trim().length > 0) {
-                state.currentView = 'search';
-                renderUI();
-            } else {
-                state.currentView = 'columns';
-                renderUI();
-            }
-        });
-        
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) insertBase64Image(e.target.files[0]);
-            e.target.value = ''; 
-        });
-
-        const toolBtn = document.getElementById('toolBtn');
-        const toolMenu = document.getElementById('toolMenu');
-        toolBtn.addEventListener('click', e => { e.stopPropagation(); toolMenu.classList.toggle('show'); });
-        window.addEventListener('click', () => toolMenu.classList.remove('show'));
-        document.getElementById('btnAddCategory').onclick = addCategory;
-        document.getElementById('btnAnnulla').onclick = performUndo;
-        document.getElementById('btnRipristina').onclick = performRedo;
-        document.getElementById('btnBackup').onclick = backupData;
-        document.getElementById('btnImporta').onclick = () => document.getElementById('backupInput').click();
-        document.getElementById('backupInput').onchange = importData;
-
-        linkModalCancel.onclick = hideLinkModal;
-        linkModalConfirm.onclick = () => applyLink(linkUrlInput.value.trim());
-        renameModalCancel.onclick = hideRenameModal;
-        renameModalConfirm.onclick = handleRenameConfirm;
-    }
-
-    // --- INITIALIZATION ---
-    async function initialize() {
-        try {
-            Loader.show();
-            await Database.init();
-            state.allData = await Database.load();
-            state.recents = JSON.parse(localStorage.getItem('promptManagerRecents')) || [];
-
-            if (state.allData.length === 0) {
-                state.allData = [{ id: 'cat_1', name: 'AI Generative', subcategories: [{ id: 'sub_1', name: 'Esempio', prompts: [{id: 'p_1', title: 'Benvenuto', description: 'Benvenuto! Prova le nuove variabili.<br><br>Scrivi un post su {{Argomento}} con tono {{Tono:Formale|Amichevole|Divertente}}.<br>La lingua di output è {Lingua:Italiano}.', favorite: true, tags: ['info']}] }] }];
-                await Database.save(state.allData);
-            }
-            
-            setupEventListeners();
-            renderUI();
-        } catch (error) {
-            console.error(error);
-            Toast.show("Errore di inizializzazione", 'error');
-        } finally {
-            Loader.hide();
-        }
-    }
-    initialize();
+    if(['favorites','recents','tags','search'].includes(S.view))cS.value=S.view;else if(S.catId)cS.value=S.catId;
+}
+
+function renderC1(){
+    const col=$('c1'),cat=FC(S.allData,S.catId);
+    if(!cat){col.innerHTML='<div class="em">Seleziona una categoria</div>';return}
+    col.innerHTML='<div class="ch"><div class="chl"><h3>'+esc(cat.name)+'</h3><button class="sb" data-a="rc" title="Rinomina"><i class="fa-solid fa-pen-to-square"></i></button><button class="sb dg" data-a="dc" title="Elimina"><i class="fa-solid fa-trash-can"></i></button></div><button class="ab" data-a="as"><i class="fa-solid fa-plus"></i> Sotto</button></div><div class="cl" role="listbox"></div>';
+    col.querySelector('[data-a="rc"]').onclick=async()=>{const n=await Modal.prompt('Rinomina Categoria','Nuovo nome',cat.name);if(!n)return;const d=structuredClone(S.allData);FC(d,cat.id).name=n;await save(d);Toast.show('Rinominata!','ok')};
+    col.querySelector('[data-a="dc"]').onclick=async()=>{if(!await Modal.confirm('Elimina Categoria','Eliminare "'+cat.name+'" e tutto il contenuto?'))return;const d=S.allData.filter(c=>c.id!==cat.id);let ids={};if(S.catId===cat.id){if(d.length){const f=d[0];ids={view:'columns',catId:f.id,subId:f.subcategories?.[0]?.id||null,pid:f.subcategories?.[0]?.prompts?.[0]?.id||null}}else ids={view:'favorites',catId:null,subId:null,pid:null}}await save(d,{ids});Toast.show('Eliminata!','')};
+    col.querySelector('[data-a="as"]').onclick=async()=>{const n=await Modal.prompt('Nuova Sottocategoria','Nome');if(!n)return;const d=structuredClone(S.allData),c=FC(d,cat.id);if(!c.subcategories)c.subcategories=[];const ns={id:uid(),name:n,prompts:[]};c.subcategories.push(ns);await save(d,{ids:{subId:ns.id,pid:null}});Toast.show('Creata!','ok')};
+    const list=col.querySelector('.cl'),subs=[...(cat.subcategories||[])].sort((a,b)=>a.name.localeCompare(b.name));
+    if(!subs.length){list.innerHTML='<div class="em">Nessuna sottocategoria</div>';return}
+    subs.forEach(s=>{const el=document.createElement('div');el.className='it'+(s.id===S.subId?' ac':'');el.tabIndex=0;el.innerHTML='<div class="in">'+esc(s.name)+'</div>';el.onclick=async()=>{if(!await dirtyCheck())return;S.subId=s.id;const fp=[...(s.prompts||[])].sort((a,b)=>a.title.localeCompare(b.title))[0];S.pid=fp?.id||null;render()};el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}};list.appendChild(el)});
+}
+
+function renderC2(){
+    const col=$('c2'),cat=FC(S.allData,S.catId),sub=cat?.subcategories?.find(s=>s.id===S.subId);
+    if(!sub){col.innerHTML='<div class="em">Seleziona una sottocategoria</div>';return}
+    col.innerHTML='<div class="ch"><div class="chl"><h3>'+esc(sub.name)+'</h3><button class="sb" data-a="rs" title="Rinomina"><i class="fa-solid fa-pen-to-square"></i></button><button class="sb dg" data-a="ds" title="Elimina"><i class="fa-solid fa-trash-can"></i></button></div><button class="ab" data-a="ap"><i class="fa-solid fa-plus"></i> Prompt</button></div><div class="cl" role="listbox"></div>';
+    col.querySelector('[data-a="rs"]').onclick=async()=>{const n=await Modal.prompt('Rinomina Sottocategoria','Nuovo nome',sub.name);if(!n)return;const d=structuredClone(S.allData);FS(d,cat.id,sub.id).name=n;await save(d);Toast.show('Rinominata!','ok')};
+    col.querySelector('[data-a="ds"]').onclick=async()=>{if(!await Modal.confirm('Elimina Sottocategoria','Eliminare "'+sub.name+'"?'))return;const d=structuredClone(S.allData),c2=FC(d,cat.id),idx=c2.subcategories.findIndex(s=>s.id===sub.id);c2.subcategories.splice(idx,1);const nx=c2.subcategories[idx]||c2.subcategories[idx-1]||c2.subcategories[0];await save(d,{ids:{subId:nx?.id||null,pid:nx?.prompts?.[0]?.id||null}});Toast.show('Eliminata!','')};
+    col.querySelector('[data-a="ap"]').onclick=async()=>{const t=await Modal.prompt('Nuovo Prompt','Titolo');if(!t)return;const d=structuredClone(S.allData),s2=FS(d,cat.id,sub.id),np={id:uid(),title:t,description:'',favorite:false,tags:[]};if(!s2.prompts)s2.prompts=[];s2.prompts.push(np);S.editNew=true;await save(d,{ids:{pid:np.id}});Toast.show('Creato!','ok')};
+    const list=col.querySelector('.cl'),prompts=[...(sub.prompts||[])].sort((a,b)=>a.title.localeCompare(b.title));
+    if(!prompts.length){list.innerHTML='<div class="em">Nessun prompt</div>';return}
+    prompts.forEach(p=>{const el=document.createElement('div');el.className='it'+(p.id===S.pid?' ac':'');el.tabIndex=0;
+        let th='';if(p.tags?.length)th='<div class="tr">'+p.tags.map(t=>'<span class="tg" style="background:'+tc(t)+'">'+esc(t)+'</span>').join('')+'</div>';
+        el.innerHTML='<div class="in">'+esc(p.title)+'</div><div class="iv">'+esc(tp(p.description))+'</div>'+th;
+        el.onclick=async()=>{if(!await dirtyCheck())return;S.pid=p.id;trackR(p.id,sub.id,S.catId);render()};el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}};list.appendChild(el)});
+}
+
+function renderDet(){
+    const colId=['favorites','recents','tags','search'].includes(S.view)?'cD':'c3';
+    const col=$(colId);if(!col)return;if(dac)dac.abort();dac=new AbortController();const sig=dac.signal;
+    const f=FP(S.allData,S.pid);if(!f){col.innerHTML='<div class="em">Seleziona un prompt</div>';return}
+    const{cat,sub,prompt:p}=f;if(!p.tags)p.tags=[];const sd=san(p.description||'');
+    col.innerHTML='<div class="det"><div class="dh"><h3>Dettagli Prompt</h3><div class="da">'+
+        '<button data-a="edit" title="Modifica testo (Ctrl+E)"><i class="fa-solid fa-pencil"></i></button>'+
+        '<button data-a="copy" title="Copia con variabili applicate"><i class="fa-solid fa-copy"></i></button>'+
+        '<button data-a="fav" title="Aggiungi/Rimuovi Preferito"><i class="'+(p.favorite?'fa-solid ys':'fa-regular')+' fa-star"></i></button>'+
+        '<button data-a="best" title="Copia in Best (stessa sottocategoria)"><i class="fa-solid fa-trophy gt"></i></button>'+
+        '<button data-a="prova" title="Copia in Prova (Inbox)"><i class="fa-solid fa-vial pv"></i></button>'+
+        '<button data-a="move" title="Sposta in altra categoria/sottocategoria"><i class="fa-solid fa-right-left"></i></button>'+
+        '<button data-a="del" title="Elimina prompt"><i class="fa-solid fa-trash-can"></i></button>'+
+        '</div></div>'+
+        '<div class="dti"><h1>'+esc(p.title)+'</h1><button class="sb" data-a="ren" title="Rinomina"><i class="fa-solid fa-pen-to-square"></i></button></div>'+
+        '<div class="di"><b>\uD83D\uDCCD Posizione:</b> '+esc(cat.name)+' \u203A '+esc(sub.name)+'<br>'+
+        '<b>\u2139\uFE0F Azioni disponibili:</b> \u270F\uFE0F Modifica testo \u00B7 \uD83D\uDCCB Copia con variabili \u00B7 \u2B50 Preferiti \u00B7 \uD83C\uDFC6 Salva copia in Best \u00B7 \uD83E\uDDEA Salva copia in Prova \u00B7 \u2194\uFE0F Sposta \u00B7 \uD83D\uDDD1\uFE0F Elimina</div>'+
+        '<div class="tgs"><div class="tgi"><input type="text" id="tI" placeholder="Aggiungi tag (es: SEO, AI)"><button id="tA"><i class="fa-solid fa-plus"></i> Tag</button></div><div class="tgc" id="tC"></div></div>'+
+        '<div class="vs" id="vS"></div>'+
+        '<div class="eb" id="eB"><i class="fa-solid fa-triangle-exclamation"></i> Modalit\u00E0 editing attiva \u2014 Ctrl+S per salvare</div>'+
+        '<div class="fb" id="fB2"><button data-cmd="bold" title="Grassetto"><i class="fa-solid fa-bold"></i></button><button data-cmd="italic" title="Corsivo"><i class="fa-solid fa-italic"></i></button><button data-cmd="underline" title="Sottolineato"><i class="fa-solid fa-underline"></i></button><button data-cmd="insertUnorderedList" title="Lista"><i class="fa-solid fa-list-ul"></i></button><button data-cmd="fontSizeUp" title="+"><i class="fa-solid fa-plus"></i></button><button data-cmd="fontSizeDown" title="-"><i class="fa-solid fa-minus"></i></button><button data-cmd="createLink" title="Link"><i class="fa-solid fa-link"></i></button><button data-cmd="unlink" title="Rimuovi link"><i class="fa-solid fa-link-slash"></i></button><button data-cmd="insertImage" title="Immagine"><i class="fa-regular fa-image"></i></button><button id="cB" title="Colore"><i class="fa-solid fa-palette"></i></button><input type="color" id="cP" value="#FFFFFF" style="visibility:hidden;width:0;height:0;padding:0;border:none"><button class="fs" id="sB">\uD83D\uDCBE Salva</button></div>'+
+        '<div class="dd" contenteditable="false" id="dA">'+sd+'</div></div>';
+
+    const dA=col.querySelector('#dA'),fB2=col.querySelector('#fB2'),sB=col.querySelector('#sB'),eB=col.querySelector('#eB');
+    // Tags
+    const tC=col.querySelector('#tC');(p.tags||[]).forEach(tag=>{const el=document.createElement('span');el.className='tgr';el.style.background=tc(tag);el.innerHTML=esc(tag)+' <i class="fa-solid fa-xmark"></i>';el.onclick=async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2?.prompt.tags)f2.prompt.tags=f2.prompt.tags.filter(t=>t!==tag);await save(d,{hist:false});Toast.show('"'+tag+'" rimosso.','',1500)};tC.appendChild(el)});
+    const tI=col.querySelector('#tI'),tA=col.querySelector('#tA');
+    const addTag=async()=>{const n=tI.value.trim().toLowerCase();if(!n)return;if(p.tags.includes(n)){Toast.show('Tag gi\u00E0 presente.','');tI.value='';return}const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2){if(!f2.prompt.tags)f2.prompt.tags=[];f2.prompt.tags.push(n)}tI.value='';await save(d,{hist:false});Toast.show('Tag "'+n+'" aggiunto!','ok',1500)};
+    tA.addEventListener('click',addTag,{signal:sig});tI.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTag()}},{signal:sig});
+    // Variables
+    const iv=exVars(p.description||'');renderVars(iv,col);
+    dA.addEventListener('input',()=>{S.dirty=true;renderVars(exVars(dA.innerText),col)},{signal:sig});
+    // Edit toggle
+    const toggleEdit=on=>{dA.contentEditable=on?'true':'false';fB2.classList.toggle('show',on);sB.classList.toggle('show',on);eB.classList.toggle('show',on);if(on)dA.focus()};
+    col.querySelector('[data-a="edit"]').addEventListener('click',()=>{const ed=dA.contentEditable==='true';if(ed){S.dirty=false;toggleEdit(false);Toast.show('Editing chiuso.','',1500)}else toggleEdit(true)},{signal:sig});
+    // Save
+    const doSave=async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.description=dA.innerHTML;toggleEdit(false);S.dirty=false;await save(d);Toast.show('Salvato!','ok')};
+    sB.addEventListener('click',doSave,{signal:sig});
+    // Formatting
+    let linkRange=null,colorRange=null;
+    col.querySelectorAll('#fB2 button[data-cmd]').forEach(btn=>{btn.addEventListener('click',async e=>{e.preventDefault();const cmd=btn.dataset.cmd;
+        if(cmd==='createLink'){const sel=window.getSelection();if(!sel.rangeCount||!sel.toString().length){Toast.show('Seleziona il testo.','er');return}linkRange=sel.getRangeAt(0);const url=await Modal.link();if(!url||url.length<4){linkRange=null;return}let fu=url;if(!/^[a-zA-Z]+:\/\//.test(fu))fu='https://'+fu;if(fu.trim().toLowerCase().startsWith('javascript:')){Toast.show('URL non sicuro.','er');linkRange=null;return}if(linkRange){const s2=window.getSelection();s2.removeAllRanges();s2.addRange(linkRange);document.execCommand('insertHTML',false,'<a href="'+esc(fu)+'" target="_blank">'+esc(linkRange.toString())+'</a>');linkRange=null;Toast.show('Link creato!','ok',1500)}}
+        else if(cmd==='fontSizeUp')document.execCommand('fontSize',false,'7');
+        else if(cmd==='fontSizeDown')document.execCommand('fontSize',false,'1');
+        else if(cmd==='insertImage')$('fI').click();
+        else document.execCommand(cmd,false,null);
+        if(cmd!=='createLink')dA.focus();
+    },{signal:sig})});
+    // Color
+    const cP=col.querySelector('#cP');col.querySelector('#cB').addEventListener('click',()=>{const sel=window.getSelection();colorRange=(sel.rangeCount&&sel.toString().length)?sel.getRangeAt(0):null;cP.click()},{signal:sig});
+    cP.addEventListener('change',()=>{dA.focus();if(colorRange){const s=window.getSelection();s.removeAllRanges();s.addRange(colorRange)}document.execCommand('foreColor',false,cP.value);colorRange=null},{signal:sig});
+    // Copy
+    col.querySelector('[data-a="copy"]').addEventListener('click',()=>{let t=dA.innerText;col.querySelectorAll('.vi,.vse').forEach(i=>{const n=i.dataset.variable,v=i.value.trim();if(v){const e=escRe(n);t=t.replace(new RegExp('(\\{\\{|\\[|\\{)\\s*'+e+'(\\s*|:.*?)(\\]|\\}\\}|\\})','g'),v)}});navigator.clipboard.writeText(t).then(()=>Toast.show('Copiato!','ok'),()=>Toast.show('Errore copia.','er'))},{signal:sig});
+    // Favorite
+    col.querySelector('[data-a="fav"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.favorite=!f2.prompt.favorite;await save(d,{hist:false})},{signal:sig});
+    // Delete
+    col.querySelector('[data-a="del"]').addEventListener('click',async()=>{if(!await Modal.confirm('Elimina Prompt','Eliminare "'+p.title+'"?'))return;const d=structuredClone(S.allData);const f2=FP(d,p.id);if(!f2)return;const idx=f2.sub.prompts.findIndex(x=>x.id===p.id);if(idx!==-1)f2.sub.prompts.splice(idx,1);S.recents=S.recents.filter(r=>r.pid!==p.id);const nx=f2.sub.prompts[idx]||f2.sub.prompts[idx-1]||f2.sub.prompts[0];await save(d,{ids:{pid:nx?.id||null}});Toast.show('Eliminato.','')},{signal:sig});
+    // Quick save Best & Prova
+    const quickSave=async(target,useSrc)=>{Loader.show();try{const content=dA.innerHTML||p.description,d=structuredClone(S.allData);
+        let ci=d.findIndex(c=>c.name.trim().toLowerCase()===target.toLowerCase());if(ci===-1){d.push({id:uid(),name:target,subcategories:[]});ci=d.length-1}if(!d[ci].subcategories)d[ci].subcategories=[];
+        const tsn=useSrc?sub.name:'Inbox';let si=d[ci].subcategories.findIndex(s=>s.name.trim().toLowerCase()===tsn.trim().toLowerCase());if(si===-1){d[ci].subcategories.push({id:uid(),name:tsn,prompts:[]});si=d[ci].subcategories.length-1}if(!d[ci].subcategories[si].prompts)d[ci].subcategories[si].prompts=[];
+        d[ci].subcategories[si].prompts.push({id:uid(),title:p.title+' (Copy)',description:content,favorite:false,tags:[...(p.tags||[])]});
+        await save(d,{hist:false});Toast.show('Salvato in '+d[ci].name+' > '+tsn+'!','ok')}catch(e){Toast.show('Errore.','er')}finally{Loader.hide()}};
+    col.querySelector('[data-a="best"]').addEventListener('click',()=>quickSave('Best',true),{signal:sig});
+    col.querySelector('[data-a="prova"]').addEventListener('click',()=>quickSave('Prova',false),{signal:sig});
+    // Move
+    col.querySelector('[data-a="move"]').addEventListener('click',async()=>{
+        const result=await Modal.move(S.allData,cat.id,sub.id);if(!result)return;
+        if(result.catId===cat.id&&result.subId===sub.id){Toast.show('Stessa posizione.','');return}
+        const d=structuredClone(S.allData),srcF=FP(d,p.id);if(!srcF)return;
+        const idx=srcF.sub.prompts.findIndex(x=>x.id===p.id);if(idx===-1)return;
+        const moved=srcF.sub.prompts.splice(idx,1)[0];
+        const tgtSub=FS(d,result.catId,result.subId);if(!tgtSub){Toast.show('Destinazione non trovata.','er');return}
+        if(!tgtSub.prompts)tgtSub.prompts=[];tgtSub.prompts.push(moved);
+        await save(d,{ids:{catId:result.catId,subId:result.subId,pid:moved.id,view:'columns'}});Toast.show('Spostato!','ok')},{signal:sig});
+    // Rename
+    col.querySelector('[data-a="ren"]').addEventListener('click',async()=>{const n=await Modal.prompt('Rinomina Prompt','Nuovo titolo',p.title);if(!n)return;const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.title=n;await save(d);Toast.show('Rinominato!','ok')},{signal:sig});
+    // Paste plain
+    dA.addEventListener('paste',e=>{e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData('text/plain');if(t)document.execCommand('insertText',false,t)},{signal:sig});
+    // Drag & drop
+    dA.addEventListener('dragover',e=>{if(dA.contentEditable==='true'){e.preventDefault();dA.classList.add('drag-over')}},{signal:sig});
+    dA.addEventListener('dragleave',()=>dA.classList.remove('drag-over'),{signal:sig});
+    dA.addEventListener('drop',e=>{dA.classList.remove('drag-over');if(dA.contentEditable==='true'&&e.dataTransfer.types.includes('Files')){e.preventDefault();if(e.dataTransfer.files.length>0)insImg(e.dataTransfer.files[0])}},{signal:sig});
+    $('fI').addEventListener('change',e=>{if(e.target.files.length>0)insImg(e.target.files[0]);e.target.value='';},{signal:sig});
+    if(S.editNew){toggleEdit(true);S.editNew=false}
+}
+
+function renderVars(vars,col){
+    const s=col.querySelector('#vS');if(!s)return;if(!vars.length){s.classList.remove('ac');s.innerHTML='';return}
+    const ex={};s.querySelectorAll('.vi,.vse').forEach(el=>{ex[el.dataset.variable]=el.value});
+    s.innerHTML='<div class="vl">Variabili Dinamiche</div>';
+    vars.forEach(v=>{const g=document.createElement('div');g.className='vg';const l=document.createElement('div');l.className='vn';l.textContent=v.name;l.title=v.name;
+        let i;if(v.options?.length){i=document.createElement('select');i.className='vse';v.options.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;i.appendChild(op)})}
+        else{i=document.createElement('input');i.type='text';i.className='vi';i.placeholder='Valore per '+v.name;if(v.defaultValue)i.value=v.defaultValue}
+        i.dataset.variable=v.name;if(ex[v.name]!==undefined)i.value=ex[v.name];g.appendChild(l);g.appendChild(i);s.appendChild(g)});s.classList.add('ac');
+}
+function insImg(file){if(!file.type.startsWith('image/')){Toast.show("Non \u00E8 un'immagine.",'er');return}if(file.size>2*1024*1024){Toast.show('Max 2MB.','er');return}const r=new FileReader();r.onload=e=>{document.execCommand('insertHTML',false,'<img src="'+e.target.result+'" style="max-width:100%;height:auto;display:block;margin:8px 0;border-radius:8px" alt="Immagine">');Toast.show('Immagine inserita.','ok',1500)};r.readAsDataURL(file)}
+
+function renderSpec(type){
+    const titles={favorites:'\u2B50 Preferiti',recents:'\uD83D\uDD52 Recenti'};const col=$('cL');
+    col.innerHTML='<div class="ch"><h3>'+titles[type]+'</h3></div><div class="cl" role="listbox"></div>';
+    let items=[];
+    if(type==='favorites'){S.allData.forEach(c=>c.subcategories?.forEach(s=>s.prompts?.forEach(p=>{if(p.favorite)items.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id})})));items.sort((a,b)=>a.title.localeCompare(b.title))}
+    else{S.recents.forEach(r=>{const f=FP(S.allData,r.pid);if(f)items.push({...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts})});items.sort((a,b)=>(b.ts||0)-(a.ts||0))}
+    const list=col.querySelector('.cl');
+    if(!items.length){list.innerHTML='<div class="em">Nessun elemento</div>';$('cD').innerHTML='<div class="em">Nessun prompt</div>';S.pid=null;return}
+    if(!items.find(x=>x.id===S.pid)){S.pid=items[0].id;S.catId=items[0].ci;S.subId=items[0].si}
+    items.forEach(p=>mkItem(list,p));renderDet();
+}
+
+function renderTags(){
+    const col=$('cL');col.innerHTML='<div class="ch"><h3>\uD83C\uDFF7\uFE0F Tag</h3></div><div class="cl" role="listbox"></div>';
+    const allT=new Set();S.allData.forEach(c=>c.subcategories?.forEach(s=>s.prompts?.forEach(p=>{(p.tags||[]).forEach(t=>allT.add(t))})));
+    const list=col.querySelector('.cl');
+    if(!allT.size){list.innerHTML='<div class="em">Nessun tag</div>';$('cD').innerHTML='<div class="em">Aggiungi tag ai prompt</div>';return}
+    const sorted=[...allT].sort();if(!S.tag||!allT.has(S.tag))S.tag=sorted[0];
+    sorted.forEach(tag=>{const el=document.createElement('div');el.className='it'+(tag===S.tag?' ac':'');el.tabIndex=0;el.innerHTML='<span class="tg" style="background:'+tc(tag)+'">'+esc(tag)+'</span>';el.onclick=()=>{S.tag=tag;renderTags()};list.appendChild(el)});
+    const dc=$('cD');dc.innerHTML='<div class="ch"><h3>Tag: <span class="tg" style="background:'+tc(S.tag)+'">'+esc(S.tag)+'</span></h3></div><div class="cl" role="listbox"></div>';
+    const dl=dc.querySelector('.cl'),ti=[];
+    S.allData.forEach(c=>c.subcategories?.forEach(s=>s.prompts?.forEach(p=>{if(p.tags?.includes(S.tag))ti.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id})})));ti.sort((a,b)=>a.title.localeCompare(b.title));
+    if(!ti.length){dl.innerHTML='<div class="em">Nessun prompt</div>';return}
+    ti.forEach(p=>{const el=document.createElement('div');el.className='it';el.tabIndex=0;el.innerHTML='<div class="in">'+esc(p.title)+'</div><div class="ip">'+esc(p.cn)+' \u203A '+esc(p.sn)+'</div>';el.onclick=async()=>{if(!await dirtyCheck())return;S.catId=p.ci;S.subId=p.si;S.pid=p.id;S.view='columns';trackR(p.id,p.si,p.ci);render()};dl.appendChild(el)});
+}
+
+function renderSearch(){
+    const q=sI.value.toLowerCase().trim(),col=$('cL');
+    col.innerHTML='<div class="ch"><h3>\uD83D\uDD0D "'+esc(q)+'"</h3></div><div class="cl" role="listbox"></div>';
+    if(!q){col.querySelector('.cl').innerHTML='<div class="em">Digita per cercare...</div>';$('cD').innerHTML='<div class="em"></div>';return}
+    const items=[];S.allData.forEach(c=>c.subcategories?.forEach(s=>s.prompts?.forEach(p=>{const tmp=document.createElement('div');tmp.innerHTML=p.description||'';const desc=tmp.textContent.toLowerCase();if(p.title.toLowerCase().includes(q)||desc.includes(q)||p.tags?.some(t=>t.includes(q)))items.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id})})));
+    items.sort((a,b)=>a.title.localeCompare(b.title));const list=col.querySelector('.cl');
+    if(!items.length){list.innerHTML='<div class="em">Nessun risultato</div>';$('cD').innerHTML='<div class="em">Prova altro termine</div>';return}
+    if(!items.find(x=>x.id===S.pid)&&items.length){S.pid=items[0].id;S.catId=items[0].ci;S.subId=items[0].si}
+    items.forEach(p=>mkItem(list,p));renderDet();
+}
+
+function mkItem(container,p){
+    const el=document.createElement('div');el.className='it'+(p.id===S.pid?' ac':'');el.tabIndex=0;
+    let th='';if(p.tags?.length)th='<div class="tr">'+p.tags.map(t=>'<span class="tg" style="background:'+tc(t)+'">'+esc(t)+'</span>').join('')+'</div>';
+    el.innerHTML='<div class="in">'+esc(p.title)+'</div>'+(p.cn?'<div class="ip">'+esc(p.cn)+' \u203A '+esc(p.sn)+'</div>':'')+th;
+    el.onclick=async()=>{if(!await dirtyCheck())return;S.catId=p.ci;S.subId=p.si;S.pid=p.id;trackR(p.id,p.si,p.ci);render()};
+    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}};container.appendChild(el);
+}
+
+function doBackup(){if(!S.allData.length){Toast.show('Nessun dato.','er');return}const b=new Blob([JSON.stringify(S.allData,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='prompt_backup_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);Toast.show('Backup scaricato!','ok')}
+
+function doImport(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async ev=>{try{
+        const data=JSON.parse(ev.target.result);
+        if(!validate(data)){Toast.show('Formato JSON non valido.','er',5000);return}
+        S.catId=data[0]?.id||null;S.subId=data[0]?.subcategories?.[0]?.id||null;S.pid=data[0]?.subcategories?.[0]?.prompts?.[0]?.id||null;S.view='columns';
+        await save(data,{hist:false});Toast.show('Importazione riuscita!','ok');
+    }catch(err){console.error(err);Toast.show('Errore parsing JSON.','er')}};
+    reader.readAsText(file);e.target.value='';
+}
+
+function setup(){
+    const t=localStorage.getItem('pmTheme')||'dark';document.documentElement.setAttribute('data-theme',t);
+    $('thB').innerHTML=t==='dark'?'<i class="fa-solid fa-moon"></i>':'<i class="fa-solid fa-sun"></i>';
+    $('thB').onclick=()=>{const c=document.documentElement.getAttribute('data-theme'),n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('pmTheme',n);$('thB').innerHTML=n==='dark'?'<i class="fa-solid fa-moon"></i>':'<i class="fa-solid fa-sun"></i>'};
+    cS.onchange=async()=>{if(!await dirtyCheck()){renderDD();return}const v=cS.value;if(['favorites','recents','tags','search'].includes(v)){S.view=v;S.pid=null}else{S.view='columns';S.catId=v;const c=FC(S.allData,v),fs=c?.subcategories?.[0];S.subId=fs?.id||null;S.pid=fs?.prompts?.[0]?.id||null}render()};
+    let st;sI.oninput=()=>{clearTimeout(st);st=setTimeout(()=>{S.view=sI.value.trim().length>0?'search':'columns';render()},250)};
+    const tm=$('toM');$('toB').onclick=e=>{e.stopPropagation();tm.classList.toggle('show')};window.addEventListener('click',()=>tm.classList.remove('show'));
+    $('bAC').onclick=async()=>{const n=await Modal.prompt('Nuova Categoria','Nome');if(!n)return;const nc={id:uid(),name:n,subcategories:[]};await save([...S.allData,nc],{ids:{view:'columns',catId:nc.id,subId:null,pid:null}});Toast.show('"'+n+'" creata!','ok')};
+    $('bU').onclick=doUndo;$('bR').onclick=doRedo;$('bBk').onclick=doBackup;
+    $('bIm').onclick=()=>$('fB').click();$('fB').onchange=doImport;
+    document.addEventListener('keydown',e=>{
+        const isIn=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+        const isEd=document.activeElement?.contentEditable==='true';
+        if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();const sb=document.querySelector('.fs.show');if(sb)sb.click()}
+        if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey&&!isEd){e.preventDefault();doUndo()}
+        if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))&&!isEd){e.preventDefault();doRedo()}
+        if((e.ctrlKey||e.metaKey)&&e.key==='f'){e.preventDefault();sI.focus()}
+        if((e.ctrlKey||e.metaKey)&&e.key==='n'&&!isIn&&!isEd){e.preventDefault();document.querySelector('[data-a="ap"]')?.click()}
+        if(e.key==='Escape'){Modal.closeAll();const d=document.querySelector('.dd[contenteditable="true"]');if(d){d.contentEditable='false';document.querySelector('.fb')?.classList.remove('show');document.querySelector('.fs')?.classList.remove('show');document.querySelector('.eb')?.classList.remove('show');S.dirty=false}}
+    });
+    setInterval(()=>{if(S.allData.length)DB.bk(S.allData)},10*60*1000);
+}
+
+async function init(){
+    Loader.show();try{
+        await DB.init();Modal.init();S.allData=await DB.load();S.recents=await DB.loadR();
+        if(!S.allData.length){S.allData=[{id:uid(),name:'AI Generative',subcategories:[{id:uid(),name:'Esempio',prompts:[{id:uid(),title:'Benvenuto',description:'Benvenuto in Prompt Studio v21!<br><br>Prova le variabili: {{Argomento}} con tono {{Tono:Formale|Amichevole|Divertente}}.<br>Lingua: {Lingua:Italiano}.',favorite:true,tags:['info']}]}]}];await DB.save(S.allData)}
+        setup();render();DB.bk(S.allData);
+    }catch(e){console.error(e);Toast.show('Errore inizializzazione.','er')}finally{Loader.hide()}
+}
+init();
 })();
 </script>
 </body>
