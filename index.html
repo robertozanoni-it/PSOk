@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v21</title>
+<title>Prompt Studio v21 - Fixed</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
 
@@ -147,7 +147,11 @@ const Modal={
         this._mr=r;const cs=$('mvC'),ss=$('mvS');cs.innerHTML='';
         cats.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;cs.appendChild(o)});
         cs.value=curCat||cats[0]?.id;
-        const fill=()=>{ss.innerHTML='';const cat=cats.find(c=>c.id===cs.value);(cat?.subcategories||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;ss.appendChild(o)})};
+        const fill=()=>{ss.innerHTML='';const cat=cats.find(c=>c.id===cs.value);(cat?.subcategories||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;ss.appendChild(o)});
+        if(cat?.subcategories?.length && curSub){
+            const hasCurSub = cat.subcategories.find(s=>s.id===curSub);
+            if(hasCurSub) ss.value=curSub;
+        }};
         fill();cs.onchange=fill;$('mM').classList.add('show')})},
     _cm(v){$('mM').classList.remove('show');if(this._mr){this._mr(v);this._mr=null}},
     closeAll(){this._ci(null);this._cc(false);this._cl(null);this._cm(null)},
@@ -334,16 +338,42 @@ function renderDet(){
         await save(d,{hist:false});Toast.show('Salvato in '+d[ci].name+' > '+tsn+'!','ok')}catch(e){Toast.show('Errore.','er')}finally{Loader.hide()}};
     col.querySelector('[data-a="best"]').addEventListener('click',()=>quickSave('Best',true),{signal:sig});
     col.querySelector('[data-a="prova"]').addEventListener('click',()=>quickSave('Prova',false),{signal:sig});
-    // Move
+    // Move - BUG FIX: Aggiunto controllo subcategories
     col.querySelector('[data-a="move"]').addEventListener('click',async()=>{
-        const result=await Modal.move(S.allData,cat.id,sub.id);if(!result)return;
+        const result=await Modal.move(S.allData,cat.id,sub.id);
+        if(!result)return;
         if(result.catId===cat.id&&result.subId===sub.id){Toast.show('Stessa posizione.','');return}
-        const d=structuredClone(S.allData),srcF=FP(d,p.id);if(!srcF)return;
-        const idx=srcF.sub.prompts.findIndex(x=>x.id===p.id);if(idx===-1)return;
+        
+        const d=structuredClone(S.allData);
+        const srcF=FP(d,p.id);
+        if(!srcF)return;
+        
+        const idx=srcF.sub.prompts.findIndex(x=>x.id===p.id);
+        if(idx===-1)return;
+        
         const moved=srcF.sub.prompts.splice(idx,1)[0];
-        const tgtSub=FS(d,result.catId,result.subId);if(!tgtSub){Toast.show('Destinazione non trovata.','er');return}
-        if(!tgtSub.prompts)tgtSub.prompts=[];tgtSub.prompts.push(moved);
-        await save(d,{ids:{catId:result.catId,subId:result.subId,pid:moved.id,view:'columns'}});Toast.show('Spostato!','ok')},{signal:sig});
+        
+        const tgtCat=FC(d,result.catId);
+        if(!tgtCat){Toast.show('Categoria destinazione non trovata.','er');return}
+        
+        // BUG FIX: Assicura che subcategories esista
+        if(!tgtCat.subcategories){
+            tgtCat.subcategories=[];
+        }
+        
+        const tgtSub=tgtCat.subcategories.find(s=>s.id===result.subId);
+        if(!tgtSub){Toast.show('Sottocategoria destinazione non trovata.','er');return}
+        
+        // BUG FIX: Assicura che prompts esista
+        if(!tgtSub.prompts){
+            tgtSub.prompts=[];
+        }
+        
+        tgtSub.prompts.push(moved);
+        
+        await save(d,{ids:{catId:result.catId,subId:result.subId,pid:moved.id,view:'columns'}});
+        Toast.show('Spostato!','ok');
+    },{signal:sig});
     // Rename
     col.querySelector('[data-a="ren"]').addEventListener('click',async()=>{const n=await Modal.prompt('Rinomina Prompt','Nuovo titolo',p.title);if(!n)return;const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.title=n;await save(d);Toast.show('Rinominato!','ok')},{signal:sig});
     // Paste plain
