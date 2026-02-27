@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v23</title>
+<title>Prompt Studio v24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -125,7 +125,7 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  height: 56px;
+  height: 62px;
   flex-shrink: 0;
   z-index: 100;
   position: relative;
@@ -133,7 +133,7 @@ body {
 
 .logo {
   font-family: var(--font-head);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -.5px;
   color: var(--t1);
@@ -216,21 +216,36 @@ body {
 /* Header right actions */
 .hr { display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0 }
 
-/* Icon buttons — cleaner, more minimal */
+/* Icon buttons — colored per function, vivid hover */
 .ib {
   background: transparent;
   border: none;
-  color: var(--t3);
   border-radius: var(--r-md);
-  width: 36px; height: 36px;
+  width: 40px; height: 40px;
   display: flex; align-items:center; justify-content:center;
   cursor: pointer;
-  font-size: 15px;
-  transition: color var(--tr), background var(--tr);
+  font-size: 17px;
+  transition: color var(--tr), background var(--tr), box-shadow var(--tr), transform var(--tr);
   position: relative;
 }
-.ib:hover { color: var(--t1); background: var(--el) }
+.ib:hover { transform: translateY(-1px) }
 .ib.active { color: var(--ac) }
+
+/* Individual icon colors */
+.ib-theme  { color: #a78bfa }
+.ib-theme:hover  { color: #c4b5fd; background: rgba(167,139,250,.15); box-shadow: 0 0 12px rgba(167,139,250,.25) }
+
+.ib-settings { color: #94a3b8 }
+.ib-settings:hover { color: #e2e8f0; background: rgba(148,163,184,.15); box-shadow: 0 0 12px rgba(148,163,184,.2) }
+
+.ib-stats  { color: #34d399 }
+.ib-stats:hover  { color: #6ee7b7; background: rgba(52,211,153,.15); box-shadow: 0 0 12px rgba(52,211,153,.3) }
+
+.ib-snip   { color: #f59e0b }
+.ib-snip:hover   { color: #fcd34d; background: rgba(245,158,11,.15); box-shadow: 0 0 12px rgba(245,158,11,.3) }
+
+.ib-tools  { color: #fb923c }
+.ib-tools:hover  { color: #fdba74; background: rgba(251,146,60,.15); box-shadow: 0 0 12px rgba(251,146,60,.3) }
 
 /* Divider in header */
 .hdiv { width:1px; height:24px; background:var(--bd2); margin:0 4px }
@@ -314,12 +329,12 @@ body {
   border-bottom: 1px solid var(--bd);
   flex-shrink: 0;
   gap: 8px;
-  min-height: 52px;
+  min-height: 58px;
 }
 .chl { display:flex; align-items:center; gap:8px; overflow:hidden; min-width:0 }
 .ch h3 {
   font-family: var(--font-head);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--t2);
   white-space: nowrap;
@@ -374,14 +389,14 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   padding: 5px;
   border-radius: var(--r-sm);
-  transition: color var(--tr), background var(--tr);
+  transition: color var(--tr), background var(--tr), box-shadow var(--tr);
   flex-shrink: 0;
 }
-.sb:hover { color: var(--ac); background: var(--acg) }
-.sb.dg:hover { color: var(--rd); background: rgba(248,113,113,.12) }
+.sb:hover { color: #93c5fd; background: rgba(96,165,250,.15); box-shadow: 0 0 8px rgba(96,165,250,.2) }
+.sb.dg:hover { color: #fca5a5; background: rgba(248,113,113,.15); box-shadow: 0 0 8px rgba(248,113,113,.25) }
 
 /* ═══════════════════════════════════════════
    LIST ITEMS
@@ -419,17 +434,17 @@ body {
 .it.is-fav .fav-icon { display: block }
 
 .in {
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--t1);
   transition: color var(--tr);
 }
-.ip { font-size: 11px; color: var(--t3); margin-top: 3px }
+.ip { font-size: 12px; color: var(--t3); margin-top: 3px }
 .iv {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--t3);
   margin-top: 4px;
   overflow: hidden;
@@ -486,28 +501,85 @@ body {
 }
 .dh h3 {
   font-family: var(--font-head);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--t3);
   white-space: nowrap;
 }
 
-/* Action buttons in detail */
+/* Action buttons in detail — colored per function */
 .da { display:flex; gap:2px; align-items:center; flex-wrap:wrap }
 .da button {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--t3);
   padding: 7px;
   border-radius: var(--r-sm);
-  transition: color var(--tr), background var(--tr);
-  min-width: 30px; min-height: 30px;
+  transition: color var(--tr), background var(--tr), box-shadow var(--tr), transform var(--tr);
+  min-width: 32px; min-height: 32px;
   display: flex; align-items:center; justify-content:center;
 }
-.da button:hover { color: var(--t1); background: var(--el) }
+.da button:hover { transform: translateY(-1px) }
+
+/* Edit — blue */
+.da [data-a="edit"]         { color: #60a5fa }
+.da [data-a="edit"]:hover   { color: #93c5fd; background: rgba(96,165,250,.15); box-shadow: 0 0 10px rgba(96,165,250,.25) }
+
+/* Copy — green */
+.da [data-a="copy"]         { color: #34d399 }
+.da [data-a="copy"]:hover   { color: #6ee7b7; background: rgba(52,211,153,.15); box-shadow: 0 0 10px rgba(52,211,153,.25) }
+
+/* Duplicate — cyan */
+.da [data-a="dup"]          { color: #22d3ee }
+.da [data-a="dup"]:hover    { color: #67e8f9; background: rgba(34,211,238,.15); box-shadow: 0 0 10px rgba(34,211,238,.25) }
+
+/* Favorite — yellow */
+.da [data-a="fav"]          { color: var(--yl) }
+.da [data-a="fav"]:hover    { color: #fde68a; background: rgba(251,191,36,.15); box-shadow: 0 0 10px rgba(251,191,36,.3) }
+
+/* Pin — amber */
+.da [data-a="pin"]          { color: #fb923c }
+.da [data-a="pin"]:hover    { color: #fdba74; background: rgba(251,146,60,.15); box-shadow: 0 0 10px rgba(251,146,60,.25) }
+
+/* Versions — purple */
+.da [data-a="ver"]          { color: #a78bfa }
+.da [data-a="ver"]:hover    { color: #c4b5fd; background: rgba(167,139,250,.15); box-shadow: 0 0 10px rgba(167,139,250,.25) }
+
+/* Best — gold */
+.da [data-a="best"]         { color: var(--gd) }
+.da [data-a="best"]:hover   { color: #fde68a; background: rgba(251,191,36,.15); box-shadow: 0 0 10px rgba(251,191,36,.3) }
+
+/* Prova — pink */
+.da [data-a="prova"]        { color: #f472b6 }
+.da [data-a="prova"]:hover  { color: #f9a8d4; background: rgba(244,114,182,.15); box-shadow: 0 0 10px rgba(244,114,182,.25) }
+
+/* Move — indigo */
+.da [data-a="move"]         { color: #818cf8 }
+.da [data-a="move"]:hover   { color: #a5b4fc; background: rgba(129,140,248,.15); box-shadow: 0 0 10px rgba(129,140,248,.25) }
+
+/* Link — sky */
+.da [data-a="link"]         { color: #38bdf8 }
+.da [data-a="link"]:hover   { color: #7dd3fc; background: rgba(56,189,248,.15); box-shadow: 0 0 10px rgba(56,189,248,.25) }
+
+/* Share — teal */
+.da [data-a="share"]        { color: #2dd4bf }
+.da [data-a="share"]:hover  { color: #5eead4; background: rgba(45,212,191,.15); box-shadow: 0 0 10px rgba(45,212,191,.25) }
+
+/* Focus — slate */
+.da [data-a="focus"]        { color: #94a3b8 }
+.da [data-a="focus"]:hover  { color: #cbd5e1; background: rgba(148,163,184,.15); box-shadow: 0 0 10px rgba(148,163,184,.2) }
+
+/* Delete — red */
+.da [data-a="del"]          { color: #f87171 }
+.da [data-a="del"]:hover    { color: #fca5a5; background: rgba(248,113,113,.15); box-shadow: 0 0 10px rgba(248,113,113,.3) }
+
+/* Rename */
+.da [data-a="ren"]          { color: #94a3b8 }
+.da [data-a="ren"]:hover    { color: #e2e8f0; background: rgba(148,163,184,.12) }
+
 .da .ys { color: var(--yl) !important }
 .da .gt { color: var(--gd) !important }
 .da .pv { color: var(--pk) !important }
@@ -518,7 +590,7 @@ body {
   padding: 8px 18px;
   background: var(--sf2);
   border-bottom: 1px solid var(--bd);
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--t3);
   display: flex;
   align-items: center;
@@ -546,7 +618,7 @@ body {
 }
 .dti h1 {
   font-family: var(--font-head);
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 700;
   margin: 0;
   flex: 1;
@@ -561,11 +633,11 @@ body {
   padding: 8px 18px;
   background: var(--sf2);
   border-bottom: 1px solid var(--bd);
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--t3);
   line-height: 1.6;
   display: flex;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
   align-items: center;
   flex-shrink: 0;
@@ -574,13 +646,13 @@ body {
 .di-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
+  gap: 5px;
+  padding: 3px 10px;
   background: var(--el);
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
 }
-.di-chip i { font-size: 9px; opacity:.7 }
+.di-chip i { font-size: 10px; opacity:.7 }
 
 /* Tags section */
 .tgs {
@@ -1174,13 +1246,13 @@ body.focus-mode .co:not(.focus-target) { display:none }
 
   <div class="hr">
     <div class="hdiv"></div>
-    <button class="ib" id="thB" title="Cambia tema"><i class="fa-solid fa-moon"></i></button>
-    <button class="ib" id="stBtn" title="Impostazioni"><i class="fa-solid fa-gear"></i></button>
-    <button class="ib" id="statsBtn" title="Analytics"><i class="fa-solid fa-chart-bar"></i></button>
-    <button class="ib" id="snipBtn" title="Snippet"><i class="fa-solid fa-puzzle-piece"></i></button>
+    <button class="ib ib-theme" id="thB" title="Cambia tema"><i class="fa-solid fa-moon"></i></button>
+    <button class="ib ib-settings" id="stBtn" title="Impostazioni"><i class="fa-solid fa-gear"></i></button>
+    <button class="ib ib-stats" id="statsBtn" title="Analytics"><i class="fa-solid fa-chart-bar"></i></button>
+    <button class="ib ib-snip" id="snipBtn" title="Snippet"><i class="fa-solid fa-puzzle-piece"></i></button>
     <div class="hdiv"></div>
     <div class="tw">
-      <button class="ib" id="toB" title="Strumenti"><i class="fa-solid fa-screwdriver-wrench"></i></button>
+      <button class="ib ib-tools" id="toB" title="Strumenti"><i class="fa-solid fa-screwdriver-wrench"></i></button>
       <div class="tm" id="toM" role="menu">
         <div class="tm-grid">
           <button class="tb" style="background:var(--gn)" id="bAC"><i class="fa-solid fa-plus"></i>Nuova Categoria</button>
