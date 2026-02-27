@@ -28,9 +28,9 @@
   --ac-glow:   0 0 20px rgba(124,111,255,.35);
 
   /* Text */
-  --t1: #f0f2ff;
-  --t2: #9ba3c4;
-  --t3: #4a5070;
+  --t1: #f4f6ff;
+  --t2: #c0c8e4;
+  --t3: #7b84a8;
 
   /* Status */
   --gn:  #34d399;
@@ -59,7 +59,7 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Sizing */
-  --font-size:   15px;
+  --font-size:   16px;
   --item-pad:    10px 14px;
   --gap:         6px;
   --hpad:        14px 18px;
@@ -133,7 +133,7 @@ body {
 
 .logo {
   font-family: var(--font-head);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -.5px;
   color: var(--t1);
@@ -178,7 +178,7 @@ body {
   border: 1px solid var(--bd);
   border-radius: var(--r-xl);
   padding: 8px 14px 8px 34px;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--t1);
   outline: none;
   font-family: var(--font-ui);
@@ -198,7 +198,7 @@ body {
   border-radius: var(--r-md);
   color: var(--t1);
   padding: 8px 30px 8px 12px;
-  font-size: 13.5px;
+  font-size: 15px;
   font-family: var(--font-ui);
   font-weight: 500;
   appearance: none;
@@ -224,7 +224,7 @@ body {
   width: 40px; height: 40px;
   display: flex; align-items:center; justify-content:center;
   cursor: pointer;
-  font-size: 17px;
+  font-size: 19px;
   transition: color var(--tr), background var(--tr), box-shadow var(--tr), transform var(--tr);
   position: relative;
 }
@@ -276,7 +276,7 @@ body {
   border: none;
   border-radius: var(--r-md);
   padding: 10px 6px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   font-family: var(--font-ui);
   cursor: pointer;
@@ -334,9 +334,9 @@ body {
 .chl { display:flex; align-items:center; gap:8px; overflow:hidden; min-width:0 }
 .ch h3 {
   font-family: var(--font-head);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--t2);
+  color: var(--t1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -346,7 +346,7 @@ body {
 .cnt {
   background: var(--acg);
   color: var(--ac);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   font-family: var(--font-mono);
   padding: 2px 7px;
@@ -361,7 +361,7 @@ body {
   border: none;
   border-radius: var(--r-md);
   padding: 7px 13px;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -385,11 +385,11 @@ body {
 
 /* Small icon buttons */
 .sb {
-  color: var(--t3);
+  color: var(--t2);
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   padding: 5px;
   border-radius: var(--r-sm);
   transition: color var(--tr), background var(--tr), box-shadow var(--tr);
@@ -434,7 +434,7 @@ body {
 .it.is-fav .fav-icon { display: block }
 
 .in {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -442,10 +442,10 @@ body {
   color: var(--t1);
   transition: color var(--tr);
 }
-.ip { font-size: 12px; color: var(--t3); margin-top: 3px }
+.ip { font-size: 13px; color: var(--t2); margin-top: 3px }
 .iv {
-  font-size: 13px;
-  color: var(--t3);
+  font-size: 14px;
+  color: var(--t2);
   margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -459,7 +459,7 @@ body {
   display: inline-block;
   padding: 2px 7px;
   border-radius: 20px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -472,7 +472,7 @@ body {
   gap: 5px;
   padding: 4px 10px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #fff;
   cursor: pointer;
@@ -501,10 +501,10 @@ body {
 }
 .dh h3 {
   font-family: var(--font-head);
-  font-size: 13px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: .08em;
-  color: var(--t3);
+  color: var(--t2);
   white-space: nowrap;
 }
 
@@ -514,7 +514,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 17px;
   color: var(--t3);
   padding: 7px;
   border-radius: var(--r-sm);
@@ -590,8 +590,8 @@ body {
   padding: 8px 18px;
   background: var(--sf2);
   border-bottom: 1px solid var(--bd);
-  font-size: 13px;
-  color: var(--t3);
+  font-size: 14px;
+  color: var(--t2);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -618,7 +618,7 @@ body {
 }
 .dti h1 {
   font-family: var(--font-head);
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
   margin: 0;
   flex: 1;
@@ -633,8 +633,8 @@ body {
   padding: 8px 18px;
   background: var(--sf2);
   border-bottom: 1px solid var(--bd);
-  font-size: 12.5px;
-  color: var(--t3);
+  font-size: 14px;
+  color: var(--t2);
   line-height: 1.6;
   display: flex;
   gap: 10px;
@@ -642,7 +642,7 @@ body {
   align-items: center;
   flex-shrink: 0;
 }
-.di b { color: var(--t2); font-weight: 600 }
+.di b { color: var(--t1); font-weight: 600 }
 .di-chip {
   display: flex;
   align-items: center;
@@ -650,9 +650,9 @@ body {
   padding: 3px 10px;
   background: var(--el);
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
 }
-.di-chip i { font-size: 10px; opacity:.7 }
+.di-chip i { font-size: 11px; opacity:.7 }
 
 /* Tags section */
 .tgs {
@@ -674,7 +674,7 @@ body {
   border-radius: var(--r-md);
   background: var(--el);
   color: var(--t1);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   font-family: var(--font-ui);
   transition: border-color var(--tr), box-shadow var(--tr);
@@ -687,7 +687,7 @@ body {
   border: none;
   border-radius: var(--r-md);
   cursor: pointer;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   transition: opacity var(--tr);
 }
@@ -710,7 +710,7 @@ body {
   margin-top: 4px;
 }
 .tsug.show { display: block; animation: dropdown-in var(--tr-fast) both }
-.tsug-item { padding:7px 12px; cursor:pointer; font-size:12.5px; color:var(--t2) }
+.tsug-item { padding:7px 12px; cursor:pointer; font-size:14px; color:var(--t1) }
 .tsug-item:hover { background:var(--el); color:var(--t1) }
 
 /* Variables panel */
@@ -725,7 +725,7 @@ body {
 }
 .vs.ac { display:flex }
 .vl {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   color: var(--or);
   font-weight: 700;
@@ -735,9 +735,9 @@ body {
 .vg { display:flex; align-items:center; gap:10px }
 .vn {
   min-width: 90px; max-width: 120px;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--t2);
+  color: var(--t1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -750,7 +750,7 @@ body {
   border: 1px solid var(--bd);
   border-radius: var(--r-md);
   color: var(--t1);
-  font-size: 13px;
+  font-size: 14px;
   font-family: var(--font-ui);
   transition: border-color var(--tr);
 }
@@ -770,7 +770,7 @@ body {
   border: 1px solid var(--bd);
   color: var(--t2);
   border-radius: 20px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--tr);
@@ -800,8 +800,8 @@ body {
   padding: 6px 8px;
   border-radius: var(--r-sm);
   cursor: pointer;
-  font-size: 12px;
-  color: var(--t2);
+  font-size: 13px;
+  color: var(--t1);
   transition: background var(--tr);
 }
 .ver-item:hover { background:var(--el) }
@@ -811,7 +811,7 @@ body {
   border: none;
   padding: 2px 9px;
   border-radius: 4px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   display: none;
@@ -824,7 +824,7 @@ body {
   padding: 7px 18px;
   background: rgba(251,191,36,.08);
   border-bottom: 1px solid rgba(251,191,36,.2);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--yl);
   align-items: center;
@@ -849,11 +849,11 @@ body {
 .fb button {
   background: transparent;
   border: 1px solid transparent;
-  color: var(--t2);
+  color: var(--t1);
   padding: 5px 9px;
   border-radius: var(--r-sm);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   transition: all var(--tr);
   min-height: 30px;
   display: flex;
@@ -874,7 +874,7 @@ body {
   display: none;
   margin-left: auto;
   font-weight: 700 !important;
-  font-size: 12.5px !important;
+  font-size: 14px !important;
   padding: 6px 16px !important;
   border-radius: var(--r-md) !important;
   border-color: transparent !important;
@@ -913,8 +913,8 @@ body {
   padding: 7px 18px;
   border-top: 1px solid var(--bd);
   background: var(--sf);
-  font-size: 11px;
-  color: var(--t3);
+  font-size: 12px;
+  color: var(--t2);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -954,7 +954,7 @@ body {
 }
 .mc h4 {
   font-family: var(--font-head);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
   margin-bottom: 18px;
   padding-bottom: 14px;
@@ -974,7 +974,7 @@ body {
   border-radius: var(--r-md);
   background: var(--el);
   color: var(--t1);
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
   margin-bottom: 14px;
   font-family: var(--font-ui);
@@ -988,13 +988,13 @@ body {
 }
 .mc label {
   display: block;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--t2);
+  color: var(--t1);
   margin-bottom: 7px;
   letter-spacing: .02em;
 }
-.mm { margin-bottom:18px; font-size:14px; color:var(--t2); line-height:1.6 }
+.mm { margin-bottom:18px; font-size:15px; color:var(--t1); line-height:1.6 }
 .mf { display:flex; justify-content:flex-end; gap:8px; margin-top:4px }
 .mb {
   padding: 9px 20px;
@@ -1002,7 +1002,7 @@ body {
   border-radius: var(--r-md);
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   font-family: var(--font-ui);
   transition: opacity var(--tr), transform var(--tr);
 }
@@ -1051,7 +1051,7 @@ body {
   border: 1px solid var(--bd);
 }
 .stat-num { font-family:var(--font-head); font-size:28px; font-weight:800; color:var(--ac) }
-.stat-label { font-size:11px; color:var(--t3); margin-top:4px; font-weight:500 }
+.stat-label { font-size:13px; color:var(--t2); margin-top:4px; font-weight:500 }
 
 /* ═══════════════════════════════════════════
    TOASTS
@@ -1072,7 +1072,7 @@ body {
   border-radius: var(--r-lg);
   padding: 11px 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.5);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -1122,8 +1122,8 @@ body {
 ═══════════════════════════════════════════ */
 .em {
   text-align: center;
-  color: var(--t3);
-  font-size: 13.5px;
+  color: var(--t2);
+  font-size: 15px;
   padding: 32px 16px;
   height: 100%;
   display: flex;
@@ -1133,14 +1133,14 @@ body {
   gap: 10px;
 }
 .em i { font-size: 28px; opacity:.25 }
-.em span { color: var(--t3) }
+.em span { color: var(--t2) }
 
 /* ═══════════════════════════════════════════
    SHORTCUT BAR
 ═══════════════════════════════════════════ */
 .sh {
-  font-size: 11px;
-  color: var(--t3);
+  font-size: 12px;
+  color: var(--t2);
   padding: 5px 20px;
   border-top: 1px solid var(--bd);
   background: var(--sf);
@@ -1163,8 +1163,8 @@ body {
   border-radius: 3px;
   padding: 0 5px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--t2);
+  font-size: 11px;
+  color: var(--t1);
 }
 
 /* ═══════════════════════════════════════════
