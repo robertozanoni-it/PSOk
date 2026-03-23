@@ -191,7 +191,7 @@ body {
   box-shadow: 0 0 0 3px var(--acg);
 }
 
-/* Category select — now styled as pills/tabs */
+/* Category select */
 .cat-select {
   background: var(--el);
   border: 1px solid var(--bd);
@@ -216,7 +216,7 @@ body {
 /* Header right actions */
 .hr { display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0 }
 
-/* Icon buttons — colored per function, vivid hover */
+/* Icon buttons */
 .ib {
   background: transparent;
   border: none;
@@ -231,7 +231,6 @@ body {
 .ib:hover { transform: translateY(-1px) }
 .ib.active { color: var(--ac) }
 
-/* Individual icon colors */
 .ib-theme  { color: #a78bfa }
 .ib-theme:hover  { color: #c4b5fd; background: rgba(167,139,250,.15); box-shadow: 0 0 12px rgba(167,139,250,.25) }
 
@@ -508,7 +507,7 @@ body {
   white-space: nowrap;
 }
 
-/* Action buttons in detail — colored per function */
+/* Action buttons in detail */
 .da { display:flex; gap:2px; align-items:center; flex-wrap:wrap }
 .da button {
   background: none;
@@ -524,59 +523,32 @@ body {
 }
 .da button:hover { transform: translateY(-1px) }
 
-/* Edit — blue */
 .da [data-a="edit"]         { color: #60a5fa }
 .da [data-a="edit"]:hover   { color: #93c5fd; background: rgba(96,165,250,.15); box-shadow: 0 0 10px rgba(96,165,250,.25) }
-
-/* Copy — green */
 .da [data-a="copy"]         { color: #34d399 }
 .da [data-a="copy"]:hover   { color: #6ee7b7; background: rgba(52,211,153,.15); box-shadow: 0 0 10px rgba(52,211,153,.25) }
-
-/* Duplicate — cyan */
 .da [data-a="dup"]          { color: #22d3ee }
 .da [data-a="dup"]:hover    { color: #67e8f9; background: rgba(34,211,238,.15); box-shadow: 0 0 10px rgba(34,211,238,.25) }
-
-/* Favorite — yellow */
 .da [data-a="fav"]          { color: var(--yl) }
 .da [data-a="fav"]:hover    { color: #fde68a; background: rgba(251,191,36,.15); box-shadow: 0 0 10px rgba(251,191,36,.3) }
-
-/* Pin — amber */
 .da [data-a="pin"]          { color: #fb923c }
 .da [data-a="pin"]:hover    { color: #fdba74; background: rgba(251,146,60,.15); box-shadow: 0 0 10px rgba(251,146,60,.25) }
-
-/* Versions — purple */
 .da [data-a="ver"]          { color: #a78bfa }
 .da [data-a="ver"]:hover    { color: #c4b5fd; background: rgba(167,139,250,.15); box-shadow: 0 0 10px rgba(167,139,250,.25) }
-
-/* Best — gold */
 .da [data-a="best"]         { color: var(--gd) }
 .da [data-a="best"]:hover   { color: #fde68a; background: rgba(251,191,36,.15); box-shadow: 0 0 10px rgba(251,191,36,.3) }
-
-/* Prova — pink */
 .da [data-a="prova"]        { color: #f472b6 }
 .da [data-a="prova"]:hover  { color: #f9a8d4; background: rgba(244,114,182,.15); box-shadow: 0 0 10px rgba(244,114,182,.25) }
-
-/* Move — indigo */
 .da [data-a="move"]         { color: #818cf8 }
 .da [data-a="move"]:hover   { color: #a5b4fc; background: rgba(129,140,248,.15); box-shadow: 0 0 10px rgba(129,140,248,.25) }
-
-/* Link — sky */
 .da [data-a="link"]         { color: #38bdf8 }
 .da [data-a="link"]:hover   { color: #7dd3fc; background: rgba(56,189,248,.15); box-shadow: 0 0 10px rgba(56,189,248,.25) }
-
-/* Share — teal */
 .da [data-a="share"]        { color: #2dd4bf }
 .da [data-a="share"]:hover  { color: #5eead4; background: rgba(45,212,191,.15); box-shadow: 0 0 10px rgba(45,212,191,.25) }
-
-/* Focus — slate */
 .da [data-a="focus"]        { color: #94a3b8 }
 .da [data-a="focus"]:hover  { color: #cbd5e1; background: rgba(148,163,184,.15); box-shadow: 0 0 10px rgba(148,163,184,.2) }
-
-/* Delete — red */
 .da [data-a="del"]          { color: #f87171 }
 .da [data-a="del"]:hover    { color: #fca5a5; background: rgba(248,113,113,.15); box-shadow: 0 0 10px rgba(248,113,113,.3) }
-
-/* Rename */
 .da [data-a="ren"]          { color: #94a3b8 }
 .da [data-a="ren"]:hover    { color: #e2e8f0; background: rgba(148,163,184,.12) }
 
@@ -818,7 +790,7 @@ body {
 }
 .ver-item:hover .ver-restore { display:inline-block }
 
-/* Editing banner — subtler strip */
+/* Editing banner */
 .eb {
   display: none;
   padding: 7px 18px;
@@ -834,7 +806,7 @@ body {
 .eb.show { display:flex; animation:fadein .15s both }
 @keyframes fadein { from{opacity:0} to{opacity:1} }
 
-/* Formatting toolbar — pill style */
+/* Formatting toolbar */
 .fb {
   padding: 8px 14px;
   display: none;
@@ -1196,13 +1168,9 @@ body.focus-mode .co:not(.focus-target) { display:none }
 </head>
 <body>
 
-<!-- Toast container — moved to bottom-right -->
 <div class="tw2" id="T" aria-live="polite"></div>
-
-<!-- Loader -->
 <div class="lo" id="L"><div class="sp"></div></div>
 
-<!-- Modals (same structure as v22) -->
 <div class="mo" id="mI" role="dialog" aria-modal="true"><div class="mc"><h4 id="mIt"></h4><div id="mIb"></div><div class="mf"><button class="mb cc" id="mIc">Annulla</button><button class="mb cf" id="mIk">Conferma</button></div></div></div>
 <div class="mo" id="mC" role="alertdialog" aria-modal="true"><div class="mc"><h4 id="mCt"></h4><div class="mm" id="mCm"></div><div class="mf"><button class="mb cc" id="mCc">Annulla</button><button class="mb dn" id="mCk">Conferma</button></div></div></div>
 <div class="mo" id="mL" role="dialog" aria-modal="true"><div class="mc"><h4>Inserisci URL</h4><input type="text" id="mLu" placeholder="https://esempio.it"><div class="mf"><button class="mb cc" id="mLc">Annulla</button><button class="mb cf" id="mLk">Conferma</button></div></div></div>
@@ -1224,7 +1192,6 @@ body.focus-mode .co:not(.focus-target) { display:none }
 <div class="mo" id="mStats" role="dialog" aria-modal="true"><div class="mc" style="max-width:600px"><h4><i class="fa-solid fa-chart-bar"></i> Dashboard & Analytics</h4><div id="statsC"></div><div class="mf"><button class="mb cc" id="mStatsc">Chiudi</button></div></div></div>
 <div class="mo" id="mSnip" role="dialog" aria-modal="true"><div class="mc" style="max-width:550px"><h4><i class="fa-solid fa-puzzle-piece"></i> Snippet Riutilizzabili</h4><div id="snipL"></div><div style="border-top:1px solid var(--bd);padding-top:14px;margin-top:14px"><label>Nome (es: /firma)</label><input type="text" id="snipN" placeholder="/nome-snippet"><label>Contenuto</label><textarea id="snipCt" placeholder="Testo riutilizzabile..."></textarea><div class="mf"><button class="mb cc" id="mSnipc">Chiudi</button><button class="mb cf" id="snipAdd">Aggiungi</button></div></div></div></div>
 
-<!-- Hidden file inputs -->
 <input type="file" id="fB" style="display:none" accept=".json">
 <input type="file" id="fI"  style="display:none" accept="image/*">
 <input type="file" id="fIC" style="display:none" accept=".json">
@@ -1458,7 +1425,21 @@ tI.addEventListener('input',()=>{const v=tI.value.trim().toLowerCase();if(!v){ta
 const addTag=async()=>{const n=tI.value.trim().toLowerCase();if(!n)return;if(p.tags.includes(n)){Toast.show('Già presente.','');tI.value='';return}const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2){if(!f2.prompt.tags)f2.prompt.tags=[];f2.prompt.tags.push(n)}tI.value='';tagSug.classList.remove('show');await save(d,{hist:false});Toast.show('"'+n+'" aggiunto!','ok',1500)};
 tA.addEventListener('click',addTag,{signal:sig});tI.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTag()}},{signal:sig});
 const iv=exVars(p.description||'');renderVars(iv,col,p.id);
-dA.addEventListener('input',()=>{S.dirty=true;renderVars(exVars(dA.innerText),col,p.id);const wl=wc(dA.innerHTML);const wcl=$('wcL');if(wcl)wcl.textContent='~'+wl.t+' token'},{signal:sig});
+
+// ── FIX PERFORMANCE: debounce dell'event handler "input" ──────────────────
+let _inputTimer;
+dA.addEventListener('input',()=>{
+  S.dirty=true;
+  clearTimeout(_inputTimer);
+  _inputTimer=setTimeout(()=>{
+    renderVars(exVars(dA.innerText),col,p.id);
+    const wl=wc(dA.innerText);  // usa innerText invece di innerHTML (più veloce)
+    const wcl=$('wcL');
+    if(wcl)wcl.textContent='~'+wl.t+' token';
+  },300);
+},{signal:sig});
+// ─────────────────────────────────────────────────────────────────────────
+
 dA.addEventListener('keydown',e=>{if(e.key===' '&&dA.contentEditable==='true'){const sel=window.getSelection();if(!sel.rangeCount)return;const rng=sel.getRangeAt(0),node=rng.startContainer;if(node.nodeType!==3)return;const txt=node.textContent.substring(0,rng.startOffset),mt=txt.match(/\/(\S+)$/);if(mt){const sn='/'+mt[1],snip=S.snippets.find(s=>s.name.toLowerCase()===sn.toLowerCase());if(snip){e.preventDefault();const before=txt.substring(0,txt.length-sn.length);node.textContent=before+snip.content+node.textContent.substring(rng.startOffset);const nr=document.createRange();nr.setStart(node,before.length+snip.content.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr);Toast.show('Snippet inserito!','ok',1500)}}}},{signal:sig});
 const toggleEdit=on=>{dA.contentEditable=on?'true':'false';fB2.classList.toggle('show',on);sB.classList.toggle('show',on);eB.classList.toggle('show',on);if(on)dA.focus()};
 col.querySelector('[data-a="edit"]').addEventListener('click',()=>{const ed=dA.contentEditable==='true';if(ed){S.dirty=false;toggleEdit(false);Toast.show('Editing chiuso.','',1500)}else toggleEdit(true)},{signal:sig});
@@ -1596,7 +1577,7 @@ async function init(){
         await DB.init();Modal.init();
         S.allData=await DB.load();S.recents=await DB.loadR();S.snippets=await DB.loadSn();S.varPresets=await DB.loadVP();
         const savedSt=await DB.loadSt();if(savedSt)Object.assign(S.settings,savedSt);
-        if(!S.allData.length){S.allData=[{id:uid(),name:'AI Generative',icon:'🤖',subcategories:[{id:uid(),name:'Benvenuto',icon:'',prompts:[{id:uid(),title:'Benvenuto in Prompt Studio v23',description:'Prompt Studio v23 — Redesign UI/UX.<br><br>✅ Tipografia Syne + JetBrains Mono<br>✅ Design system con token CSS<br>✅ Modali con blur e animazioni<br>✅ Toast in basso a destra con fade<br>✅ Barra shortcut con kbd styling<br>✅ Editing banner più sobrio<br>✅ Toolbar formattazione migliorata<br>✅ Meta info come chip/badge<br>✅ Tag con overflow nascosto (+N)<br>✅ Loader con spinner CSS<br>✅ Focus ring accessibili<br>✅ Tutte le funzionalità di v22 intatte<br><br>Prova le variabili: {{Argomento}} con tono {{Tono:Formale|Diretto|Amichevole}}.',favorite:true,tags:['info','v23','design'],versions:[],copyCount:0,pinned:true,createdAt:Date.now(),updatedAt:Date.now(),related:[]}]}]}];await DB.save(S.allData)}
+        if(!S.allData.length){S.allData=[{id:uid(),name:'AI Generative',icon:'🤖',subcategories:[{id:uid(),name:'Benvenuto',icon:'',prompts:[{id:uid(),title:'Benvenuto in Prompt Studio v24',description:'Prompt Studio v24 — Fix performance editor.<br><br>✅ Debouncing handler input (300ms)<br>✅ wc() usa innerText invece di innerHTML<br>✅ Nessuna regressione funzionale<br>✅ Tutte le funzionalità di v23 intatte<br><br>Prova le variabili: {{Argomento}} con tono {{Tono:Formale|Diretto|Amichevole}}.',favorite:true,tags:['info','v24','fix'],versions:[],copyCount:0,pinned:true,createdAt:Date.now(),updatedAt:Date.now(),related:[]}]}]}];await DB.save(S.allData)}
         setup();render();DB.bk(S.allData);
     }catch(e){console.error(e);Toast.show('Errore inizializzazione.','er')}finally{Loader.hide()}
 }
