@@ -354,7 +354,22 @@ function tp(h,m=60){
 }
 function fmtD(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
 function simil(a,b){if(!a||!b)return 0;a=a.toLowerCase();b=b.toLowerCase();if(a===b)return 1;const s=new Set([...a.split(/\s+/)]);const bs=b.split(/\s+/);let m=0;bs.forEach(w=>{if(s.has(w))m++});return m/Math.max(s.size,bs.length)}
-function exVars(text){const rx=/\{\{(.*?)\}\}|\[(.*?)\]|\{(.*?)\}/g,vars=new Map();let m;while((m=rx.exec(text))!==null){const c=(m[1]||m[2]||m[3]||'').trim();if(!c)continue;let n=c,opts=null,def='';if(c.includes(':')){const p=c.split(':');n=p[0].trim();const r=p.slice(1).join(':').trim();if(r.includes('|')){opts=r.split('|').map(o=>o.trim());def=opts[0]}else def=r}if(!vars.has(n))vars.set(n,{name:n,options:opts,defaultValue:def})}return Array.from(vars.values())}
+function exVars(text){
+  /* PERFORMANCE FIX: solo {{...}}, cap 20 var, skip testi >3000 chars.
+     I pattern [..] e {...} esplodevano su template con JSON-LD e liste. */
+  if(!text||text.length>3000)return[];
+  const rx=/\{\{(.*?)\}\}/g,vars=new Map();let m;
+  while((m=rx.exec(text))!==null){
+    const c=(m[1]||'').trim();
+    if(!c||c.length>40)continue;
+    let n=c,opts=null,def='';
+    if(c.includes(':')){const p=c.split(':');n=p[0].trim();const r=p.slice(1).join(':').trim();
+      if(r.includes('|')){opts=r.split('|').map(o=>o.trim());def=opts[0]}else def=r}
+    if(!vars.has(n))vars.set(n,{name:n,options:opts,defaultValue:def});
+    if(vars.size>=20)break;
+  }
+  return Array.from(vars.values());
+}
 
 const Toast={el:$('T'),show(m,t='',ms=3000){const d=document.createElement('div');d.className='to '+t;d.textContent=m;this.el.appendChild(d);setTimeout(()=>{d.style.transition='opacity .3s,transform .3s';d.style.opacity='0';d.style.transform='translateX(20px)';setTimeout(()=>d.remove(),300)},ms)}};
 const Loader={el:$('L'),show(){this.el.classList.add('show')},hide(){this.el.classList.remove('show')}};
@@ -547,7 +562,7 @@ function renderDet(){
       const wl=wc(dA.innerText);
       const wcl=$('wcL');
       if(wcl)wcl.textContent='~'+wl.t+' token';
-    },300);
+    },500);
   },{signal:sig});
 
   dA.addEventListener('keydown',e=>{if(e.key===' '&&dA.contentEditable==='true'){const sel=window.getSelection();if(!sel.rangeCount)return;const rng=sel.getRangeAt(0),node=rng.startContainer;if(node.nodeType!==3)return;const txt=node.textContent.substring(0,rng.startOffset),mt=txt.match(/\/(\S+)$/);if(mt){const sn='/'+mt[1],snip=S.snippets.find(s=>s.name.toLowerCase()===sn.toLowerCase());if(snip){e.preventDefault();const before=txt.substring(0,txt.length-sn.length);node.textContent=before+snip.content+node.textContent.substring(rng.startOffset);const nr=document.createRange();nr.setStart(node,before.length+snip.content.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr);Toast.show('Snippet inserito!','ok',1500)}}}},{signal:sig});
@@ -713,7 +728,7 @@ async function init(){
     await DB.init();Modal.init();
     S.allData=await DB.load();S.recents=await DB.loadR();S.snippets=await DB.loadSn();S.varPresets=await DB.loadVP();
     const savedSt=await DB.loadSt();if(savedSt)Object.assign(S.settings,savedSt);
-    if(!S.allData.length){S.allData=[{id:uid(),name:'AI Generative',icon:'🤖',subcategories:[{id:uid(),name:'Benvenuto',icon:'',prompts:[{id:uid(),title:'Benvenuto in Prompt Studio v24',description:'<b>Prompt Studio v24</b> — Fix performance completo.<br><br>✅ <b>wc()</b>: conteggio parole senza DOM (regex)<br>✅ <b>san()</b>: rimossa dal render, solo su paste/import<br>✅ <b>tp()</b>: strip HTML senza DOM<br>✅ <b>exVars()</b>: differita con setTimeout al caricamento<br>✅ <b>input handler</b>: debounce 300ms + innerText<br>✅ <b>ricerca</b>: strip HTML senza DOM<br>✅ <b>export MD</b>: strip HTML senza DOM<br><br>Prova le variabili: {{Argomento}} con tono {{Tono:Formale|Diretto|Amichevole}}.',favorite:true,tags:['info','v24','performance'],versions:[],copyCount:0,pinned:true,createdAt:Date.now(),updatedAt:Date.now(),related:[]}]}]}];await DB.save(S.allData)}
+    if(!S.allData.length){S.allData=[{id:uid(),name:'AI Generative',icon:'🤖',subcategories:[{id:uid(),name:'Benvenuto',icon:'',prompts:[{id:uid(),title:'Benvenuto in Prompt Studio v24.1',description:'<b>Prompt Studio v24.1</b> — Fix performance completo + fix variabili su template lunghi.<br><br>✅ <b>exVars()</b>: solo {{...}}, cap 20 var, skip testi >3000 chars<br>✅ <b>wc()</b>: conteggio parole senza DOM (regex)<br>✅ <b>san()</b>: rimossa dal render, solo su paste/import<br>✅ <b>tp()</b>: strip HTML senza DOM<br>✅ <b>exVars()</b>: differita con setTimeout al caricamento<br>✅ <b>input handler</b>: debounce 500ms + innerText<br>✅ <b>ricerca</b>: strip HTML senza DOM<br>✅ <b>export MD</b>: strip HTML senza DOM<br><br>Prova le variabili: {{Argomento}} con tono {{Tono:Formale|Diretto|Amichevole}}.',favorite:true,tags:['info','v24','performance'],versions:[],copyCount:0,pinned:true,createdAt:Date.now(),updatedAt:Date.now(),related:[]}]}]}];await DB.save(S.allData)}
     setup();render();DB.bk(S.allData);
   }catch(e){console.error(e);Toast.show('Errore inizializzazione.','er')}finally{Loader.hide()}
 }
