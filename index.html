@@ -1202,7 +1202,7 @@ body.focus-mode .co:not(.focus-target) { display:none }
 <!-- Loader -->
 <div class="lo" id="L"><div class="sp"></div></div>
 
-<!-- Modals (same structure as v22) -->
+<!-- Modals -->
 <div class="mo" id="mI" role="dialog" aria-modal="true"><div class="mc"><h4 id="mIt"></h4><div id="mIb"></div><div class="mf"><button class="mb cc" id="mIc">Annulla</button><button class="mb cf" id="mIk">Conferma</button></div></div></div>
 <div class="mo" id="mC" role="alertdialog" aria-modal="true"><div class="mc"><h4 id="mCt"></h4><div class="mm" id="mCm"></div><div class="mf"><button class="mb cc" id="mCc">Annulla</button><button class="mb dn" id="mCk">Conferma</button></div></div></div>
 <div class="mo" id="mL" role="dialog" aria-modal="true"><div class="mc"><h4>Inserisci URL</h4><input type="text" id="mLu" placeholder="https://esempio.it"><div class="mf"><button class="mb cc" id="mLc">Annulla</button><button class="mb cf" id="mLk">Conferma</button></div></div></div>
@@ -1296,7 +1296,35 @@ function tp(h,m=60){const t=document.createElement('div');t.innerHTML=h||'';cons
 function fmtD(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
 function wc(html){const t=document.createElement('div');t.innerHTML=html||'';const txt=t.textContent.trim();if(!txt)return{w:0,c:0,t:0};const w=txt.split(/\s+/).length;return{w,c:txt.length,t:Math.ceil(txt.length/4)}}
 function simil(a,b){if(!a||!b)return 0;a=a.toLowerCase();b=b.toLowerCase();if(a===b)return 1;const s=new Set([...a.split(/\s+/)]);const bs=b.split(/\s+/);let m=0;bs.forEach(w=>{if(s.has(w))m++});return m/Math.max(s.size,bs.length)}
-function exVars(text){const rx=/\{\{(.*?)\}\}|\[(.*?)\]|\{(.*?)\}/g,vars=new Map();let m;while((m=rx.exec(text))!==null){const c=(m[1]||m[2]||m[3]||'').trim();if(!c)continue;let n=c,opts=null,def='';if(c.includes(':')){const p=c.split(':');n=p[0].trim();const r=p.slice(1).join(':').trim();if(r.includes('|')){opts=r.split('|').map(o=>o.trim());def=opts[0]}else def=r}if(!vars.has(n))vars.set(n,{name:n,options:opts,defaultValue:def})}return Array.from(vars.values())}
+
+// ═══════════════════════════════════════════
+// FUNZIONE exVars AGGIORNATA: supporta {{ }}, [ ], { }
+// ═══════════════════════════════════════════
+function exVars(text){
+  const rx = /\{\{([^{}]+?)\}\}|\[([^\[\]]+?)\]|\{([^{}]+?)\}/g;
+  const vars = new Map();
+  let m;
+  while((m = rx.exec(text)) !== null){
+    const c = (m[1] || m[2] || m[3] || '').trim();
+    if(!c) continue;
+    let n = c, opts = null, def = '';
+    if(c.includes(':')){
+      const p = c.split(':');
+      n = p[0].trim();
+      const r = p.slice(1).join(':').trim();
+      if(r.includes('|')){
+        opts = r.split('|').map(o => o.trim());
+        def = opts[0];
+      } else {
+        def = r;
+      }
+    }
+    if(!vars.has(n)) {
+      vars.set(n, { name: n, options: opts, defaultValue: def });
+    }
+  }
+  return Array.from(vars.values());
+}
 
 const Toast={el:$('T'),show(m,t='',ms=3000){const d=document.createElement('div');d.className='to '+t;d.textContent=m;this.el.appendChild(d);setTimeout(()=>{d.style.transition='opacity .3s, transform .3s';d.style.opacity='0';d.style.transform='translateX(20px)';setTimeout(()=>d.remove(),300)},ms)}};
 const Loader={el:$('L'),show(){this.el.classList.add('show')},hide(){this.el.classList.remove('show')}};
@@ -1474,7 +1502,35 @@ else if(cmd==='findReplace'){const v=await Modal.prompt('Trova e Sostituisci',[{
 else document.execCommand(cmd,false,null);if(cmd!=='createLink'&&cmd!=='findReplace')dA.focus()},{signal:sig})});
 const cP=$('cP');$('cB').addEventListener('click',()=>{const sel=window.getSelection();colorR=(sel.rangeCount&&sel.toString().length)?sel.getRangeAt(0):null;cP.click()},{signal:sig});
 cP.addEventListener('change',()=>{dA.focus();if(colorR){const s=window.getSelection();s.removeAllRanges();s.addRange(colorR)}document.execCommand('foreColor',false,cP.value);colorR=null},{signal:sig});
-col.querySelector('[data-a="copy"]').addEventListener('click',async()=>{let t=dA.innerText;col.querySelectorAll('.vi,.vse').forEach(i=>{const n=i.dataset.variable,v=i.value.trim();if(v){const e=escRe(n);t=t.replace(new RegExp('(\\{\\{|\\[|\\{)\\s*'+e+'(\\s*|:.*?)(\\]|\\}\\}|\\})','g'),v)}});try{await navigator.clipboard.writeText(t);const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.copyCount=(f2.prompt.copyCount||0)+1;await save(d,{hist:false});Toast.show('Copiato! (#'+(p.copyCount+1)+')','ok')}catch(e){Toast.show('Errore copia.','er')}},{signal:sig});
+
+// ═══════════════════════════════════════════
+// PULSANTE COPIA: regex aggiornata per tutti i tipi di parentesi
+// ═══════════════════════════════════════════
+col.querySelector('[data-a="copy"]').addEventListener('click',async()=>{
+  let t = dA.innerText;
+  col.querySelectorAll('.vi,.vse').forEach(i => {
+    const n = i.dataset.variable;
+    const v = i.value.trim();
+    if(v){
+      const e = escRe(n);
+      const pattern = new RegExp(
+        '(\\{\\{\\s*' + e + '(\\s*|:[^}]*?)\\s*\\}\\})' + '|' +
+        '(\\[\\s*' + e + '(\\s*|:[^\\]]*?)\\s*\\])' + '|' +
+        '(\\{\\s*' + e + '(\\s*|:[^}]*?)\\s*\\})', 
+        'g'
+      );
+      t = t.replace(pattern, v);
+    }
+  });
+  try{
+    await navigator.clipboard.writeText(t);
+    const d=structuredClone(S.allData),f2=FP(d,p.id);
+    if(f2)f2.prompt.copyCount=(f2.prompt.copyCount||0)+1;
+    await save(d,{hist:false});
+    Toast.show('Copiato! (#'+(p.copyCount+1)+')','ok')
+  }catch(e){Toast.show('Errore copia.','er')}
+},{signal:sig});
+
 col.querySelector('[data-a="dup"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(!f2)return;const np={...structuredClone(f2.prompt),id:uid(),title:p.title+' (Copia)',createdAt:Date.now(),updatedAt:Date.now(),copyCount:0,versions:[]};f2.sub.prompts.push(np);await save(d,{ids:{pid:np.id}});Toast.show('Duplicato!','ok')},{signal:sig});
 col.querySelector('[data-a="fav"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.favorite=!f2.prompt.favorite;await save(d,{hist:false})},{signal:sig});
 col.querySelector('[data-a="pin"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.pinned=!f2.prompt.pinned;await save(d,{hist:false});Toast.show(p.pinned?'Sbloccato':'Pinnato!','ok',1500)},{signal:sig});
