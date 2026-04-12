@@ -248,6 +248,17 @@ body.focus-mode .co:not(.focus-target){display:none}
 </div></div>
 <div class="mo" id="mStats" role="dialog" aria-modal="true"><div class="mc" style="max-width:600px"><h4><i class="fa-solid fa-chart-bar"></i> Dashboard &amp; Analytics</h4><div id="statsC"></div><div class="mf"><button class="mb cc" id="mStatsc">Chiudi</button></div></div></div>
 <div class="mo" id="mSnip" role="dialog" aria-modal="true"><div class="mc" style="max-width:550px"><h4><i class="fa-solid fa-puzzle-piece"></i> Snippet Riutilizzabili</h4><div id="snipL"></div><div style="border-top:1px solid var(--bd);padding-top:14px;margin-top:14px"><label>Nome (es: /firma)</label><input type="text" id="snipN" placeholder="/nome-snippet"><label>Contenuto</label><textarea id="snipCt" placeholder="Testo riutilizzabile..."></textarea><div class="mf"><button class="mb cc" id="mSnipc">Chiudi</button><button class="mb cf" id="snipAdd">Aggiungi</button></div></div></div></div>
+<!-- Toolbar flottante resize immagine -->
+<div id="imgTb" style="display:none;position:fixed;z-index:9000;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r-lg);padding:6px 10px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:13px;user-select:none;">
+  <button id="imgMinus" title="Riduci (-25px)" style="background:var(--el);border:none;color:var(--t1);border-radius:var(--r-sm);width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;">−</button>
+  <span id="imgSize" style="color:var(--ac);min-width:52px;text-align:center;font-weight:700;"></span>
+  <button id="imgPlus" title="Ingrandisci (+25px)" style="background:var(--el);border:none;color:var(--t1);border-radius:var(--r-sm);width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;">+</button>
+  <div style="width:1px;height:18px;background:var(--bd2);margin:0 2px"></div>
+  <button id="imgReset" title="Reset a 100px" style="background:var(--el);border:none;color:var(--t3);border-radius:var(--r-sm);padding:0 8px;height:28px;cursor:pointer;font-size:11px;font-family:var(--font-mono);transition:background .15s;">100px</button>
+  <button id="imgFit" title="Larghezza piena" style="background:var(--el);border:none;color:var(--t3);border-radius:var(--r-sm);padding:0 8px;height:28px;cursor:pointer;font-size:11px;font-family:var(--font-mono);transition:background .15s;">100%</button>
+  <div style="width:1px;height:18px;background:var(--bd2);margin:0 2px"></div>
+  <button id="imgClose" title="Chiudi" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;">✕</button>
+</div>
 <input type="file" id="fB" style="display:none" accept=".json">
 <input type="file" id="fI" style="display:none" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff">
 <input type="file" id="fIC" style="display:none" accept=".json">
@@ -656,22 +667,127 @@ function renderVars(vars,col,pid){
   pa.appendChild(spb);s.appendChild(pa);s.classList.add('ac');
 }
 
-function insImg(file,editor){
+// ═══════════════════════════════════════════════════════
+// insImg — PATCH v25.1
+//  • Riduce automaticamente a IMG_BASE px di larghezza
+//  • Usa Canvas per ridimensionamento lossless
+//  • Aggiunge data-w per la toolbar di resize
+// ═══════════════════════════════════════════════════════
+const IMG_BASE = 100; // px larghezza di default all'inserimento
+
+function resizeImgCanvas(src, targetW, mimeType, cb){
+  const tmp = new Image();
+  tmp.onload = () => {
+    const ratio = tmp.naturalHeight / tmp.naturalWidth;
+    const w = Math.max(25, Math.round(targetW));
+    const h = Math.round(w * ratio);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(tmp, 0, 0, w, h);
+    cb(canvas.toDataURL(mimeType === 'image/png' ? 'image/png' : 'image/jpeg', 0.88), w, h);
+  };
+  tmp.onerror = () => cb(src, targetW, targetW);
+  tmp.src = src;
+}
+
+function insImg(file, editor){
   if(!file||!file.type.startsWith('image/')){Toast.show('Formato non supportato: '+(file?.type||'sconosciuto'),'er');return}
   if(file.size>10*1024*1024){Toast.show('File troppo grande (max 10MB).','er');return}
-  const r=new FileReader();
-  r.onload=e=>{
-    const ed=editor||document.querySelector('#dA[contenteditable="true"]');
+  const r = new FileReader();
+  r.onload = e => {
+    const ed = editor || document.querySelector('#dA[contenteditable="true"]');
     if(!ed){Toast.show('Attiva prima la modalità editing ✏️','er');return}
-    ed.focus();
-    if(ed._savedRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(ed._savedRange);ed._savedRange=null}
-    const imgTag='<img src="'+e.target.result+'" style="max-width:100%;height:auto;display:block;margin:10px 0;border-radius:10px" alt="'+esc(file.name)+'">';
-    document.execCommand('insertHTML',false,imgTag);
-    S.dirty=true;Toast.show('Immagine inserita! ('+file.name+')','ok',2000);
+    // Ridimensiona a IMG_BASE px via canvas
+    resizeImgCanvas(e.target.result, IMG_BASE, file.type, (dataUrl, w, h) => {
+      ed.focus();
+      if(ed._savedRange){
+        const sel=window.getSelection();sel.removeAllRanges();sel.addRange(ed._savedRange);ed._savedRange=null;
+      }
+      const alt = esc(file.name);
+      // data-orig: sorgente originale (per riscalare da nuovo ogni volta senza perdita)
+      // data-w: larghezza corrente in px
+      const imgTag = `<img src="${dataUrl}" data-orig="${e.target.result}" data-mime="${file.type}" data-w="${w}" `+
+        `style="width:${w}px;height:auto;display:block;margin:10px 0;border-radius:8px;cursor:pointer;outline:2px solid transparent;transition:outline .15s;" `+
+        `alt="${alt}">`;
+      document.execCommand('insertHTML', false, imgTag);
+      S.dirty = true;
+      Toast.show(`Immagine inserita a ${w}px (${file.name})`, 'ok', 2500);
+    });
   };
-  r.onerror=()=>Toast.show('Errore lettura file.','er');
+  r.onerror = () => Toast.show('Errore lettura file.','er');
   r.readAsDataURL(file);
 }
+
+// ═══════════════════════════════════════════════════════
+// Toolbar resize immagini — globale, si attacca all'editor
+// ═══════════════════════════════════════════════════════
+(function setupImgToolbar(){
+  const tb = $('imgTb');
+  let activeImg = null;
+
+  function showTb(img){
+    activeImg = img;
+    const w = parseInt(img.dataset.w) || img.offsetWidth || IMG_BASE;
+    $('imgSize').textContent = w + 'px';
+    // Highlight selezione
+    document.querySelectorAll('.dd img').forEach(i => i.style.outline = '2px solid transparent');
+    img.style.outline = '2px solid var(--ac)';
+    // Posiziona toolbar sopra l'immagine
+    const rect = img.getBoundingClientRect();
+    tb.style.display = 'flex';
+    const tbW = 270;
+    let left = rect.left + rect.width/2 - tbW/2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tbW - 8));
+    let top = rect.top - 50;
+    if(top < 8) top = rect.bottom + 8;
+    tb.style.left = left + 'px';
+    tb.style.top  = top  + 'px';
+  }
+
+  function hideTb(){
+    tb.style.display = 'none';
+    if(activeImg) activeImg.style.outline = '2px solid transparent';
+    activeImg = null;
+  }
+
+  function applyResize(newW){
+    if(!activeImg) return;
+    newW = Math.max(25, Math.min(newW, 1200));
+    const orig   = activeImg.dataset.orig || activeImg.src;
+    const mime   = activeImg.dataset.mime || 'image/jpeg';
+    resizeImgCanvas(orig, newW, mime, (dataUrl, w) => {
+      activeImg.src = dataUrl;
+      activeImg.style.width = w + 'px';
+      activeImg.dataset.w = w;
+      $('imgSize').textContent = w + 'px';
+      S.dirty = true;
+      // Riposiziona toolbar
+      requestAnimationFrame(() => { if(activeImg) showTb(activeImg); });
+    });
+  }
+
+  $('imgMinus').onclick  = () => { if(!activeImg)return; applyResize(parseInt(activeImg.dataset.w||100) - 25); };
+  $('imgPlus').onclick   = () => { if(!activeImg)return; applyResize(parseInt(activeImg.dataset.w||100) + 25); };
+  $('imgReset').onclick  = () => applyResize(IMG_BASE);
+  $('imgFit').onclick    = () => {
+    if(!activeImg)return;
+    const edW = activeImg.closest('.dd')?.offsetWidth || 600;
+    applyResize(edW - 40);
+  };
+  $('imgClose').onclick  = hideTb;
+
+  // Delegazione click su tutte le immagini negli editor
+  document.addEventListener('click', e => {
+    const img = e.target.closest('.dd img');
+    if(img){ e.stopPropagation(); showTb(img); return; }
+    // Click fuori: chiudi se non sulla toolbar
+    if(!e.target.closest('#imgTb')) hideTb();
+  }, true);
+
+  // Chiudi su scroll o resize finestra
+  document.addEventListener('scroll', hideTb, true);
+  window.addEventListener('resize', hideTb);
+})();
 
 function doBackup(){if(!S.allData.length){Toast.show('Nessun dato da esportare.','er');return}const b=new Blob([JSON.stringify(S.allData,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='prompt_backup_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);Toast.show('Backup scaricato!','ok')}
 function doImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const data=JSON.parse(ev.target.result);if(!validate(data)){Toast.show('JSON non valido.','er');return}S.catId=data[0]?.id||null;S.subId=data[0]?.subcategories?.[0]?.id||null;S.pid=data[0]?.subcategories?.[0]?.prompts?.[0]?.id||null;S.view='columns';await save(data,{hist:false});Toast.show('Importato con successo!','ok')}catch(err){Toast.show('Errore nel parsing JSON.','er')}};reader.readAsText(file);e.target.value=''}
