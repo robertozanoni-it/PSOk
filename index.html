@@ -89,6 +89,16 @@ body{background:var(--bg);font-family:var(--font-ui);color:var(--t1);display:fle
 .tg{display:inline-block;padding:2px 7px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;font-family:var(--font-mono);letter-spacing:.02em;}
 .tgr{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;transition:opacity var(--tr),transform var(--tr);font-family:var(--font-ui);}
 .tgr:hover{opacity:.8;transform:scale(.97)}.tgr i{font-size:9px}
+/* ── PROMPT SEARCH BOX ── */
+.p-search-wrap{padding:7px 8px;background:var(--sf);border-bottom:1px solid var(--bd);flex-shrink:0;position:relative;transition:background var(--tr);}
+.p-search-wrap i{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:12px;pointer-events:none;transition:color var(--tr);z-index:1;}
+.p-search-wrap:focus-within i{color:var(--ac)}
+.p-search-input{width:100%;background:var(--el);border:1px solid var(--bd);border-radius:20px;padding:6px 28px 6px 30px;font-size:13px;color:var(--t1);outline:none;font-family:var(--font-ui);transition:border-color var(--tr),box-shadow var(--tr);}
+.p-search-input::placeholder{color:var(--t3)}
+.p-search-input:focus{border-color:var(--ac);box-shadow:0 0 0 2px var(--acg);}
+.p-search-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:3px;border-radius:50%;display:none;transition:color var(--tr),background var(--tr);}
+.p-search-clear:hover{color:var(--t1);background:var(--elh)}
+.p-search-clear.visible{display:flex;align-items:center;justify-content:center;}
 .dc{padding:0}
 .det{height:100%;display:flex;flex-direction:column}
 .dh{padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--sf);gap:12px;}
@@ -107,10 +117,26 @@ body{background:var(--bg);font-family:var(--font-ui);color:var(--t1);display:fle
 .da [data-a="move"]{color:#818cf8}.da [data-a="move"]:hover{color:#a5b4fc;background:rgba(129,140,248,.15);box-shadow:0 0 10px rgba(129,140,248,.25)}
 .da [data-a="link"]{color:#38bdf8}.da [data-a="link"]:hover{color:#7dd3fc;background:rgba(56,189,248,.15);box-shadow:0 0 10px rgba(56,189,248,.25)}
 .da [data-a="share"]{color:#2dd4bf}.da [data-a="share"]:hover{color:#5eead4;background:rgba(45,212,191,.15);box-shadow:0 0 10px rgba(45,212,191,.25)}
+.da [data-a="srch"]{color:#e879f9}.da [data-a="srch"]:hover{color:#f0abfc;background:rgba(232,121,249,.15);box-shadow:0 0 10px rgba(232,121,249,.25)}
+.da [data-a="srch"].active-srch{color:#f0abfc;background:rgba(232,121,249,.2);}
 .da [data-a="focus"]{color:#94a3b8}.da [data-a="focus"]:hover{color:#cbd5e1;background:rgba(148,163,184,.15);box-shadow:0 0 10px rgba(148,163,184,.2)}
 .da [data-a="del"]{color:#f87171}.da [data-a="del"]:hover{color:#fca5a5;background:rgba(248,113,113,.15);box-shadow:0 0 10px rgba(248,113,113,.3)}
 .da [data-a="ren"]{color:#94a3b8}.da [data-a="ren"]:hover{color:#e2e8f0;background:rgba(148,163,184,.12)}
 .da .ys{color:var(--yl)!important}.da .gt{color:var(--gd)!important}.da .pv{color:var(--pk)!important}.da .ac-btn{color:var(--ac)!important}
+/* ── IN-PROMPT SEARCH BAR ── */
+mark.ps-hl{background:rgba(251,191,36,.38);color:inherit;border-radius:2px;padding:0 1px;transition:background var(--tr);}
+mark.ps-hl.cur{background:var(--or);color:#fff;border-radius:2px;box-shadow:0 0 0 2px rgba(251,146,60,.4);}
+.det-srch{display:none;padding:7px 18px;background:var(--sf2);border-bottom:1px solid var(--bd);align-items:center;gap:8px;flex-shrink:0;}
+.det-srch.show{display:flex;animation:fadein .15s both}
+.det-srch-inp{flex:1;min-width:0;background:var(--el);border:1px solid var(--bd);border-radius:20px;padding:6px 12px 6px 10px;font-size:13px;color:var(--t1);outline:none;font-family:var(--font-ui);transition:border-color var(--tr),box-shadow var(--tr);}
+.det-srch-inp:focus{border-color:#e879f9;box-shadow:0 0 0 2px rgba(232,121,249,.18);}
+.det-srch-inp::placeholder{color:var(--t3)}
+.det-srch-cnt{font-size:12px;color:#e879f9;font-family:var(--font-mono);white-space:nowrap;min-width:40px;text-align:center;font-weight:700;opacity:.9;}
+.det-srch-cnt.zero{color:var(--rd);}
+.det-srch-nav{background:var(--el);border:1px solid var(--bd);color:var(--t2);border-radius:var(--r-sm);width:28px;height:28px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0;}
+.det-srch-nav:hover{background:var(--elh);color:var(--t1);border-color:var(--bd2);}
+.det-srch-nav:active{transform:scale(.93);}
+/* ── END IN-PROMPT SEARCH ── */
 .bread{padding:8px 18px;background:var(--sf2);border-bottom:1px solid var(--bd);font-size:14px;color:var(--t2);display:flex;align-items:center;gap:4px;flex-shrink:0;}
 .bread a{color:var(--ac);text-decoration:none;cursor:pointer;font-weight:500;}.bread a:hover{text-decoration:underline}
 .bread-sep{color:var(--t3);opacity:.5}
@@ -130,8 +156,6 @@ body{background:var(--bg);font-family:var(--font-ui);color:var(--t1);display:fle
 .tsug{display:none;position:absolute;top:100%;left:0;right:80px;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r-md);max-height:120px;overflow-y:auto;z-index:10;box-shadow:0 8px 20px rgba(0,0,0,.4);margin-top:4px;}
 .tsug.show{display:block;animation:dropdown-in var(--tr-fast) both}
 .tsug-item{padding:7px 12px;cursor:pointer;font-size:14px;color:var(--t1)}.tsug-item:hover{background:var(--el);color:var(--t1)}
-
-/* ═══ VARIABILI DINAMICHE — BADGE TIPO PARENTESI ═══ */
 .vs{padding:12px 18px;background:var(--sf2);border-bottom:1px solid var(--bd);display:none;flex-direction:column;gap:8px;flex-shrink:0;}
 .vs.ac{display:flex}
 .vl{font-size:12px;text-transform:uppercase;color:var(--or);font-weight:700;letter-spacing:.08em;font-family:var(--font-mono);}
@@ -149,12 +173,9 @@ body{background:var(--bg);font-family:var(--font-ui);color:var(--t1);display:fle
 .vp{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--bd);margin-top:2px}
 .vp-btn{padding:4px 11px;background:var(--el);border:1px solid var(--bd);color:var(--t2);border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;transition:all var(--tr);font-family:var(--font-ui);}
 .vp-btn:hover{background:var(--ac);color:#fff;border-color:var(--ac)}
-
-/* Legenda tipi parentesi */
 .vlegend{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:var(--el);border-radius:var(--r-md);margin-bottom:6px;font-size:11px;}
 .vlegend-item{display:flex;align-items:center;gap:4px;color:var(--t3);}
 .vlegend-item code{font-family:var(--font-mono);font-size:10px;padding:1px 4px;border-radius:3px;background:var(--sf);color:var(--t2);}
-
 .ver-panel{display:none;padding:8px 18px;background:var(--sf2);border-bottom:1px solid var(--bd);max-height:140px;overflow-y:auto;flex-shrink:0;}
 .ver-panel.show{display:block;animation:slidedown var(--tr-fast) both}
 @keyframes slidedown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -164,7 +185,6 @@ body{background:var(--bg);font-family:var(--font-ui);color:var(--t1);display:fle
 .ver-item:hover .ver-restore{display:inline-block}
 .eb{display:none;padding:7px 18px;background:rgba(251,191,36,.08);border-bottom:1px solid rgba(251,191,36,.2);font-size:14px;font-weight:600;color:var(--yl);align-items:center;gap:8px;flex-shrink:0;}
 .eb.show{display:flex;animation:fadein .15s both}
-@keyframes fadein{from{opacity:0}to{opacity:1}}
 .fb{padding:8px 14px;display:none;gap:3px;align-items:center;background:var(--sf);border-bottom:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap;}
 .fb.show{display:flex;animation:fadein .15s both}
 .fb button{background:transparent;border:1px solid transparent;color:var(--t1);padding:5px 9px;border-radius:var(--r-sm);cursor:pointer;font-size:15px;transition:all var(--tr);min-height:30px;display:flex;align-items:center;justify-content:center;}
@@ -221,6 +241,7 @@ body.focus-mode .mn{padding:0}
 body.focus-mode .mn.v3,body.focus-mode .mn.v2{grid-template-columns:1fr}
 body.focus-mode .co:not(.focus-target){display:none}
 #snipL>div{transition:background var(--tr)}#snipL>div:hover{background:var(--elh)!important}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
 @media(max-width:1100px){:root{--w-cat:230px;--w-sub:230px}}
 @media(max-width:900px){.mn.v3,.mn.v2{grid-template-columns:1fr}}
 </style>
@@ -248,7 +269,6 @@ body.focus-mode .co:not(.focus-target){display:none}
 </div></div>
 <div class="mo" id="mStats" role="dialog" aria-modal="true"><div class="mc" style="max-width:600px"><h4><i class="fa-solid fa-chart-bar"></i> Dashboard &amp; Analytics</h4><div id="statsC"></div><div class="mf"><button class="mb cc" id="mStatsc">Chiudi</button></div></div></div>
 <div class="mo" id="mSnip" role="dialog" aria-modal="true"><div class="mc" style="max-width:550px"><h4><i class="fa-solid fa-puzzle-piece"></i> Snippet Riutilizzabili</h4><div id="snipL"></div><div style="border-top:1px solid var(--bd);padding-top:14px;margin-top:14px"><label>Nome (es: /firma)</label><input type="text" id="snipN" placeholder="/nome-snippet"><label>Contenuto</label><textarea id="snipCt" placeholder="Testo riutilizzabile..."></textarea><div class="mf"><button class="mb cc" id="mSnipc">Chiudi</button><button class="mb cf" id="snipAdd">Aggiungi</button></div></div></div></div>
-<!-- Toolbar flottante resize immagine -->
 <div id="imgTb" style="display:none;position:fixed;z-index:9000;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r-lg);padding:6px 10px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;align-items:center;gap:6px;font-family:var(--font-mono);font-size:13px;user-select:none;">
   <button id="imgMinus" title="Riduci (-25px)" style="background:var(--el);border:none;color:var(--t1);border-radius:var(--r-sm);width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;">−</button>
   <span id="imgSize" style="color:var(--ac);min-width:52px;text-align:center;font-weight:700;"></span>
@@ -309,6 +329,7 @@ body.focus-mode .co:not(.focus-target){display:none}
   <span class="sh-key"><kbd>Ctrl+F</kbd> Cerca</span>
   <span class="sh-key"><kbd>Ctrl+N</kbd> Nuovo</span>
   <span class="sh-key"><kbd>Ctrl+D</kbd> Duplica</span>
+  <span class="sh-key"><kbd>Ctrl+G</kbd> Cerca nel prompt</span>
   <span class="sh-key"><kbd>F11</kbd> Focus</span>
   <span class="sh-key"><kbd>Esc</kbd> Chiudi</span>
 </div>
@@ -327,17 +348,6 @@ function fmtD(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('it-IT'
 function wc(html){const t=document.createElement('div');t.innerHTML=html||'';const txt=t.textContent.trim();if(!txt)return{w:0,c:0,t:0};const w=txt.split(/\s+/).length;return{w,c:txt.length,t:Math.ceil(txt.length/4)}}
 function simil(a,b){if(!a||!b)return 0;a=a.toLowerCase();b=b.toLowerCase();if(a===b)return 1;const s=new Set([...a.split(/\s+/)]);const bs=b.split(/\s+/);let m=0;bs.forEach(w=>{if(s.has(w))m++});return m/Math.max(s.size,bs.length)}
 
-// ═══════════════════════════════════════════════════════════════
-// exVars — PATCH v25: tutti i tipi di parentesi
-//
-//  {{variabile}}   → doppie graffe   (originale)
-//  ((variabile))   → doppie tonde    (NUOVO)
-//  [variabile]     → quadre          (originale)
-//  {variabile}     → singola graffa  (originale)
-//  (variabile)     → singola tonda   (NUOVO)
-//
-//  Supporto default e opzioni: nome:default  o  nome:A|B|C
-// ═══════════════════════════════════════════════════════════════
 function exVars(text){
   const rx = /\{\{([^{}]+?)\}\}|\(\(([^()]+?)\)\)|\[([^\[\]]+?)\]|\{([^{}]+?)\}|\(([^()]+?)\)/g;
   const vars = new Map();
@@ -345,15 +355,12 @@ function exVars(text){
   while((m = rx.exec(text)) !== null){
     const raw = (m[1] || m[2] || m[3] || m[4] || m[5] || '').trim();
     if(!raw) continue;
-
-    // Determina il tipo di parentesi per il badge visivo
     let bracketType = 'curly';
     if(m[1])      bracketType = 'dbl-curly';
     else if(m[2]) bracketType = 'dbl-paren';
     else if(m[3]) bracketType = 'square';
     else if(m[4]) bracketType = 'curly';
     else if(m[5]) bracketType = 'paren';
-
     let name = raw, opts = null, def = '';
     if(raw.includes(':')){
       const p = raw.split(':');
@@ -373,7 +380,6 @@ function exVars(text){
   return Array.from(vars.values());
 }
 
-// Label leggibile per il badge tipo parentesi
 function bracketLabel(type){
   const map = {
     'dbl-curly': '{{}}',
@@ -478,7 +484,13 @@ list.appendChild(el)})}
 function renderC2(){const col=$('c2'),cat=FC(S.allData,S.catId),sub=cat?.subcategories?.find(s=>s.id===S.subId);
 if(!sub){col.innerHTML='<div class="em"><i class="fa-regular fa-file-lines"></i>Seleziona una sottocategoria</div>';return}
 const pc=(sub.prompts||[]).length;
-col.innerHTML='<div class="ch"><div class="chl">'+(sub.icon?'<span style="font-size:18px">'+esc(sub.icon)+'</span>':'')+'<h3>'+esc(sub.name)+'</h3><span class="cnt">'+pc+'</span><button class="sb" data-a="is" title="Icona"><i class="fa-regular fa-face-smile"></i></button><button class="sb" data-a="rs" title="Rinomina"><i class="fa-solid fa-pen-to-square"></i></button><button class="sb dg" data-a="ds" title="Elimina"><i class="fa-regular fa-trash-can"></i></button></div><button class="ab" data-a="ap"><i class="fa-solid fa-plus"></i> Prompt</button></div><div class="cl" role="listbox" id="pList"></div>';
+col.innerHTML='<div class="ch"><div class="chl">'+(sub.icon?'<span style="font-size:18px">'+esc(sub.icon)+'</span>':'')+'<h3>'+esc(sub.name)+'</h3><span class="cnt">'+pc+'</span><button class="sb" data-a="is" title="Icona"><i class="fa-regular fa-face-smile"></i></button><button class="sb" data-a="rs" title="Rinomina"><i class="fa-solid fa-pen-to-square"></i></button><button class="sb dg" data-a="ds" title="Elimina"><i class="fa-regular fa-trash-can"></i></button></div><button class="ab" data-a="ap"><i class="fa-solid fa-plus"></i> Prompt</button></div>'+
+'<div class="p-search-wrap">'+
+'<i class="fa-solid fa-magnifying-glass"></i>'+
+'<input type="text" id="pSI" class="p-search-input" placeholder="Filtra prompt…" autocomplete="off" aria-label="Filtra prompt">'+
+'<button id="pSC" class="p-search-clear" title="Cancella filtro" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>'+
+'</div>'+
+'<div class="cl" role="listbox" id="pList"></div>';
 col.querySelector('[data-a="is"]').onclick=async()=>{const n=await Modal.prompt('Icona','Inserisci emoji',sub.icon||'');if(n===null)return;const d=structuredClone(S.allData);FS(d,cat.id,sub.id).icon=n;await save(d,{hist:false})};
 col.querySelector('[data-a="rs"]').onclick=async()=>{const n=await Modal.prompt('Rinomina','Nome',sub.name);if(!n)return;const d=structuredClone(S.allData);FS(d,cat.id,sub.id).name=n;await save(d);Toast.show('Rinominata!','ok')};
 col.querySelector('[data-a="ds"]').onclick=async()=>{if(!await Modal.confirm('Elimina','Eliminare "'+sub.name+'"?'))return;const d=structuredClone(S.allData),c2=FC(d,cat.id),idx=c2.subcategories.findIndex(s=>s.id===sub.id);c2.subcategories.splice(idx,1);const nx=c2.subcategories[idx]||c2.subcategories[idx-1]||c2.subcategories[0];await save(d,{ids:{subId:nx?.id||null,pid:nx?.prompts?.[0]?.id||null}});Toast.show('Eliminata!','')};
@@ -497,7 +509,36 @@ el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}
 el.ondragstart=e=>{e.dataTransfer.setData('text/plain',p.id);el.classList.add('dragging')};el.ondragend=()=>el.classList.remove('dragging');
 el.ondragover=e=>{e.preventDefault();el.classList.add('drag-over')};el.ondragleave=()=>el.classList.remove('drag-over');
 el.ondrop=async e=>{e.preventDefault();el.classList.remove('drag-over');const fid=e.dataTransfer.getData('text/plain');if(fid===p.id)return;const d=structuredClone(S.allData),s2=FS(d,cat.id,sub.id);if(!s2)return;const fi=s2.prompts.findIndex(x=>x.id===fid),ti=s2.prompts.findIndex(x=>x.id===p.id);if(fi===-1||ti===-1)return;const[mv]=s2.prompts.splice(fi,1);s2.prompts.splice(ti,0,mv);await save(d);Toast.show('Riordinato!','ok',1500)};
-list.appendChild(el)})}
+list.appendChild(el)});
+
+// ── FILTRO PROMPT IN-LIST ──
+const pSI=$('pSI'),pSC=$('pSC');
+if(pSI){
+  const filterPrompts=()=>{
+    const q=pSI.value.toLowerCase().trim();
+    pSC.classList.toggle('visible',q.length>0);
+    const items=list.querySelectorAll('.it');
+    let visible=0;
+    items.forEach(el=>{
+      const txt=el.textContent.toLowerCase();
+      const show=!q||txt.includes(q);
+      el.style.display=show?'':'none';
+      if(show)visible++;
+    });
+    let noRes=list.querySelector('.no-res-msg');
+    if(!visible&&q){
+      if(!noRes){noRes=document.createElement('div');noRes.className='em no-res-msg';noRes.style.height='auto';noRes.style.padding='24px 16px';noRes.innerHTML='<i class="fa-solid fa-magnifying-glass"></i><span>Nessun risultato per &ldquo;'+esc(q)+'&rdquo;</span>';list.appendChild(noRes)}
+      else{noRes.querySelector('span').innerHTML='Nessun risultato per &ldquo;'+esc(q)+'&rdquo;'}
+    }else if(noRes)noRes.remove();
+  };
+  pSI.addEventListener('input',filterPrompts);
+  pSI.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&pSI.value){e.stopPropagation();pSI.value='';filterPrompts();}
+    if(e.key==='ArrowDown'){e.preventDefault();const first=list.querySelector('.it:not([style*="display: none"])');if(first)first.focus();}
+  });
+  pSC.addEventListener('click',()=>{pSI.value='';filterPrompts();pSI.focus();});
+}
+}
 
 function renderDet(){
 const colId=['favorites','recents','tags','search'].includes(S.view)?'cD':'c3';
@@ -517,9 +558,19 @@ col.innerHTML='<div class="det"><div class="dh"><h3>Dettaglio</h3><div class="da
 '<button data-a="move"  title="Sposta"><i class="fa-solid fa-right-left"></i></button>'+
 '<button data-a="link"  title="Correlati"><i class="fa-solid fa-link"></i></button>'+
 '<button data-a="share" title="Esporta/Condividi"><i class="fa-solid fa-share-nodes"></i></button>'+
+'<button data-a="srch"  title="Cerca nel prompt (Ctrl+G)"><i class="fa-solid fa-magnifying-glass"></i></button>'+
 '<button data-a="focus" title="Focus Mode (F11)"><i class="fa-solid fa-expand"></i></button>'+
 '<button data-a="del"   title="Elimina (Cestino)" style="color:var(--rd)"><i class="fa-regular fa-trash-can"></i></button>'+
 '</div></div>'+
+// ── IN-PROMPT SEARCH BAR ──
+'<div class="det-srch" id="dSrch" role="search" aria-label="Cerca nel testo del prompt">'+
+'<i class="fa-solid fa-magnifying-glass" style="color:var(--t3);font-size:12px;flex-shrink:0"></i>'+
+'<input type="text" class="det-srch-inp" id="dSrchI" placeholder="Cerca nel prompt…" autocomplete="off" spellcheck="false" aria-label="Cerca nel prompt">'+
+'<span class="det-srch-cnt" id="dSrchC" aria-live="polite"></span>'+
+'<button class="det-srch-nav" id="dSrchPv" title="Precedente (Shift+Invio)"><i class="fa-solid fa-chevron-up"></i></button>'+
+'<button class="det-srch-nav" id="dSrchNx" title="Successivo (Invio)"><i class="fa-solid fa-chevron-down"></i></button>'+
+'<button class="det-srch-nav" id="dSrchX" style="margin-left:2px;color:var(--rd)" title="Chiudi (Esc)"><i class="fa-solid fa-xmark"></i></button>'+
+'</div>'+
 '<div class="bread"><a data-nav="cat">'+esc(cat.name)+'</a><span class="bread-sep"> › </span><a data-nav="sub">'+esc(sub.name)+'</a><span class="bread-sep"> › </span><span>'+esc(p.title)+'</span></div>'+
 '<div class="dti"><h1>'+esc(p.title)+'</h1><button class="sb" data-a="ren" title="Rinomina"><i class="fa-solid fa-pen-to-square"></i></button></div>'+
 '<div class="di">'+
@@ -547,10 +598,139 @@ tA.addEventListener('click',addTag,{signal:sig});tI.addEventListener('keydown',e
 const iv=exVars(p.description||'');renderVars(iv,col,p.id);
 dA.addEventListener('input',()=>{S.dirty=true;renderVars(exVars(dA.innerText),col,p.id);const wl=wc(dA.innerHTML);const wcl=$('wcL');if(wcl)wcl.textContent='~'+wl.t+' token'},{signal:sig});
 dA.addEventListener('keydown',e=>{if(e.key===' '&&dA.contentEditable==='true'){const sel=window.getSelection();if(!sel.rangeCount)return;const rng=sel.getRangeAt(0),node=rng.startContainer;if(node.nodeType!==3)return;const txt=node.textContent.substring(0,rng.startOffset),mt=txt.match(/\/(\S+)$/);if(mt){const sn='/'+mt[1],snip=S.snippets.find(s=>s.name.toLowerCase()===sn.toLowerCase());if(snip){e.preventDefault();const before=txt.substring(0,txt.length-sn.length);node.textContent=before+snip.content+node.textContent.substring(rng.startOffset);const nr=document.createRange();nr.setStart(node,before.length+snip.content.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr);Toast.show('Snippet inserito!','ok',1500)}}}},{signal:sig});
-const toggleEdit=on=>{dA.contentEditable=on?'true':'false';fB2.classList.toggle('show',on);sB.classList.toggle('show',on);eB.classList.toggle('show',on);if(on)dA.focus()};
+
+// ── IN-PROMPT HIGHLIGHT SEARCH ──────────────────────────────
+let hlIdx = 0;
+
+function doHl(q) {
+  // Remove all existing highlight marks safely
+  dA.querySelectorAll('mark.ps-hl').forEach(mk => {
+    const parent = mk.parentNode;
+    if (!parent) return;
+    while (mk.firstChild) parent.insertBefore(mk.firstChild, mk);
+    parent.removeChild(mk);
+    parent.normalize();
+  });
+  const cnt = $('dSrchC');
+  if (!q || !q.trim()) { if(cnt) cnt.textContent = ''; hlIdx = 0; return 0; }
+  // Walk only text nodes (skip any MARK parents to avoid double-wrapping)
+  const re = new RegExp(escRe(q), 'gi');
+  const walker = document.createTreeWalker(dA, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => (n.parentNode && n.parentNode.nodeName === 'MARK') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) nodes.push(node);
+  let count = 0;
+  nodes.forEach(tn => {
+    re.lastIndex = 0;
+    const txt = tn.textContent;
+    if (!re.test(txt)) return;
+    re.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, m;
+    while ((m = re.exec(txt)) !== null) {
+      if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+      const mk = document.createElement('mark');
+      mk.className = 'ps-hl';
+      mk.textContent = m[0];
+      frag.appendChild(mk);
+      count++;
+      last = m.index + m[0].length;
+    }
+    if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+    if (tn.parentNode) tn.parentNode.replaceChild(frag, tn);
+  });
+  return count;
+}
+
+function goHl(dir) {
+  const marks = [...dA.querySelectorAll('mark.ps-hl')];
+  if (!marks.length) return;
+  marks.forEach(m => m.classList.remove('cur'));
+  hlIdx = ((hlIdx + dir) % marks.length + marks.length) % marks.length;
+  marks[hlIdx].classList.add('cur');
+  marks[hlIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const cnt = $('dSrchC');
+  if (cnt) { cnt.textContent = (hlIdx + 1) + '/' + marks.length; cnt.className = 'det-srch-cnt'; }
+}
+
+function closeSrch() {
+  const srch = $('dSrch');
+  if (srch) srch.classList.remove('show');
+  const inp = $('dSrchI'); if (inp) inp.value = '';
+  const cnt = $('dSrchC'); if (cnt) { cnt.textContent = ''; cnt.className = 'det-srch-cnt'; }
+  const btn = col.querySelector('[data-a="srch"]'); if (btn) btn.classList.remove('active-srch');
+  doHl('');
+}
+
+function openSrch() {
+  const srch = $('dSrch');
+  if (!srch) return;
+  srch.classList.add('show');
+  const btn = col.querySelector('[data-a="srch"]'); if (btn) btn.classList.add('active-srch');
+  setTimeout(() => { const inp = $('dSrchI'); if (inp) inp.focus(); }, 60);
+}
+
+$('dSrchI').addEventListener('input', () => {
+  const q = $('dSrchI').value.trim();
+  hlIdx = 0;
+  const count = doHl(q);
+  const cnt = $('dSrchC');
+  if (!cnt) return;
+  if (q && count > 0) {
+    cnt.textContent = '1/' + count;
+    cnt.className = 'det-srch-cnt';
+    const first = dA.querySelector('mark.ps-hl');
+    if (first) { first.classList.add('cur'); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  } else if (q && count === 0) {
+    cnt.textContent = '0/0';
+    cnt.className = 'det-srch-cnt zero';
+  } else {
+    cnt.textContent = '';
+    cnt.className = 'det-srch-cnt';
+  }
+}, { signal: sig });
+
+$('dSrchI').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); goHl(e.shiftKey ? -1 : 1); }
+  if (e.key === 'Escape') { e.stopPropagation(); closeSrch(); }
+}, { signal: sig });
+
+$('dSrchNx').addEventListener('click', () => goHl(1), { signal: sig });
+$('dSrchPv').addEventListener('click', () => goHl(-1), { signal: sig });
+$('dSrchX').addEventListener('click', () => closeSrch(), { signal: sig });
+
+col.querySelector('[data-a="srch"]').addEventListener('click', () => {
+  const srch = $('dSrch');
+  if (!srch) return;
+  if (srch.classList.contains('show')) { closeSrch(); } else { openSrch(); }
+}, { signal: sig });
+// ── END IN-PROMPT SEARCH ──────────────────────────────────────
+
+const toggleEdit = on => {
+  if (on) {
+    // Always close and clear search before editing (marks live in DOM)
+    closeSrch();
+  }
+  dA.contentEditable = on ? 'true' : 'false';
+  fB2.classList.toggle('show', on);
+  sB.classList.toggle('show', on);
+  eB.classList.toggle('show', on);
+  if (on) dA.focus();
+};
+
 col.querySelector('[data-a="edit"]').addEventListener('click',()=>{const ed=dA.contentEditable==='true';if(ed){S.dirty=false;toggleEdit(false);Toast.show('Editing chiuso.','',1500)}else toggleEdit(true)},{signal:sig});
-const doSave=async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2){if(f2.prompt.description&&f2.prompt.description!==dA.innerHTML){f2.prompt.versions.push({ts:Date.now(),content:f2.prompt.description});if(f2.prompt.versions.length>20)f2.prompt.versions.shift()}f2.prompt.description=dA.innerHTML;f2.prompt.updatedAt=Date.now()}toggleEdit(false);S.dirty=false;await save(d);Toast.show('Salvato!','ok')};
+
+const doSave=async()=>{
+  // Strip highlight marks before saving
+  doHl('');
+  const d=structuredClone(S.allData),f2=FP(d,p.id);
+  if(f2){if(f2.prompt.description&&f2.prompt.description!==dA.innerHTML){f2.prompt.versions.push({ts:Date.now(),content:f2.prompt.description});if(f2.prompt.versions.length>20)f2.prompt.versions.shift()}f2.prompt.description=dA.innerHTML;f2.prompt.updatedAt=Date.now()}
+  toggleEdit(false);S.dirty=false;await save(d);Toast.show('Salvato!','ok')
+};
 sB.addEventListener('click',doSave,{signal:sig});
+
 let linkR=null,colorR=null;
 col.querySelectorAll('#fB2 button[data-cmd]').forEach(btn=>{btn.addEventListener('click',async e=>{e.preventDefault();const cmd=btn.dataset.cmd;
 if(cmd==='createLink'){const sel=window.getSelection();if(!sel.rangeCount||!sel.toString().length){Toast.show('Seleziona testo.','er');return}linkR=sel.getRangeAt(0);const url=await Modal.link();if(!url||url.length<4){linkR=null;return}let fu=url;if(!/^[a-zA-Z]+:\/\//.test(fu))fu='https://'+fu;if(fu.trim().toLowerCase().startsWith('javascript:')){Toast.show('URL non sicuro.','er');linkR=null;return}if(linkR){const s2=window.getSelection();s2.removeAllRanges();s2.addRange(linkR);document.execCommand('insertHTML',false,'<a href="'+esc(fu)+'" target="_blank">'+esc(linkR.toString())+'</a>');linkR=null;Toast.show('Link inserito!','ok',1500)}}
@@ -562,12 +742,6 @@ else document.execCommand(cmd,false,null);if(cmd!=='createLink'&&cmd!=='findRepl
 const cP=$('cP');$('cB').addEventListener('click',()=>{const sel=window.getSelection();colorR=(sel.rangeCount&&sel.toString().length)?sel.getRangeAt(0):null;cP.click()},{signal:sig});
 cP.addEventListener('change',()=>{dA.focus();if(colorR){const s=window.getSelection();s.removeAllRanges();s.addRange(colorR)}document.execCommand('foreColor',false,cP.value);colorR=null},{signal:sig});
 
-// ═══════════════════════════════════════════════════════
-// COPY — PATCH v25: sostituzione tutti i tipi parentesi
-//
-//  Sostituisce: {{v}}  ((v))  [v]  {v}  (v)
-//  Con e senza :default e :opt1|opt2
-// ═══════════════════════════════════════════════════════
 col.querySelector('[data-a="copy"]').addEventListener('click',async()=>{
   let t = dA.innerText;
   col.querySelectorAll('.vi,.vse').forEach(i => {
@@ -616,9 +790,6 @@ $('fI').onchange=e=>{if(e.target.files.length>0){const editor=document.querySele
 if(p.related?.length){const rd=document.createElement('div');rd.style.cssText='padding:9px 18px;border-bottom:1px solid var(--bd);background:var(--sf2);font-size:12.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap';rd.innerHTML='<span style="color:var(--t3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">🔗 Correlati</span>';p.related.forEach(rid=>{const rf=FP(S.allData,rid);if(rf){const a=document.createElement('a');a.style.cssText='color:var(--ac);cursor:pointer;font-weight:500;font-size:13px';a.textContent=rf.prompt.title;a.onclick=()=>{S.pid=rid;S.catId=rf.cat.id;S.subId=rf.sub.id;S.view='columns';render()};rd.appendChild(a)}});const tgsEl=col.querySelector('.tgs');if(tgsEl)tgsEl.parentNode.insertBefore(rd,tgsEl.nextSibling)}
 if(S.editNew){toggleEdit(true);S.editNew=false}}
 
-// ═══════════════════════════════════════════════════════
-// renderVars — PATCH v25: badge tipo parentesi per ogni var
-// ═══════════════════════════════════════════════════════
 function renderVars(vars,col,pid){
   const s=col.querySelector('#vS');if(!s)return;
   if(!vars.length){s.classList.remove('ac');s.innerHTML='';return}
@@ -626,7 +797,6 @@ function renderVars(vars,col,pid){
 
   s.innerHTML='<div class="vl"><i class="fa-solid fa-sliders" style="margin-right:5px"></i>Variabili Dinamiche</div>';
 
-  // Legenda tipi supportati
   const leg=document.createElement('div');
   leg.className='vlegend';
   leg.innerHTML=[
@@ -640,11 +810,9 @@ function renderVars(vars,col,pid){
 
   vars.forEach(v=>{
     const g=document.createElement('div');g.className='vg';
-    // Badge tipo parentesi
     const badge=document.createElement('span');
     badge.className='vbracket '+v.bracketType;
     badge.textContent=bracketLabel(v.bracketType);
-    // Nome variabile
     const l=document.createElement('div');l.className='vn';l.textContent=v.name;l.title=v.name;
     let i;
     if(v.options?.length){
@@ -667,13 +835,7 @@ function renderVars(vars,col,pid){
   pa.appendChild(spb);s.appendChild(pa);s.classList.add('ac');
 }
 
-// ═══════════════════════════════════════════════════════
-// insImg — PATCH v25.1
-//  • Riduce automaticamente a IMG_BASE px di larghezza
-//  • Usa Canvas per ridimensionamento lossless
-//  • Aggiunge data-w per la toolbar di resize
-// ═══════════════════════════════════════════════════════
-const IMG_BASE = 100; // px larghezza di default all'inserimento
+const IMG_BASE = 100;
 
 function resizeImgCanvas(src, targetW, mimeType, cb){
   const tmp = new Image();
@@ -697,15 +859,12 @@ function insImg(file, editor){
   r.onload = e => {
     const ed = editor || document.querySelector('#dA[contenteditable="true"]');
     if(!ed){Toast.show('Attiva prima la modalità editing ✏️','er');return}
-    // Ridimensiona a IMG_BASE px via canvas
     resizeImgCanvas(e.target.result, IMG_BASE, file.type, (dataUrl, w, h) => {
       ed.focus();
       if(ed._savedRange){
         const sel=window.getSelection();sel.removeAllRanges();sel.addRange(ed._savedRange);ed._savedRange=null;
       }
       const alt = esc(file.name);
-      // data-orig: sorgente originale (per riscalare da nuovo ogni volta senza perdita)
-      // data-w: larghezza corrente in px
       const imgTag = `<img src="${dataUrl}" data-orig="${e.target.result}" data-mime="${file.type}" data-w="${w}" `+
         `style="width:${w}px;height:auto;display:block;margin:10px 0;border-radius:8px;cursor:pointer;outline:2px solid transparent;transition:outline .15s;" `+
         `alt="${alt}">`;
@@ -718,9 +877,6 @@ function insImg(file, editor){
   r.readAsDataURL(file);
 }
 
-// ═══════════════════════════════════════════════════════
-// Toolbar resize immagini — globale, si attacca all'editor
-// ═══════════════════════════════════════════════════════
 (function setupImgToolbar(){
   const tb = $('imgTb');
   let activeImg = null;
@@ -729,10 +885,8 @@ function insImg(file, editor){
     activeImg = img;
     const w = parseInt(img.dataset.w) || img.offsetWidth || IMG_BASE;
     $('imgSize').textContent = w + 'px';
-    // Highlight selezione
     document.querySelectorAll('.dd img').forEach(i => i.style.outline = '2px solid transparent');
     img.style.outline = '2px solid var(--ac)';
-    // Posiziona toolbar sopra l'immagine
     const rect = img.getBoundingClientRect();
     tb.style.display = 'flex';
     const tbW = 270;
@@ -761,7 +915,6 @@ function insImg(file, editor){
       activeImg.dataset.w = w;
       $('imgSize').textContent = w + 'px';
       S.dirty = true;
-      // Riposiziona toolbar
       requestAnimationFrame(() => { if(activeImg) showTb(activeImg); });
     });
   }
@@ -776,15 +929,12 @@ function insImg(file, editor){
   };
   $('imgClose').onclick  = hideTb;
 
-  // Delegazione click su tutte le immagini negli editor
   document.addEventListener('click', e => {
     const img = e.target.closest('.dd img');
     if(img){ e.stopPropagation(); showTb(img); return; }
-    // Click fuori: chiudi se non sulla toolbar
     if(!e.target.closest('#imgTb')) hideTb();
   }, true);
 
-  // Chiudi su scroll o resize finestra
   document.addEventListener('scroll', hideTb, true);
   window.addEventListener('resize', hideTb);
 })();
@@ -827,12 +977,24 @@ function setup(){
         if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey&&!isEd){e.preventDefault();doUndo()}
         if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))&&!isEd){e.preventDefault();doRedo()}
         if((e.ctrlKey||e.metaKey)&&e.key==='f'){e.preventDefault();sI.focus()}
+        if((e.ctrlKey||e.metaKey)&&e.key==='g'&&!isIn){
+          e.preventDefault();
+          // Toggle in-prompt search
+          const srchBtn=document.querySelector('[data-a="srch"]');
+          if(srchBtn)srchBtn.click();
+        }
         if((e.ctrlKey||e.metaKey)&&e.key==='n'&&!isIn&&!isEd){e.preventDefault();document.querySelector('[data-a="ap"]')?.click()}
         if((e.ctrlKey||e.metaKey)&&e.key==='e'&&!isIn){e.preventDefault();document.querySelector('[data-a="edit"]')?.click()}
         if((e.ctrlKey||e.metaKey)&&e.key==='d'&&!isIn&&!isEd){e.preventDefault();document.querySelector('[data-a="dup"]')?.click()}
         if(e.key==='F11'){e.preventDefault();S.focusMode=!S.focusMode;render()}
-        if(e.key==='Escape'){Modal.closeAll();const d=document.querySelector('.dd[contenteditable="true"]');if(d){d.contentEditable='false';document.querySelector('.fb')?.classList.remove('show');document.querySelector('.fs')?.classList.remove('show');document.querySelector('.eb')?.classList.remove('show');S.dirty=false}if(S.focusMode){S.focusMode=false;render()}}
-        if(!isIn&&!isEd&&(e.key==='ArrowDown'||e.key==='ArrowUp')){const list=document.querySelector('#pList')||document.querySelector('#cL .cl');if(!list)return;const items=[...list.querySelectorAll('.it')];const active=list.querySelector('.it.ac');if(!active||!items.length)return;const idx=items.indexOf(active);const next=e.key==='ArrowDown'?items[idx+1]:items[idx-1];if(next){e.preventDefault();next.click()}}
+        if(e.key==='Escape'){
+          // Close in-prompt search first if open
+          const srch=$('dSrch');
+          if(srch&&srch.classList.contains('show')){
+            const xBtn=$('dSrchX');if(xBtn)xBtn.click();return;
+          }
+          Modal.closeAll();const d=document.querySelector('.dd[contenteditable="true"]');if(d){d.contentEditable='false';document.querySelector('.fb')?.classList.remove('show');document.querySelector('.fs')?.classList.remove('show');document.querySelector('.eb')?.classList.remove('show');S.dirty=false}if(S.focusMode){S.focusMode=false;render()}}
+        if(!isIn&&!isEd&&(e.key==='ArrowDown'||e.key==='ArrowUp')){const list=document.querySelector('#pList')||document.querySelector('#cL .cl');if(!list)return;const items=[...list.querySelectorAll('.it:not([style*="display: none"])')];const active=list.querySelector('.it.ac');if(!active||!items.length)return;const idx=items.indexOf(active);const next=e.key==='ArrowDown'?items[idx+1]:items[idx-1];if(next){e.preventDefault();next.click()}}
     });
     checkHash();
 }
