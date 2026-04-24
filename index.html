@@ -341,7 +341,81 @@ const $=id=>document.getElementById(id);
 const uid=()=>crypto.randomUUID?crypto.randomUUID():`${Date.now()}_${Math.random().toString(36).slice(2,9)}`;
 const esc=s=>{const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};return String(s).replace(/[&<>"']/g,c=>m[c])};
 const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-function san(h){const t=document.createElement('div');t.innerHTML=h;const ok={'B':[],'I':[],'U':[],'STRONG':[],'EM':[],'BR':[],'P':[],'DIV':[],'SPAN':['style'],'UL':[],'OL':[],'LI':[],'A':['href','target'],'IMG':['src','alt','style'],'FONT':['color','size'],'H1':[],'H2':[],'H3':[],'H4':[],'H5':[],'H6':[]};(function cl(n){Array.from(n.childNodes).forEach(c=>{if(c.nodeType===3)return;if(c.nodeType===1){if(!(c.tagName in ok)){n.replaceChild(document.createTextNode(c.textContent),c);return}Array.from(c.attributes).forEach(a=>{if(!ok[c.tagName].includes(a.name))c.removeAttribute(a.name)});if(c.hasAttribute('href')&&c.getAttribute('href').trim().toLowerCase().startsWith('javascript:'))c.setAttribute('href','#');if(c.hasAttribute('src')){const s=c.getAttribute('src');if(s&&!s.startsWith('data:')&&!s.startsWith('http'))c.removeAttribute('src')}cl(c)}else n.removeChild(c)})})(t);return t.innerHTML}
+function san(h){
+  const t = document.createElement('div');
+  t.innerHTML = h || '';
+
+  const ok = {
+    B: [], I: [], U: [], STRONG: [], EM: [], BR: [],
+    P: [], DIV: [], SPAN: ['style'],
+    UL: [], OL: [], LI: [],
+    A: ['href', 'target', 'rel'],
+    IMG: ['src', 'alt', 'style', 'data-orig', 'data-mime', 'data-w'],
+    FONT: ['color', 'size'],
+    CODE: [], PRE: [],
+    H1: [], H2: [], H3: [], H4: [], H5: [], H6: []
+  };
+
+  function cleanUrlAttr(el, attr) {
+    const raw = (el.getAttribute(attr) || '').trim();
+    const low = raw.toLowerCase();
+
+    if (!raw) {
+      el.removeAttribute(attr);
+      return;
+    }
+
+    if (low.startsWith('javascript:') || low.startsWith('vbscript:')) {
+      el.removeAttribute(attr);
+      return;
+    }
+
+    if (attr === 'src') {
+      const isSafeImage =
+        low.startsWith('data:image/png') ||
+        low.startsWith('data:image/jpeg') ||
+        low.startsWith('data:image/jpg') ||
+        low.startsWith('data:image/gif') ||
+        low.startsWith('data:image/webp') ||
+        low.startsWith('https://') ||
+        low.startsWith('http://');
+
+      if (!isSafeImage) el.removeAttribute(attr);
+    }
+  }
+
+  (function cl(n){
+    Array.from(n.childNodes).forEach(c => {
+      if (c.nodeType === 3) return;
+
+      if (c.nodeType === 1) {
+        if (!(c.tagName in ok)) {
+          n.replaceChild(document.createTextNode(c.textContent), c);
+          return;
+        }
+
+        Array.from(c.attributes).forEach(a => {
+          if (!ok[c.tagName].includes(a.name)) c.removeAttribute(a.name);
+        });
+
+        if (c.hasAttribute('href')) {
+          cleanUrlAttr(c, 'href');
+          c.setAttribute('rel', 'noopener noreferrer');
+        }
+
+        if (c.hasAttribute('src')) {
+          cleanUrlAttr(c, 'src');
+        }
+
+        cl(c);
+      } else {
+        n.removeChild(c);
+      }
+    });
+  })(t);
+
+  return t.innerHTML;
+}
 function tc(n){let h=0;for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);return`hsl(${h%360},55%,50%)`}
 function tp(h,m=60){const t=document.createElement('div');t.innerHTML=h||'';const x=t.textContent||'';return x.length>m?x.slice(0,m)+'\u2026':x}
 function fmtD(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
@@ -352,31 +426,56 @@ function exVars(text){
   const rx = /\{\{([^{}]+?)\}\}|\(\(([^()]+?)\)\)|\[([^\[\]]+?)\]|\{([^{}]+?)\}|\(([^()]+?)\)/g;
   const vars = new Map();
   let m;
-  while((m = rx.exec(text)) !== null){
+
+  const validName = name =>
+    /^[\p{L}\p{N}_.$-]{1,60}$/u.test(name);
+
+  while ((m = rx.exec(text || '')) !== null) {
     const raw = (m[1] || m[2] || m[3] || m[4] || m[5] || '').trim();
-    if(!raw) continue;
+    if (!raw) continue;
+
     let bracketType = 'curly';
-    if(m[1])      bracketType = 'dbl-curly';
-    else if(m[2]) bracketType = 'dbl-paren';
-    else if(m[3]) bracketType = 'square';
-    else if(m[4]) bracketType = 'curly';
-    else if(m[5]) bracketType = 'paren';
-    let name = raw, opts = null, def = '';
-    if(raw.includes(':')){
+
+    if (m[1]) bracketType = 'dbl-curly';
+    else if (m[2]) bracketType = 'dbl-paren';
+    else if (m[3]) bracketType = 'square';
+    else if (m[4]) bracketType = 'curly';
+    else if (m[5]) bracketType = 'paren';
+
+    let name = raw;
+    let opts = null;
+    let def = '';
+
+    if (raw.includes(':')) {
       const p = raw.split(':');
       name = p[0].trim();
+
       const rest = p.slice(1).join(':').trim();
-      if(rest.includes('|')){
-        opts = rest.split('|').map(o => o.trim());
-        def = opts[0];
+
+      if (rest.includes('|')) {
+        opts = rest
+          .split('|')
+          .map(o => o.trim())
+          .filter(Boolean);
+
+        def = opts[0] || '';
       } else {
         def = rest;
       }
     }
-    if(!vars.has(name)){
-      vars.set(name, { name, options: opts, defaultValue: def, bracketType });
+
+    if (!validName(name)) continue;
+
+    if (!vars.has(name)) {
+      vars.set(name, {
+        name,
+        options: opts,
+        defaultValue: def,
+        bracketType
+      });
     }
   }
+
   return Array.from(vars.values());
 }
 
@@ -405,7 +504,71 @@ const Modal={
     _cc(v){$('mC').classList.remove('show');if(this._cr){this._cr(v);this._cr=null}},
     link(){return new Promise(r=>{this._lr=r;$('mLu').value='';$('mL').classList.add('show');setTimeout(()=>$('mLu').focus(),50)})},
     _cl(v){$('mL').classList.remove('show');if(this._lr){this._lr(v);this._lr=null}},
-    move(cats,curCat,curSub){return new Promise(r=>{this._mr=r;const cs=$('mvC'),ss=$('mvS');cs.innerHTML='';cats.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;cs.appendChild(o)});cs.value=curCat||cats[0]?.id;const fill=()=>{ss.innerHTML='';const cat=cats.find(c=>c.id===cs.value);(cat?.subcategories||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;ss.appendChild(o)});if(cat?.subcategories?.length&&curSub){const h=cat.subcategories.find(s=>s.id===curSub);if(h)ss.value=curSub}};fill();cs.onchange=fill;$('mM').classList.add('show')})},
+    move(cats, curCat, curSub) {
+  return new Promise(r => {
+    this._mr = r;
+
+    const cs = $('mvC');
+    const ss = $('mvS');
+    const okBtn = $('mMk');
+
+    cs.innerHTML = '';
+    ss.innerHTML = '';
+
+    const validCats = Array.isArray(cats)
+      ? cats.filter(c => c && c.id)
+      : [];
+
+    validCats.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.name || 'Senza nome';
+      cs.appendChild(o);
+    });
+
+    cs.value = curCat || validCats[0]?.id || '';
+
+    const fill = () => {
+      ss.innerHTML = '';
+
+      const cat = validCats.find(c => c.id === cs.value);
+      const subs = Array.isArray(cat?.subcategories)
+        ? cat.subcategories.filter(s => s && s.id)
+        : [];
+
+      if (!subs.length) {
+        const o = document.createElement('option');
+        o.value = '';
+        o.textContent = 'Nessuna sottocategoria disponibile';
+        ss.appendChild(o);
+
+        ss.disabled = true;
+        if (okBtn) okBtn.disabled = true;
+        return;
+      }
+
+      ss.disabled = false;
+      if (okBtn) okBtn.disabled = false;
+
+      subs.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.name || 'Senza nome';
+        ss.appendChild(o);
+      });
+
+      if (curSub) {
+        const h = subs.find(s => s.id === curSub);
+        if (h) ss.value = curSub;
+      }
+    };
+
+    fill();
+    cs.onchange = fill;
+
+    $('mM').classList.add('show');
+  });
+},
     _cm(v){$('mM').classList.remove('show');if(this._mr){this._mr(v);this._mr=null}},
     closeAll(){this._ci(null);this._cc(false);this._cl(null);this._cm(null);['mSt','mStats','mSnip'].forEach(id=>$(id).classList.remove('show'))},
     init(){$('mIk').onclick=()=>this._ri();$('mIc').onclick=()=>this._ci(null);$('mCk').onclick=()=>this._cc(true);$('mCc').onclick=()=>this._cc(false);$('mC').onkeydown=e=>{if(e.key==='Escape')this._cc(false)};$('mLk').onclick=()=>this._cl($('mLu').value.trim());$('mLc').onclick=()=>this._cl(null);$('mLu').onkeydown=e=>{if(e.key==='Enter')this._cl($('mLu').value.trim());if(e.key==='Escape')this._cl(null)};$('mMk').onclick=()=>{const c=$('mvC').value,s=$('mvS').value;this._cm(c&&s?{catId:c,subId:s}:null)};$('mMc').onclick=()=>this._cm(null);
@@ -827,12 +990,61 @@ function renderVars(vars,col,pid){
     g.appendChild(badge);g.appendChild(l);g.appendChild(i);s.appendChild(g);
   });
 
-  const pa=document.createElement('div');pa.className='vp';
-  const presets=S.varPresets[pid]||[];
-  presets.forEach((pr,idx)=>{const btn=document.createElement('button');btn.className='vp-btn';btn.textContent=pr.name||'Preset '+(idx+1);btn.onclick=()=>{vars.forEach(v=>{const inp=s.querySelector('[data-variable="'+v.name+'"]');if(inp&&pr.values[v.name])inp.value=pr.values[v.name]})};pa.appendChild(btn)});
-  const spb=document.createElement('button');spb.className='vp-btn';spb.innerHTML='<i class="fa-solid fa-plus" style="font-size:10px;margin-right:3px"></i>Salva Preset';
-  spb.onclick=async()=>{const name=await Modal.prompt('Nome Preset','Nome');if(!name)return;const values={};s.querySelectorAll('.vi,.vse').forEach(inp=>{values[inp.dataset.variable]=inp.value});if(!S.varPresets[pid])S.varPresets[pid]=[];S.varPresets[pid].push({name,values});await DB.saveVP(S.varPresets);Toast.show('Preset salvato!','ok');render()};
-  pa.appendChild(spb);s.appendChild(pa);s.classList.add('ac');
+const pa = document.createElement('div');
+pa.className = 'vp';
+
+const presets = S.varPresets[pid] || [];
+
+presets.forEach((pr, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'vp-btn';
+  btn.textContent = pr.name || 'Preset ' + (idx + 1);
+
+  btn.onclick = () => {
+    vars.forEach(v => {
+      const inp = Array.from(s.querySelectorAll('.vi,.vse'))
+        .find(el => el.dataset.variable === v.name);
+
+      if (
+        inp &&
+        pr.values &&
+        Object.prototype.hasOwnProperty.call(pr.values, v.name)
+      ) {
+        inp.value = pr.values[v.name];
+      }
+    });
+  };
+
+  pa.appendChild(btn);
+});
+
+const spb = document.createElement('button');
+spb.className = 'vp-btn';
+spb.innerHTML = '<i class="fa-solid fa-plus" style="font-size:10px;margin-right:3px"></i>Salva Preset';
+
+spb.onclick = async () => {
+  const name = await Modal.prompt('Nome Preset', 'Nome');
+  if (!name) return;
+
+  const values = {};
+
+  s.querySelectorAll('.vi,.vse').forEach(inp => {
+    values[inp.dataset.variable] = inp.value;
+  });
+
+  if (!S.varPresets[pid]) S.varPresets[pid] = [];
+
+  S.varPresets[pid].push({ name, values });
+
+  await DB.saveVP(S.varPresets);
+
+  Toast.show('Preset salvato!', 'ok');
+  render();
+};
+
+pa.appendChild(spb);
+s.appendChild(pa);
+s.classList.add('ac');
 }
 
 const IMG_BASE = 100;
@@ -943,7 +1155,59 @@ function doBackup(){if(!S.allData.length){Toast.show('Nessun dato da esportare.'
 function doImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const data=JSON.parse(ev.target.result);if(!validate(data)){Toast.show('JSON non valido.','er');return}S.catId=data[0]?.id||null;S.subId=data[0]?.subcategories?.[0]?.id||null;S.pid=data[0]?.subcategories?.[0]?.prompts?.[0]?.id||null;S.view='columns';await save(data,{hist:false});Toast.show('Importato con successo!','ok')}catch(err){Toast.show('Errore nel parsing JSON.','er')}};reader.readAsText(file);e.target.value=''}
 function doExportMd(){if(!S.allData.length)return;let md='# Prompt Studio Export\n\n';S.allData.forEach(c=>{md+='## '+c.name+'\n\n';(c.subcategories||[]).forEach(s=>{md+='### '+s.name+'\n\n';(s.prompts||[]).forEach(p=>{const tmp=document.createElement('div');tmp.innerHTML=p.description||'';md+='#### '+p.title+'\n';if(p.tags?.length)md+='*Tags: '+p.tags.join(', ')+'*\n\n';md+=tmp.textContent+'\n\n---\n\n'})})});const b=new Blob([md],{type:'text/markdown'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='prompts_'+new Date().toISOString().slice(0,10)+'.md';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);Toast.show('Export Markdown pronto!','ok')}
 function doExportCat(){const cat=FC(S.allData,S.catId);if(!cat){Toast.show('Seleziona prima una categoria.','er');return}const b=new Blob([JSON.stringify([cat],null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='cat_'+cat.name.replace(/\s+/g,'_')+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);Toast.show('Categoria esportata!','ok')}
-function doImportCat(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const data=JSON.parse(ev.target.result);if(!Array.isArray(data))throw 0;validate(data);await save([...structuredClone(S.allData),...data]);Toast.show('Categoria importata!','ok')}catch(err){Toast.show('Errore importazione.','er')}};reader.readAsText(file);e.target.value=''}
+function doImportCat(e){
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = async ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+
+      if (!Array.isArray(data) || !validate(data)) {
+        Toast.show('JSON categoria non valido.', 'er');
+        return;
+      }
+
+      const existingNames = new Set(
+        S.allData.map(c => String(c.name || '').trim().toLowerCase())
+      );
+
+      const cleaned = data.map(cat => {
+        const copy = structuredClone(cat);
+
+        if (existingNames.has(String(copy.name || '').trim().toLowerCase())) {
+          copy.name = copy.name + ' (Importata)';
+        }
+
+        copy.id = uid();
+
+        copy.subcategories = (copy.subcategories || []).map(sub => {
+          sub.id = uid();
+          sub.prompts = (sub.prompts || []).map(p => ({
+            ...p,
+            id: uid(),
+            createdAt: p.createdAt || Date.now(),
+            updatedAt: Date.now()
+          }));
+          return sub;
+        });
+
+        return copy;
+      });
+
+      await save([...structuredClone(S.allData), ...cleaned]);
+      Toast.show('Categoria importata!', 'ok');
+    } catch (err) {
+      console.error(err);
+      Toast.show('Errore importazione.', 'er');
+    }
+  };
+
+  reader.readAsText(file);
+  e.target.value = '';
+}
 function showStats(){const all=allP(S.allData);const tp=all.length,tc2=S.allData.length;let ts=0;S.allData.forEach(c=>ts+=(c.subcategories||[]).length);const tf=all.filter(p=>p.favorite).length;const tCop=all.reduce((a,p)=>a+(p.copyCount||0),0);const tags=allTags(S.allData);const topC=[...all].sort((a,b)=>(b.copyCount||0)-(a.copyCount||0)).slice(0,5);const nc=all.filter(p=>!p.copyCount).length;
 let h='<div class="stats"><div class="stat-card"><div class="stat-num">'+tp+'</div><div class="stat-label">Prompt totali</div></div><div class="stat-card"><div class="stat-num">'+tc2+'</div><div class="stat-label">Categorie</div></div><div class="stat-card"><div class="stat-num">'+ts+'</div><div class="stat-label">Sottocategorie</div></div><div class="stat-card"><div class="stat-num">'+tf+'</div><div class="stat-label">Preferiti</div></div><div class="stat-card"><div class="stat-num">'+tCop+'</div><div class="stat-label">Copie totali</div></div><div class="stat-card"><div class="stat-num">'+tags.length+'</div><div class="stat-label">Tag univoci</div></div><div class="stat-card"><div class="stat-num">'+nc+'</div><div class="stat-label">Mai copiati</div></div></div>';
 if(topC.length&&topC[0].copyCount){h+='<h5 style="margin:12px 0 8px;color:var(--t2);font-family:var(--font-head)">Top Prompt Copiati</h5><div style="font-size:13px">';topC.forEach((p,i)=>{if(p.copyCount)h+='<div style="padding:4px 0;color:var(--t2);display:flex;justify-content:space-between"><span>'+(i+1)+'. '+esc(p.title)+'</span><b style="color:var(--ac);font-family:var(--font-mono)">'+p.copyCount+'×</b></div>'});h+='</div>'}
@@ -1040,8 +1304,40 @@ el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}
 async function init(){
     Loader.show();try{
         await DB.init();Modal.init();
-        S.allData=await DB.load();S.recents=await DB.loadR();S.snippets=await DB.loadSn();S.varPresets=await DB.loadVP();
-        const savedSt=await DB.loadSt();if(savedSt)Object.assign(S.settings,savedSt);
+        S.allData = await DB.load();
+S.recents = await DB.loadR();
+S.snippets = await DB.loadSn();
+S.varPresets = await DB.loadVP();
+
+if (!validate(S.allData)) {
+  console.warn('Dati IndexedDB non validi: reset dataset.');
+  S.allData = [];
+  S.recents = [];
+  S.snippets = Array.isArray(S.snippets) ? S.snippets : [];
+  S.varPresets = {};
+  await DB.save(S.allData);
+  await DB.saveR(S.recents);
+  await DB.saveVP(S.varPresets);
+}
+
+if (!Array.isArray(S.recents)) S.recents = [];
+if (!Array.isArray(S.snippets)) S.snippets = [];
+if (!S.varPresets || typeof S.varPresets !== 'object' || Array.isArray(S.varPresets)) {
+  S.varPresets = {};
+}
+
+const savedSt = await DB.loadSt();
+
+if (savedSt && typeof savedSt === 'object') {
+  Object.assign(S.settings, savedSt);
+}
+
+S.settings.fontSize = Math.min(24, Math.max(12, parseInt(S.settings.fontSize) || 15));
+S.settings.bkInt = Math.min(60, Math.max(1, parseInt(S.settings.bkInt) || 10));
+
+if (!['dark', 'light'].includes(S.settings.theme)) S.settings.theme = 'dark';
+if (!['purple', 'blue', 'green', 'rose', 'amber'].includes(S.settings.accent)) S.settings.accent = 'purple';
+if (!['compact', 'normal', 'comfortable'].includes(S.settings.density)) S.settings.density = 'normal';
         if(!S.allData.length){
           const wid=uid(),wsid=uid(),wpid=uid();
           S.allData=[{id:wid,name:'Guide',icon:'📚',subcategories:[{id:wsid,name:'Benvenuto',icon:'',prompts:[{
