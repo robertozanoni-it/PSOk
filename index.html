@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
 :root {
-  --bg:#0a0b0f;--sf:#111318;--sf2:#16181f;--el:#1e2130;--elh:#252840;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);--ac:#7c6fff;--ach:#6257e8;--acg:rgba(124,111,255,.15);--ac-glow:0 0 20px rgba(124,111,255,.35);--t1:#f4f6ff;--t2:#c0c8e4;--t3:#7b84a8;--gn:#34d399;--rd:#f87171;--yl:#fbbf24;--pk:#f472b6;--cy:#22d3ee;--or:#fb923c;--gd:#fbbf24;--r-sm:5px;--r-md:10px;--r-lg:14px;--r-xl:20px;--ease:cubic-bezier(.4,0,.2,1);--tr-fast:.12s var(--ease);--tr:.2s var(--ease);--tr-slow:.35s var(--ease);--font-ui:'Inter',system-ui,sans-serif;--font-head:'Syne',sans-serif;--font-mono:'JetBrains Mono',monospace;--font-size:16px;--item-pad:10px 14px;--gap:6px;--hpad:14px 18px;--w-cat:260px;--w-sub:260px;
+  --bg:#0a0b0f;--sf:#111318;--sf2:#16181f;--el:#1e2130;--elh:#252840;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);--ac:#7c6fff;--ach:#6257e8;--acg:rgba(124,111,255,.15);--ac-glow:0 0 20px rgba(124,111,255,.35);--t1:#f4f6ff;--t2:#c0c8e4;--t3:#7b84a8;--gn:#34d399;--rd:#f87171;--yl:#fbbf24;--pk:#f472b6;--cy:#22d3ee;--or:#fb923c;--gd:#fbbf24;--r-sm:5px;--r-md:10px;--r-lg:14px;--r-xl:20px;--ease:cubic-bezier(.4,0,.2,1);--tr-fast:.12s var(--ease);--tr:.2s var(--ease);--tr-slow:.35s var(--ease);--font-ui:'Inter',system-ui,sans-serif;--font-head:'Syne',sans-serif;--font-mono:'JetBrains Mono',monospace;--font-size:20px;--item-pad:10px 14px;--gap:6px;--hpad:14px 18px;--w-cat:260px;--w-sub:260px;
 }
 [data-theme="light"]{--bg:#f5f6fa;--sf:#ffffff;--sf2:#f0f1f7;--el:#eceef6;--elh:#e2e5f0;--bd:rgba(0,0,0,.07);--bd2:rgba(0,0,0,.14);--t1:#141622;--t2:#4a5070;--t3:#9ba3c4;--acg:rgba(124,111,255,.1);}
 [data-accent="blue"]{--ac:#60a5fa;--ach:#3b82f6;--acg:rgba(96,165,250,.15);--ac-glow:0 0 20px rgba(96,165,250,.35)}
@@ -41,6 +41,29 @@ body{background:var(--bg);font-family:var(--font-ui);color:var(--t1);display:fle
 .ib{background:transparent;border:none;border-radius:var(--r-md);width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:19px;transition:color var(--tr),background var(--tr),box-shadow var(--tr),transform var(--tr);position:relative;}
 .ib:hover{transform:translateY(-1px)}
 .ib.active{color:var(--ac)}
+.ib-font{
+  color:var(--cy);
+}
+
+.ib-font:hover{
+  color:#67e8f9;
+  background:rgba(34,211,238,.15);
+  box-shadow:0 0 12px rgba(34,211,238,.25);
+}
+
+.font-size-indicator{
+  min-width:48px;
+  text-align:center;
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:700;
+  color:var(--ac);
+  background:var(--el);
+  border:1px solid var(--bd);
+  border-radius:var(--r-md);
+  padding:5px 8px;
+  user-select:none;
+}
 .ib-theme{color:#a78bfa}.ib-theme:hover{color:#c4b5fd;background:rgba(167,139,250,.15);box-shadow:0 0 12px rgba(167,139,250,.25)}
 .ib-settings{color:#94a3b8}.ib-settings:hover{color:#e2e8f0;background:rgba(148,163,184,.15);box-shadow:0 0 12px rgba(148,163,184,.2)}
 .ib-stats{color:#34d399}.ib-stats:hover{color:#6ee7b7;background:rgba(52,211,153,.15);box-shadow:0 0 12px rgba(52,211,153,.3)}
@@ -263,7 +286,7 @@ body.focus-mode .co:not(.focus-target){display:none}
     <div class="color-dot" data-accent="amber" style="background:#fbbf24" title="Ambra"></div>
   </div>
   <label>Densità Interfaccia</label><select id="stDen"><option value="compact">Compatta</option><option value="normal" selected>Normale</option><option value="comfortable">Comoda</option></select>
-  <label>Dimensione Font Editor (px)</label><input type="number" id="stFont" value="15" min="12" max="24">
+  <label>Dimensione Font Editor (px)</label><input type="number" id="stFont" value="20" min="14" max="32">
   <label>Backup Automatico (minuti)</label><input type="number" id="stBkInt" value="10" min="1" max="60">
   <div class="mf"><button class="mb cc" id="mStc">Chiudi</button><button class="mb cf" id="mStk">Salva</button></div>
 </div></div>
@@ -303,6 +326,17 @@ body.focus-mode .co:not(.focus-target){display:none}
     <button class="ib ib-stats" id="statsBtn" title="Analytics"><i class="fa-solid fa-chart-bar"></i></button>
     <button class="ib ib-snip" id="snipBtn" title="Snippet"><i class="fa-solid fa-puzzle-piece"></i></button>
     <div class="hdiv"></div>
+    <button class="ib ib-font" id="fontDownBtn" title="Riduci font">
+  <i class="fa-solid fa-minus"></i>
+</button>
+
+<span class="font-size-indicator" id="fontSizeInd">20px</span>
+
+<button class="ib ib-font" id="fontUpBtn" title="Aumenta font">
+  <i class="fa-solid fa-plus"></i>
+</button>
+
+<div class="hdiv"></div>
     <div class="tw">
       <button class="ib ib-tools" id="toB" title="Strumenti"><i class="fa-solid fa-screwdriver-wrench"></i></button>
       <div class="tm" id="toM" role="menu">
@@ -597,7 +631,7 @@ function allTags(data){const s=new Set();data.forEach(c=>(c.subcategories||[]).f
 function validate(data){if(!Array.isArray(data))return false;for(const c of data){if(!c||typeof c.name!=='string')return false;if(!c.id)c.id=uid();if(!Array.isArray(c.subcategories))c.subcategories=[];if(!c.icon)c.icon='';for(const s of c.subcategories){if(!s||typeof s.name!=='string')return false;if(!s.id)s.id=uid();if(!Array.isArray(s.prompts))s.prompts=[];if(!s.icon)s.icon='';for(const p of s.prompts){if(!p||typeof p.title!=='string')return false;if(!p.id)p.id=uid();if(typeof p.description!=='string')p.description=p.description||'';if(!Array.isArray(p.tags))p.tags=p.tags?[p.tags]:[];if(typeof p.favorite!=='boolean')p.favorite=!!p.favorite;if(!Array.isArray(p.versions))p.versions=[];if(typeof p.copyCount!=='number')p.copyCount=0;if(typeof p.pinned!=='boolean')p.pinned=false;if(typeof p.createdAt!=='number')p.createdAt=Date.now();if(typeof p.updatedAt!=='number')p.updatedAt=Date.now();if(!Array.isArray(p.related))p.related=[];
 if(typeof p.noAutoVars!=='boolean')p.noAutoVars=false;}}}return true}
 
-const S={allData:[],recents:[],snippets:[],varPresets:{},hist:[],redo:[],view:'all',catId:null,subId:null,pid:null,tag:null,dirty:false,editNew:false,focusMode:false,settings:{theme:'dark',accent:'purple',density:'normal',fontSize:15,bkInt:10}};
+const S={allData:[],recents:[],snippets:[],varPresets:{},hist:[],redo:[],view:'all',catId:null,subId:null,pid:null,tag:null,dirty:false,editNew:false,focusMode:false,settings:{theme:'dark',accent:'purple',density:'normal',fontSize:20,bkInt:10}};
 let saving=false,dac=null,bkTimer=null;
 
 async function save(nd,opts={}){const{ids={},hist:pushH=true}=opts;if(saving){Toast.show('Salvataggio...','',1500);return false}saving=true;Loader.show();try{if(pushH){S.redo=[];S.hist.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));if(S.hist.length>40)S.hist.shift()}S.allData=nd;Object.assign(S,ids);S.dirty=false;await DB.save(S.allData);await DB.saveR(S.recents);render();return true}catch(e){console.error(e);Toast.show('Errore salvataggio.','er',5000);return false}finally{saving=false;Loader.hide()}}
@@ -1351,11 +1385,57 @@ if(topC.length&&topC[0].copyCount){h+='<h5 style="margin:12px 0 8px;color:var(--
 if(tags.length){h+='<h5 style="margin:14px 0 8px;color:var(--t2);font-family:var(--font-head)">Tag più usati</h5><div style="display:flex;flex-wrap:wrap;gap:6px">';const tagC={};all.forEach(p=>(p.tags||[]).forEach(t=>{tagC[t]=(tagC[t]||0)+1}));Object.entries(tagC).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([t,c])=>{h+='<span class="tg" style="background:'+tc(t)+'">'+esc(t)+' ('+c+')</span>'});h+='</div>'}
 $('statsC').innerHTML=h;$('mStats').classList.add('show')}
 function showSnippets(){const list=$('snipL');list.innerHTML='';if(!S.snippets.length)list.innerHTML='<div style="padding:12px;color:var(--t3);font-size:13px;text-align:center">Nessuno snippet. Crea il primo qui sotto.</div>';else S.snippets.forEach((sn,i)=>{const el=document.createElement('div');el.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--el);border-radius:var(--r-md);margin-bottom:6px;transition:background .2s';el.innerHTML='<div><b style="color:var(--ac);font-family:var(--font-mono)">'+esc(sn.name)+'</b><div style="font-size:12px;color:var(--t3);margin-top:2px">'+esc(tp(sn.content,50))+'</div></div>';const del=document.createElement('button');del.style.cssText='background:none;border:none;color:var(--rd);cursor:pointer;padding:6px;border-radius:4px;font-size:14px';del.innerHTML='<i class="fa-regular fa-trash-can"></i>';del.onclick=async()=>{S.snippets.splice(i,1);await DB.saveSn(S.snippets);showSnippets();Toast.show('Snippet rimosso.','',1500)};el.appendChild(del);list.appendChild(el)});$('mSnip').classList.add('show')}
-function applySettings(){const s=S.settings;document.documentElement.setAttribute('data-theme',s.theme);document.documentElement.setAttribute('data-accent',s.accent||'purple');document.documentElement.setAttribute('data-density',s.density||'normal');document.documentElement.style.setProperty('--font-size',s.fontSize+'px');$('thB').innerHTML=s.theme==='dark'?'<i class="fa-solid fa-moon"></i>':'<i class="fa-solid fa-sun"></i>';if(bkTimer)clearInterval(bkTimer);bkTimer=setInterval(()=>{if(S.allData.length)DB.bk(S.allData)},(s.bkInt||10)*60*1000)}
+function applySettings(){
+  const s = S.settings;
+
+  document.documentElement.setAttribute('data-theme', s.theme);
+  document.documentElement.setAttribute('data-accent', s.accent || 'purple');
+  document.documentElement.setAttribute('data-density', s.density || 'normal');
+
+  const fs = Math.min(32, Math.max(14, parseInt(s.fontSize) || 20));
+  S.settings.fontSize = fs;
+
+  document.documentElement.style.setProperty('--font-size', fs + 'px');
+
+  const ind = $('fontSizeInd');
+  if (ind) ind.textContent = fs + 'px';
+
+  const stFont = $('stFont');
+  if (stFont) stFont.value = fs;
+
+  $('thB').innerHTML = s.theme === 'dark'
+    ? '<i class="fa-solid fa-moon"></i>'
+    : '<i class="fa-solid fa-sun"></i>';
+
+  if (bkTimer) clearInterval(bkTimer);
+
+  bkTimer = setInterval(() => {
+    if (S.allData.length) DB.bk(S.allData);
+  }, (s.bkInt || 10) * 60 * 1000);
+}
+
+async function changeGlobalFont(delta){
+  const current = parseInt(S.settings.fontSize) || 20;
+  const next = Math.min(32, Math.max(14, current + delta));
+
+  if (next === current) return;
+
+  S.settings.fontSize = next;
+  applySettings();
+
+  await DB.saveSt(S.settings);
+
+  const dA = $('dA');
+  if (dA) dA.style.fontSize = next + 'px';
+
+  Toast.show('Font impostato a ' + next + 'px', 'ok', 1200);
+}
 function checkHash(){const h=location.hash;if(!h.startsWith('#import='))return;try{const j=JSON.parse(decodeURIComponent(escape(atob(h.substring(8)))));if(j.title)Modal.confirm('Importa Prompt','Importare "'+j.title+'"?').then(async ok=>{if(!ok)return;const d=structuredClone(S.allData);if(!d.length)d.push({id:uid(),name:'Importati',icon:'',subcategories:[]});if(!d[0].subcategories)d[0].subcategories=[];if(!d[0].subcategories.length)d[0].subcategories.push({id:uid(),name:'Inbox',icon:'',prompts:[]});const np={id:uid(),title:j.title,description:j.description||'',favorite:false,tags:j.tags||[],versions:[],copyCount:0,pinned:false,createdAt:Date.now(),updatedAt:Date.now(),related:[]};d[0].subcategories[0].prompts.push(np);await save(d,{ids:{pid:np.id}});Toast.show('Prompt importato!','ok');location.hash=''})}catch(e){}history.replaceState(null,'',location.pathname)}
 function setup(){
     applySettings();
     $('thB').onclick=()=>{S.settings.theme=S.settings.theme==='dark'?'light':'dark';applySettings();DB.saveSt(S.settings)};
+    $('fontDownBtn').onclick = () => changeGlobalFont(-1);
+$('fontUpBtn').onclick = () => changeGlobalFont(1);
     cS.onchange=async()=>{if(!await dirtyCheck()){renderDD();return}const v=cS.value;if(['all','favorites','recents','tags','search'].includes(v)){
   S.view=v;
   S.pid=null;
@@ -1376,7 +1456,7 @@ sI.oninput = () => {
     $('bIm').onclick=()=>$('fB').click();$('fB').onchange=doImport;
     $('bExpMd').onclick=doExportMd;$('bExpCat').onclick=doExportCat;
     $('bImpCat').onclick=()=>$('fIC').click();$('fIC').onchange=doImportCat;
-    $('stBtn').onclick=()=>{$('stDen').value=S.settings.density||'normal';$('stFont').value=S.settings.fontSize||15;$('stBkInt').value=S.settings.bkInt||10;document.querySelectorAll('.color-dot').forEach(d=>{d.classList.toggle('active',d.dataset.accent===(S.settings.accent||'purple'))});$('mSt').classList.add('show')};
+    $('stBtn').onclick=()=>{$('stDen').value=S.settings.density||'normal';$('stFont').value=S.settings.fontSize||20;$('stBkInt').value=S.settings.bkInt||10;document.querySelectorAll('.color-dot').forEach(d=>{d.classList.toggle('active',d.dataset.accent===(S.settings.accent||'purple'))});$('mSt').classList.add('show')};
     $('mStc').onclick=()=>$('mSt').classList.remove('show');
     document.querySelectorAll('.color-dot').forEach(d=>{d.onclick=()=>{document.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('active'));d.classList.add('active')}});
     $('mStk').onclick=async()=>{const ac=document.querySelector('.color-dot.active');S.settings.accent=ac?.dataset.accent||'purple';S.settings.density=$('stDen').value;S.settings.fontSize=parseInt($('stFont').value)||15;S.settings.bkInt=parseInt($('stBkInt').value)||10;applySettings();await DB.saveSt(S.settings);$('mSt').classList.remove('show');render();Toast.show('Impostazioni salvate!','ok')};
@@ -1559,7 +1639,7 @@ if (savedSt && typeof savedSt === 'object') {
   Object.assign(S.settings, savedSt);
 }
 
-S.settings.fontSize = Math.min(24, Math.max(12, parseInt(S.settings.fontSize) || 15));
+S.settings.fontSize = Math.min(32, Math.max(14, parseInt(S.settings.fontSize) || 20));
 S.settings.bkInt = Math.min(60, Math.max(1, parseInt(S.settings.bkInt) || 10));
 
 if (!['dark', 'light'].includes(S.settings.theme)) S.settings.theme = 'dark';
