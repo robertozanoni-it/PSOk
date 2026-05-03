@@ -594,36 +594,145 @@ function FS(data,cid,sid){return FC(data,cid)?.subcategories?.find(s=>s.id===sid
 function allP(data){const r=[];data.forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>r.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id}))));return r}
 function allTags(data){const s=new Set();data.forEach(c=>(c.subcategories||[]).forEach(su=>(su.prompts||[]).forEach(p=>(p.tags||[]).forEach(t=>s.add(t)))));return[...s].sort()}
 
-function validate(data){if(!Array.isArray(data))return false;for(const c of data){if(!c||typeof c.name!=='string')return false;if(!c.id)c.id=uid();if(!Array.isArray(c.subcategories))c.subcategories=[];if(!c.icon)c.icon='';for(const s of c.subcategories){if(!s||typeof s.name!=='string')return false;if(!s.id)s.id=uid();if(!Array.isArray(s.prompts))s.prompts=[];if(!s.icon)s.icon='';for(const p of s.prompts){if(!p||typeof p.title!=='string')return false;if(!p.id)p.id=uid();if(typeof p.description!=='string')p.description=p.description||'';if(!Array.isArray(p.tags))p.tags=p.tags?[p.tags]:[];if(typeof p.favorite!=='boolean')p.favorite=!!p.favorite;if(!Array.isArray(p.versions))p.versions=[];if(typeof p.copyCount!=='number')p.copyCount=0;if(typeof p.pinned!=='boolean')p.pinned=false;if(typeof p.createdAt!=='number')p.createdAt=Date.now();if(typeof p.updatedAt!=='number')p.updatedAt=Date.now();if(!Array.isArray(p.related))p.related=[]}}}return true}
+function validate(data){if(!Array.isArray(data))return false;for(const c of data){if(!c||typeof c.name!=='string')return false;if(!c.id)c.id=uid();if(!Array.isArray(c.subcategories))c.subcategories=[];if(!c.icon)c.icon='';for(const s of c.subcategories){if(!s||typeof s.name!=='string')return false;if(!s.id)s.id=uid();if(!Array.isArray(s.prompts))s.prompts=[];if(!s.icon)s.icon='';for(const p of s.prompts){if(!p||typeof p.title!=='string')return false;if(!p.id)p.id=uid();if(typeof p.description!=='string')p.description=p.description||'';if(!Array.isArray(p.tags))p.tags=p.tags?[p.tags]:[];if(typeof p.favorite!=='boolean')p.favorite=!!p.favorite;if(!Array.isArray(p.versions))p.versions=[];if(typeof p.copyCount!=='number')p.copyCount=0;if(typeof p.pinned!=='boolean')p.pinned=false;if(typeof p.createdAt!=='number')p.createdAt=Date.now();if(typeof p.updatedAt!=='number')p.updatedAt=Date.now();if(!Array.isArray(p.related))p.related=[];
+if(typeof p.noAutoVars!=='boolean')p.noAutoVars=false;}}}return true}
 
-const S={allData:[],recents:[],snippets:[],varPresets:{},hist:[],redo:[],view:'favorites',catId:null,subId:null,pid:null,tag:null,dirty:false,editNew:false,focusMode:false,settings:{theme:'dark',accent:'purple',density:'normal',fontSize:15,bkInt:10}};
+const S={allData:[],recents:[],snippets:[],varPresets:{},hist:[],redo:[],view:'all',catId:null,subId:null,pid:null,tag:null,dirty:false,editNew:false,focusMode:false,settings:{theme:'dark',accent:'purple',density:'normal',fontSize:15,bkInt:10}};
 let saving=false,dac=null,bkTimer=null;
 
 async function save(nd,opts={}){const{ids={},hist:pushH=true}=opts;if(saving){Toast.show('Salvataggio...','',1500);return false}saving=true;Loader.show();try{if(pushH){S.redo=[];S.hist.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));if(S.hist.length>40)S.hist.shift()}S.allData=nd;Object.assign(S,ids);S.dirty=false;await DB.save(S.allData);await DB.saveR(S.recents);render();return true}catch(e){console.error(e);Toast.show('Errore salvataggio.','er',5000);return false}finally{saving=false;Loader.hide()}}
 async function doUndo(){if(!S.hist.length)return;const p=S.hist.pop();S.redo.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));Object.assign(S,p);await DB.save(S.allData);await DB.saveR(S.recents);render();Toast.show('Annullato!','',1500)}
 async function doRedo(){if(!S.redo.length)return;const n=S.redo.pop();S.hist.push(structuredClone({allData:S.allData,recents:S.recents,catId:S.catId,subId:S.subId,pid:S.pid,view:S.view}));Object.assign(S,n);await DB.save(S.allData);await DB.saveR(S.recents);render();Toast.show('Ripristinato!','',1500)}
 function trackR(pid,sid,cid){S.recents=S.recents.filter(r=>r.pid!==pid);S.recents.unshift({pid,sid,cid,ts:Date.now()});if(S.recents.length>30)S.recents.pop();DB.saveR(S.recents).catch(()=>{})}
-async function dirtyCheck(){if(!S.dirty)return true;const ok=await Modal.confirm('Modifiche non salvate','Hai modifiche non salvate. Vuoi perderle?');if(ok)S.dirty=false;return ok}
+async function dirtyCheck(){
+  if(!S.dirty) return true;
 
-const MA=$('MA'),cS=$('cS'),sI=$('sI');
+  const ok = await Modal.confirm(
+    'Modifiche non salvate',
+    'Hai modifiche non salvate. Vuoi perderle?'
+  );
 
-function render(){renderDD();const v=S.view;
-if(v==='favorites'||v==='recents'){MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';renderSpec(v)}
-else if(v==='tags'){MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';renderTags()}
-else if(v==='search'){MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';renderSearch()}
-else{MA.className='mn v3';MA.innerHTML='<div id="c1" class="co"></div><div id="c2" class="co"></div><div id="c3" class="co dc"></div>';renderC1();renderC2();renderDet()}
-$('bU').disabled=!S.hist.length;$('bR').disabled=!S.redo.length;
-if(S.focusMode)document.body.classList.add('focus-mode');else document.body.classList.remove('focus-mode')}
+  if(ok) S.dirty = false;
+  return ok;
+}
 
-function renderDD(){cS.innerHTML='';const o=(v,t)=>{const e=document.createElement('option');e.value=v;e.textContent=t;return e};
-cS.appendChild(o('favorites','⭐ Preferiti'));cS.appendChild(o('recents','🕒 Recenti'));cS.appendChild(o('tags','🏷️ Tag'));
-if(S.view==='search')cS.appendChild(o('search','🔍 Ricerca'));
-if(S.allData.length){const sep=o('','──────────');sep.disabled=true;cS.appendChild(sep);
-const pri=['best','prova'],pc=[],oc=[];S.allData.forEach(c=>{if(pri.includes(c.name.trim().toLowerCase()))pc.push(c);else oc.push(c)});
-pc.sort((a,b)=>pri.indexOf(a.name.trim().toLowerCase())-pri.indexOf(b.name.trim().toLowerCase()));oc.sort((a,b)=>a.name.localeCompare(b.name));
-pc.forEach(c=>cS.appendChild(o(c.id,(c.icon||'')+c.name)));if(pc.length&&oc.length){const s2=o('','──────────');s2.disabled=true;cS.appendChild(s2)}
-oc.forEach(c=>cS.appendChild(o(c.id,(c.icon||'')+c.name)))}
-if(['favorites','recents','tags','search'].includes(S.view))cS.value=S.view;else if(S.catId)cS.value=S.catId}
+const MA = $('MA'), cS = $('cS'), sI = $('sI');
+
+function render(){
+  renderDD();
+
+  const v = S.view;
+
+  if(v === 'favorites' || v === 'recents' || v === 'all'){
+    MA.className = 'mn v2';
+    MA.innerHTML = '<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';
+    renderSpec(v);
+  }
+
+  else if(v === 'tags'){
+    MA.className = 'mn v2';
+    MA.innerHTML = '<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';
+    renderTags();
+  }
+
+  else if(v === 'search'){
+    MA.className = 'mn v2';
+    MA.innerHTML = '<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';
+    renderSearch();
+  }
+
+  else{
+    MA.className = 'mn v3';
+    MA.innerHTML = '<div id="c1" class="co"></div><div id="c2" class="co"></div><div id="c3" class="co dc"></div>';
+    renderC1();
+    renderC2();
+    renderDet();
+  }
+
+  $('bU').disabled = !S.hist.length;
+  $('bR').disabled = !S.redo.length;
+
+  document.querySelectorAll('.co').forEach(x => {
+    x.classList.remove('focus-target');
+  });
+
+  (document.querySelector('#cD') || document.querySelector('#c3'))?.classList.add('focus-target');
+
+  if(S.focusMode){
+    document.body.classList.add('focus-mode');
+  } else {
+    document.body.classList.remove('focus-mode');
+  }
+}
+
+function renderDD(){
+  cS.innerHTML = '';
+
+  const o = (v, t) => {
+    const e = document.createElement('option');
+    e.value = v;
+    e.textContent = t;
+    return e;
+  };
+
+  cS.appendChild(o('all', '🌐 Tutti'));
+  cS.appendChild(o('favorites', '⭐ Preferiti'));
+  cS.appendChild(o('recents', '🕒 Recenti'));
+  cS.appendChild(o('tags', '🏷️ Tag'));
+
+  if(S.view === 'search'){
+    cS.appendChild(o('search', '🔍 Ricerca'));
+  }
+
+  if(S.allData.length){
+    const sep = o('', '──────────');
+    sep.disabled = true;
+    cS.appendChild(sep);
+
+    const pri = ['best', 'prova'];
+    const pc = [];
+    const oc = [];
+
+    S.allData.forEach(c => {
+      const name = String(c.name || '').trim().toLowerCase();
+
+      if(pri.includes(name)){
+        pc.push(c);
+      } else {
+        oc.push(c);
+      }
+    });
+
+    pc.sort((a, b) => {
+      return pri.indexOf(String(a.name || '').trim().toLowerCase()) -
+             pri.indexOf(String(b.name || '').trim().toLowerCase());
+    });
+
+    oc.sort((a, b) => {
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+
+    pc.forEach(c => {
+      cS.appendChild(o(c.id, (c.icon || '') + c.name));
+    });
+
+    if(pc.length && oc.length){
+      const s2 = o('', '──────────');
+      s2.disabled = true;
+      cS.appendChild(s2);
+    }
+
+    oc.forEach(c => {
+      cS.appendChild(o(c.id, (c.icon || '') + c.name));
+    });
+  }
+
+  if(['all', 'favorites', 'recents', 'tags', 'search'].includes(S.view)){
+    cS.value = S.view;
+  } else if(S.catId){
+    cS.value = S.catId;
+  }
+}
 
 function renderC1(){const col=$('c1'),cat=FC(S.allData,S.catId);
 if(!cat){col.innerHTML='<div class="em"><i class="fa-solid fa-folder-open"></i><span>Seleziona una categoria</span></div>';return}
@@ -704,7 +813,7 @@ if(pSI){
 }
 
 function renderDet(){
-const colId=['favorites','recents','tags','search'].includes(S.view)?'cD':'c3';
+const colId = ['all','favorites','recents','tags','search'].includes(S.view) ? 'cD' : 'c3';
 const col=$(colId);if(!col)return;if(dac)dac.abort();dac=new AbortController();const sig=dac.signal;
 const f=FP(S.allData,S.pid);if(!f){col.innerHTML='<div class="em"><i class="fa-regular fa-hand-pointer"></i><span>Seleziona un prompt</span></div>';return}
 const{cat,sub,prompt:p}=f;if(!p.tags)p.tags=[];const sd=san(p.description||'');const w=wc(p.description);
@@ -758,8 +867,21 @@ const tI=$('tI'),tA=$('tA'),tagSug=$('tagSug');const eTags=allTags(S.allData);
 tI.addEventListener('input',()=>{const v=tI.value.trim().toLowerCase();if(!v){tagSug.classList.remove('show');return}const ms=eTags.filter(t=>t.includes(v)&&!p.tags.includes(t)).slice(0,5);if(!ms.length){tagSug.classList.remove('show');return}tagSug.innerHTML=ms.map(t=>'<div class="tsug-item" data-t="'+esc(t)+'"><span class="tg" style="background:'+tc(t)+'">'+esc(t)+'</span></div>').join('');tagSug.classList.add('show');tagSug.querySelectorAll('.tsug-item').forEach(el=>{el.onclick=()=>{tI.value=el.dataset.t;tagSug.classList.remove('show');addTag()}})},{signal:sig});
 const addTag=async()=>{const n=tI.value.trim().toLowerCase();if(!n)return;if(p.tags.includes(n)){Toast.show('Già presente.','');tI.value='';return}const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2){if(!f2.prompt.tags)f2.prompt.tags=[];f2.prompt.tags.push(n)}tI.value='';tagSug.classList.remove('show');await save(d,{hist:false});Toast.show('"'+n+'" aggiunto!','ok',1500)};
 tA.addEventListener('click',addTag,{signal:sig});tI.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTag()}},{signal:sig});
-const iv=exVars(p.description||'');renderVars(iv,col,p.id);
-dA.addEventListener('input',()=>{S.dirty=true;renderVars(exVars(dA.innerText),col,p.id);const wl=wc(dA.innerHTML);const wcl=$('wcL');if(wcl)wcl.textContent='~'+wl.t+' token'},{signal:sig});
+const iv = p.noAutoVars ? [] : exVars(p.description || '');
+renderVars(iv, col, p.id);
+dA.addEventListener('input',()=>{
+  S.dirty = true;
+
+  if (!p.noAutoVars) {
+    renderVars(exVars(dA.innerText), col, p.id);
+  } else {
+    renderVars([], col, p.id);
+  }
+
+  const wl = wc(dA.innerHTML);
+  const wcl = $('wcL');
+  if (wcl) wcl.textContent = '~' + wl.t + ' token';
+},{signal:sig});
 dA.addEventListener('keydown',e=>{if(e.key===' '&&dA.contentEditable==='true'){const sel=window.getSelection();if(!sel.rangeCount)return;const rng=sel.getRangeAt(0),node=rng.startContainer;if(node.nodeType!==3)return;const txt=node.textContent.substring(0,rng.startOffset),mt=txt.match(/\/(\S+)$/);if(mt){const sn='/'+mt[1],snip=S.snippets.find(s=>s.name.toLowerCase()===sn.toLowerCase());if(snip){e.preventDefault();const before=txt.substring(0,txt.length-sn.length);node.textContent=before+snip.content+node.textContent.substring(rng.startOffset);const nr=document.createRange();nr.setStart(node,before.length+snip.content.length);nr.collapse(true);sel.removeAllRanges();sel.addRange(nr);Toast.show('Snippet inserito!','ok',1500)}}}},{signal:sig});
 
 // ── IN-PROMPT HIGHLIGHT SEARCH ──────────────────────────────
@@ -937,7 +1059,20 @@ col.querySelector('[data-a="fav"]').addEventListener('click',async()=>{const d=s
 col.querySelector('[data-a="pin"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.pinned=!f2.prompt.pinned;await save(d,{hist:false});Toast.show(p.pinned?'Sbloccato':'Pinnato!','ok',1500)},{signal:sig});
 col.querySelector('[data-a="ver"]').addEventListener('click',()=>{const panel=$('verP');panel.classList.toggle('show');if(!panel.classList.contains('show'))return;if(!p.versions.length){panel.innerHTML='<div style="padding:8px;color:var(--t3);font-size:12px">Nessuna versione salvata</div>';return}panel.innerHTML=p.versions.slice().reverse().map((v,i)=>'<div class="ver-item"><span style="color:var(--t3);font-family:var(--font-mono)">'+fmtD(v.ts)+'</span><span style="font-size:11px;color:var(--t3)">'+wc(v.content).w+' parole</span><button class="ver-restore" data-idx="'+(p.versions.length-1-i)+'">Ripristina</button></div>').join('');panel.querySelectorAll('.ver-restore').forEach(btn=>{btn.addEventListener('click',async()=>{const idx=+btn.dataset.idx,d=structuredClone(S.allData),f2=FP(d,p.id);if(!f2)return;f2.prompt.versions.push({ts:Date.now(),content:f2.prompt.description});f2.prompt.description=f2.prompt.versions[idx].content;f2.prompt.updatedAt=Date.now();await save(d);Toast.show('Versione ripristinata!','ok')},{signal:sig})})},{signal:sig});
 col.querySelector('[data-a="del"]').addEventListener('click',async()=>{if(!await Modal.confirm('Elimina','Eliminare "'+p.title+'"? Verrà spostato nel cestino.'))return;const d=structuredClone(S.allData),f2=FP(d,p.id);if(!f2)return;let trash=d.find(c=>c.name==='🗑️ Cestino');if(!trash){trash={id:uid(),name:'🗑️ Cestino',icon:'🗑️',subcategories:[{id:uid(),name:'Eliminati',icon:'',prompts:[]}]};d.push(trash)}if(!trash.subcategories.length)trash.subcategories.push({id:uid(),name:'Eliminati',icon:'',prompts:[]});const idx=f2.sub.prompts.findIndex(x=>x.id===p.id);if(idx!==-1){const rm=f2.sub.prompts.splice(idx,1)[0];rm.deletedAt=Date.now();trash.subcategories[0].prompts.push(rm)}S.recents=S.recents.filter(r=>r.pid!==p.id);const nx=f2.sub.prompts[idx]||f2.sub.prompts[idx-1]||f2.sub.prompts[0];await save(d,{ids:{pid:nx?.id||null}});Toast.show('Spostato nel cestino.','')},{signal:sig});
-const qSave=async(target,useSrc)=>{Loader.show();try{const content=dA?dA.innerHTML:p.description;const d=structuredClone(S.allData);let ci=d.findIndex(c=>c.name.trim().toLowerCase()===target.toLowerCase());if(ci===-1){d.push({id:uid(),name:target,icon:target.toLowerCase()==='best'?'🏆':'🧪',subcategories:[]});ci=d.length-1}if(!d[ci].subcategories)d[ci].subcategories=[];const tsn=useSrc?sub.name:'Inbox';let si=d[ci].subcategories.findIndex(s=>s.name.trim().toLowerCase()===tsn.trim().toLowerCase());if(si===-1){d[ci].subcategories.push({id:uid(),name:tsn,icon:'',prompts:[]});si=d[ci].subcategories.length-1}if(!d[ci].subcategories[si].prompts)d[ci].subcategories[si].prompts=[];const already=d[ci].subcategories[si].prompts.some(x=>x.title===p.title);if(already){Toast.show('Già presente in '+target+'.','',2000);Loader.hide();return}d[ci].subcategories[si].prompts.push({id:uid(),title:p.title,description:content,favorite:p.favorite,tags:[...(p.tags||[])],versions:[],copyCount:0,pinned:false,createdAt:Date.now(),updatedAt:Date.now(),related:[]});await save(d,{hist:false});Toast.show('Copiato in '+target+'!','ok')}catch(e){Toast.show('Errore.','er')}finally{Loader.hide()}};
+const qSave=async(target,useSrc)=>{Loader.show();try{const content=dA?dA.innerHTML:p.description;const d=structuredClone(S.allData);let ci=d.findIndex(c=>c.name.trim().toLowerCase()===target.toLowerCase());if(ci===-1){d.push({id:uid(),name:target,icon:target.toLowerCase()==='best'?'🏆':'🧪',subcategories:[]});ci=d.length-1}if(!d[ci].subcategories)d[ci].subcategories=[];const tsn=useSrc?sub.name:'Inbox';let si=d[ci].subcategories.findIndex(s=>s.name.trim().toLowerCase()===tsn.trim().toLowerCase());if(si===-1){d[ci].subcategories.push({id:uid(),name:tsn,icon:'',prompts:[]});si=d[ci].subcategories.length-1}if(!d[ci].subcategories[si].prompts)d[ci].subcategories[si].prompts=[];const already=d[ci].subcategories[si].prompts.some(x=>x.title===p.title);if(already){Toast.show('Già presente in '+target+'.','',2000);Loader.hide();return}d[ci].subcategories[si].prompts.push({
+  id:uid(),
+  title:p.title,
+  description:content,
+  favorite:p.favorite,
+  tags:[...(p.tags||[])],
+  versions:[],
+  copyCount:0,
+  pinned:false,
+  createdAt:Date.now(),
+  updatedAt:Date.now(),
+  related:[],
+  noAutoVars: !!p.noAutoVars
+});await save(d,{hist:false});Toast.show('Copiato in '+target+'!','ok')}catch(e){Toast.show('Errore.','er')}finally{Loader.hide()}};
 col.querySelector('[data-a="best"]').addEventListener('click',()=>qSave('Best',true),{signal:sig});
 col.querySelector('[data-a="prova"]').addEventListener('click',()=>qSave('Prova',false),{signal:sig});
 col.querySelector('[data-a="move"]').addEventListener('click',async()=>{const result=await Modal.move(S.allData,cat.id,sub.id);if(!result)return;if(result.catId===cat.id&&result.subId===sub.id){Toast.show('Stessa posizione.','');return}const d=structuredClone(S.allData),srcF=FP(d,p.id);if(!srcF)return;const idx=srcF.sub.prompts.findIndex(x=>x.id===p.id);if(idx===-1)return;const moved=srcF.sub.prompts.splice(idx,1)[0];const tgtCat=FC(d,result.catId);if(!tgtCat){Toast.show('Categoria non trovata.','er');return}if(!tgtCat.subcategories)tgtCat.subcategories=[];const tgtSub=tgtCat.subcategories.find(s=>s.id===result.subId);if(!tgtSub){Toast.show('Sottocategoria non trovata.','er');return}if(!tgtSub.prompts)tgtSub.prompts=[];tgtSub.prompts.push(moved);await save(d,{ids:{catId:result.catId,subId:result.subId,pid:moved.id,view:'columns'}});Toast.show('Spostato!','ok')},{signal:sig});
@@ -1186,11 +1321,12 @@ function doImportCat(e){
         copy.subcategories = (copy.subcategories || []).map(sub => {
           sub.id = uid();
           sub.prompts = (sub.prompts || []).map(p => ({
-            ...p,
-            id: uid(),
-            createdAt: p.createdAt || Date.now(),
-            updatedAt: Date.now()
-          }));
+  ...p,
+  id: uid(),
+  createdAt: p.createdAt || Date.now(),
+  updatedAt: Date.now(),
+  noAutoVars: true
+}));
           return sub;
         });
 
@@ -1205,9 +1341,10 @@ function doImportCat(e){
     }
   };
 
-  reader.readAsText(file);
+    reader.readAsText(file);
   e.target.value = '';
 }
+
 function showStats(){const all=allP(S.allData);const tp=all.length,tc2=S.allData.length;let ts=0;S.allData.forEach(c=>ts+=(c.subcategories||[]).length);const tf=all.filter(p=>p.favorite).length;const tCop=all.reduce((a,p)=>a+(p.copyCount||0),0);const tags=allTags(S.allData);const topC=[...all].sort((a,b)=>(b.copyCount||0)-(a.copyCount||0)).slice(0,5);const nc=all.filter(p=>!p.copyCount).length;
 let h='<div class="stats"><div class="stat-card"><div class="stat-num">'+tp+'</div><div class="stat-label">Prompt totali</div></div><div class="stat-card"><div class="stat-num">'+tc2+'</div><div class="stat-label">Categorie</div></div><div class="stat-card"><div class="stat-num">'+ts+'</div><div class="stat-label">Sottocategorie</div></div><div class="stat-card"><div class="stat-num">'+tf+'</div><div class="stat-label">Preferiti</div></div><div class="stat-card"><div class="stat-num">'+tCop+'</div><div class="stat-label">Copie totali</div></div><div class="stat-card"><div class="stat-num">'+tags.length+'</div><div class="stat-label">Tag univoci</div></div><div class="stat-card"><div class="stat-num">'+nc+'</div><div class="stat-label">Mai copiati</div></div></div>';
 if(topC.length&&topC[0].copyCount){h+='<h5 style="margin:12px 0 8px;color:var(--t2);font-family:var(--font-head)">Top Prompt Copiati</h5><div style="font-size:13px">';topC.forEach((p,i)=>{if(p.copyCount)h+='<div style="padding:4px 0;color:var(--t2);display:flex;justify-content:space-between"><span>'+(i+1)+'. '+esc(p.title)+'</span><b style="color:var(--ac);font-family:var(--font-mono)">'+p.copyCount+'×</b></div>'});h+='</div>'}
@@ -1219,8 +1356,20 @@ function checkHash(){const h=location.hash;if(!h.startsWith('#import='))return;t
 function setup(){
     applySettings();
     $('thB').onclick=()=>{S.settings.theme=S.settings.theme==='dark'?'light':'dark';applySettings();DB.saveSt(S.settings)};
-    cS.onchange=async()=>{if(!await dirtyCheck()){renderDD();return}const v=cS.value;if(['favorites','recents','tags','search'].includes(v)){S.view=v;S.pid=null}else{S.view='columns';S.catId=v;const c=FC(S.allData,v),fs=c?.subcategories?.[0];S.subId=fs?.id||null;S.pid=fs?.prompts?.[0]?.id||null}render()};
-    let st;sI.oninput=()=>{clearTimeout(st);st=setTimeout(()=>{S.view=sI.value.trim().length>0?'search':'columns';render()},250)};
+    cS.onchange=async()=>{if(!await dirtyCheck()){renderDD();return}const v=cS.value;if(['all','favorites','recents','tags','search'].includes(v)){
+  S.view=v;
+  S.pid=null;
+}else{S.view='columns';S.catId=v;const c=FC(S.allData,v),fs=c?.subcategories?.[0];S.subId=fs?.id||null;S.pid=fs?.prompts?.[0]?.id||null}render()};
+    let st;
+sI.oninput = () => {
+  clearTimeout(st);
+
+  st = setTimeout(() => {
+    S.view = sI.value.trim().length > 0 ? 'search' : 'all';
+    S.pid = null;
+    render();
+  }, 250);
+};
     const tm=$('toM');$('toB').onclick=e=>{e.stopPropagation();tm.classList.toggle('show')};window.addEventListener('click',()=>tm.classList.remove('show'));
     $('bAC').onclick=async()=>{const n=await Modal.prompt('Nuova Categoria','Nome categoria');if(!n)return;const nc={id:uid(),name:n,icon:'',subcategories:[]};await save([...S.allData,nc],{ids:{view:'columns',catId:nc.id,subId:null,pid:null}});Toast.show('"'+n+'" creata!','ok')};
     $('bU').onclick=doUndo;$('bR').onclick=doRedo;$('bBk').onclick=doBackup;
@@ -1263,16 +1412,94 @@ function setup(){
     checkHash();
 }
 
-function renderSpec(type){const titles={favorites:'⭐ Preferiti',recents:'🕒 Recenti'};const col=$('cL');
-col.innerHTML='<div class="ch"><h3>'+titles[type]+'</h3></div><div class="cl" role="listbox"></div>';
-let items=[];
-if(type==='favorites'){S.allData.forEach(c=>c.subcategories?.forEach(s=>s.prompts?.forEach(p=>{if(p.favorite)items.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id})})));items.sort((a,b)=>a.title.localeCompare(b.title))}
-else{S.recents.forEach(r=>{const f=FP(S.allData,r.pid);if(f)items.push({...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts})});items.sort((a,b)=>(b.ts||0)-(a.ts||0))}
-const list=col.querySelector('.cl');
-if(!items.length){list.innerHTML='<div class="em">Nessun elemento</div>';$('cD').innerHTML='<div class="em">Nessun prompt</div>';S.pid=null;return}
-if(!items.find(x=>x.id===S.pid)){S.pid=items[0].id;S.catId=items[0].ci;S.subId=items[0].si}
-items.forEach(p=>mkItem(list,p));renderDet()}
+function renderSpec(type){
+  const titles = {
+    all: '🌐 Tutti',
+    favorites: '⭐ Preferiti',
+    recents: '🕒 Recenti'
+  };
 
+  const col = $('cL');
+
+  col.innerHTML =
+  '<div class="ch"><div class="chl"><h3>' + titles[type] + '</h3><span class="cnt" id="specCnt">0</span></div></div>' +
+  '<div class="cl" role="listbox"></div>';
+
+  let items = [];
+
+  if(type === 'all'){
+    items = allP(S.allData).sort((a,b)=>{
+      const ca = String(a.cn || '').localeCompare(String(b.cn || ''));
+      if(ca !== 0) return ca;
+
+      const sa = String(a.sn || '').localeCompare(String(b.sn || ''));
+      if(sa !== 0) return sa;
+
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+  }
+
+  else if(type === 'favorites'){
+    S.allData.forEach(c => {
+      c.subcategories?.forEach(s => {
+        s.prompts?.forEach(p => {
+          if(p.favorite){
+            items.push({
+              ...p,
+              cn: c.name,
+              sn: s.name,
+              ci: c.id,
+              si: s.id
+            });
+          }
+        });
+      });
+    });
+
+    items.sort((a,b)=>a.title.localeCompare(b.title));
+  }
+
+  else if(type === 'recents'){
+    S.recents.forEach(r => {
+      const f = FP(S.allData, r.pid);
+
+      if(f){
+        items.push({
+          ...f.prompt,
+          cn: f.cat.name,
+          sn: f.sub.name,
+          ci: f.cat.id,
+          si: f.sub.id,
+          ts: r.ts
+        });
+      }
+    });
+
+    items.sort((a,b)=>(b.ts || 0) - (a.ts || 0));
+  }
+
+  const list = col.querySelector('.cl');
+
+const specCnt = $('specCnt');
+if (specCnt) specCnt.textContent = items.length;
+
+if(!items.length){
+  list.innerHTML = '<div class="em">Nessun elemento</div>';
+  $('cD').innerHTML = '<div class="em">Nessun prompt</div>';
+  S.pid = null;
+  return;
+}
+
+  if(!items.find(x => x.id === S.pid)){
+    S.pid = items[0].id;
+    S.catId = items[0].ci;
+    S.subId = items[0].si;
+  }
+
+  items.forEach(p => mkItem(list, p));
+
+  renderDet();
+}
 function renderTags(){const col=$('cL');col.innerHTML='<div class="ch"><h3>🏷️ Tag</h3></div><div class="cl" role="listbox"></div>';
 const allT=allTags(S.allData);const list=col.querySelector('.cl');
 if(!allT.length){list.innerHTML='<div class="em">Nessun tag</div>';$('cD').innerHTML='<div class="em">Aggiungi tag ai prompt</div>';return}
@@ -1346,7 +1573,10 @@ if (!['compact', 'normal', 'comfortable'].includes(S.settings.density)) S.settin
             description:'<b>Prompt Studio v25</b> — Variabili Dinamiche con tutti i tipi di parentesi!<br><br><b>Tipi di variabile ora supportati:</b><br><br>🔷 <code>{{variabile}}</code> — Doppie graffe (originale)<br>🔶 <code>((variabile))</code> — Doppie tonde ✨NUOVO<br>🟦 <code>[variabile]</code> — Quadre (originale)<br>🟧 <code>{variabile}</code> — Singola graffa (originale)<br>🟨 <code>(variabile)</code> — Singola tonda ✨NUOVO<br><br><b>Esempi con default e scelte multiple:</b><br>• <code>{{nome:Mario}}</code> — campo con valore default<br>• <code>[scelta:sì|no|forse]</code> — menu a tendina<br>• <code>((città:Milano))</code> — doppie tonde con default<br>• <code>(livello:Junior|Senior|Lead)</code> — tonda con opzioni<br>• <code>{azienda}</code> — singola graffa semplice<br><br><b>Prompt di esempio — prova a copiarlo:</b><br>Scrivi un\'email professionale per <b>((destinatario:Mario Rossi))</b> riguardo a <b>{{argomento}}</b>. Il tono deve essere <b>[tono:formale|amichevole|neutro]</b>. Firma come <b>(nome:La direzione)</b>.<br><br>Quando copi un prompt, le variabili vengono sostituite automaticamente con i valori inseriti! ✅',
             favorite:true,tags:['guida','v25','variabili'],versions:[],copyCount:0,pinned:true,createdAt:Date.now(),updatedAt:Date.now(),related:[]
           }]}]}];
-          S.catId=wid;S.subId=wsid;S.pid=wpid;S.view='columns';
+        S.catId = wid;
+S.subId = wsid;
+S.pid = wpid;
+S.view = 'all';
           await DB.save(S.allData);
         }
         setup();render();DB.bk(S.allData);
