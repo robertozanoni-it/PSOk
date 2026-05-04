@@ -456,61 +456,64 @@ function fmtD(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('it-IT'
 function wc(html){const t=document.createElement('div');t.innerHTML=html||'';const txt=t.textContent.trim();if(!txt)return{w:0,c:0,t:0};const w=txt.split(/\s+/).length;return{w,c:txt.length,t:Math.ceil(txt.length/4)}}
 function simil(a,b){if(!a||!b)return 0;a=a.toLowerCase();b=b.toLowerCase();if(a===b)return 1;const s=new Set([...a.split(/\s+/)]);const bs=b.split(/\s+/);let m=0;bs.forEach(w=>{if(s.has(w))m++});return m/Math.max(s.size,bs.length)}
 
-function exVars(text){
-  const rx = /\{\{([^{}]+?)\}\}|\(\(([^()]+?)\)\)|\[([^\[\]]+?)\]|\{([^{}]+?)\}|\(([^()]+?)\)/g;
+function exVars(input){
+  const text = String(input || '').replace(/\u00A0/g, ' ');
+
+  const patterns = [
+    { type:'dbl-curly', rx:/\{\{\s*([^{}]+?)\s*\}\}/g },
+    { type:'dbl-paren', rx:/\(\(\s*([^()]+?)\s*\)\)/g },
+    { type:'square',    rx:/\[\s*([^\[\]]+?)\s*\]/g },
+    { type:'curly',     rx:/\{\s*([^{}]+?)\s*\}/g },
+    { type:'paren',     rx:/\(\s*([^()]+?)\s*\)/g }
+  ];
+
   const vars = new Map();
-  let m;
 
   const validName = name =>
-    /^[\p{L}\p{N}_.$-]{1,60}$/u.test(name);
+    /^[\p{L}\p{N}_.$\-\s]{1,60}$/u.test(name) &&
+    /[\p{L}_]/u.test(name);
 
-  while ((m = rx.exec(text || '')) !== null) {
-    const raw = (m[1] || m[2] || m[3] || m[4] || m[5] || '').trim();
-    if (!raw) continue;
+  for(const {type, rx} of patterns){
+    let m;
 
-    let bracketType = 'curly';
+    while((m = rx.exec(text)) !== null){
+      const raw = (m[1] || '').trim();
+      if(!raw) continue;
 
-    if (m[1]) bracketType = 'dbl-curly';
-    else if (m[2]) bracketType = 'dbl-paren';
-    else if (m[3]) bracketType = 'square';
-    else if (m[4]) bracketType = 'curly';
-    else if (m[5]) bracketType = 'paren';
+      let name = raw;
+      let opts = null;
+      let def = '';
 
-    let name = raw;
-    let opts = null;
-    let def = '';
+      const colon = raw.indexOf(':');
 
-    if (raw.includes(':')) {
-      const p = raw.split(':');
-      name = p[0].trim();
+      if(colon !== -1){
+        name = raw.slice(0, colon).trim();
+        const rest = raw.slice(colon + 1).trim();
 
-      const rest = p.slice(1).join(':').trim();
-
-      if (rest.includes('|')) {
-        opts = rest
-          .split('|')
-          .map(o => o.trim())
-          .filter(Boolean);
-
-        def = opts[0] || '';
-      } else {
-        def = rest;
+        if(rest.includes('|')){
+          opts = rest.split('|').map(o => o.trim()).filter(Boolean);
+          def = opts[0] || '';
+        } else {
+          def = rest;
+        }
       }
-    }
 
-    if (!validName(name)) continue;
+      if(!validName(name)) continue;
 
-    if (!vars.has(name)) {
-      vars.set(name, {
-        name,
-        options: opts,
-        defaultValue: def,
-        bracketType
-      });
+      const key = `${type}:${name}`;
+
+      if(!vars.has(key)){
+        vars.set(key, {
+          name,
+          options: opts,
+          defaultValue: def,
+          bracketType: type
+        });
+      }
     }
   }
 
-  return Array.from(vars.values());
+  return [...vars.values()];
 }
 
 function bracketLabel(type){
@@ -1069,13 +1072,13 @@ col.querySelector('[data-a="copy"]').addEventListener('click',async()=>{
     if(v){
       const e = escRe(n);
       const pattern = new RegExp(
-        '(\\{\\{\\s*' + e + '(\\s*|:[^}]*?)\\s*\\}\\})' + '|' +
-        '(\\(\\(\\s*' + e + '(\\s*|:[^)]*?)\\s*\\)\\))' + '|' +
-        '(\\[\\s*' + e + '(\\s*|:[^\\]]*?)\\s*\\])' + '|' +
-        '(\\{\\s*' + e + '(\\s*|:[^}]*?)\\s*\\})' + '|' +
-        '(\\(\\s*' + e + '(\\s*|:[^)]*?)\\s*\\))',
-        'g'
-      );
+  '\\{\\{\\s*' + e + '(?:\\s*:[^}]*?)?\\s*\\}\\}' + '|' +
+  '\\(\\(\\s*' + e + '(?:\\s*:[^)]*?)?\\s*\\)\\)' + '|' +
+  '\\[\\s*' + e + '(?:\\s*:[^\\]]*?)?\\s*\\]' + '|' +
+  '\\{\\s*' + e + '(?:\\s*:[^}]*?)?\\s*\\}' + '|' +
+  '\\(\\s*' + e + '(?:\\s*:[^)]*?)?\\s*\\)',
+  'g'
+);
       t = t.replace(pattern, v);
     }
   });
@@ -1359,7 +1362,7 @@ function doImportCat(e){
   id: uid(),
   createdAt: p.createdAt || Date.now(),
   updatedAt: Date.now(),
-  noAutoVars: true
+ noAutoVars: !!p.noAutoVars
 }));
           return sub;
         });
