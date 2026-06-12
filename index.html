@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v27</title>
+<title>Prompt Studio v28</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -303,6 +303,32 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 
 #snipL>div{transition:background var(--tr)}#snipL>div:hover{background:var(--elh)!important}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* ── V28 CURATION & CLEANUP ── */
+.ib-clean{color:#14b8a6}.ib-clean:hover{color:#5eead4;background:rgba(20,184,166,.15);box-shadow:0 0 12px rgba(20,184,166,.28)}
+.v28-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--bd);background:var(--el);color:var(--t2);border-radius:20px;padding:3px 8px;font-size:11px;font-weight:800;font-family:var(--font-mono)}
+.v28-chip.good{background:rgba(52,211,153,.14);color:#34d399;border-color:rgba(52,211,153,.26)}
+.v28-chip.warn{background:rgba(251,191,36,.14);color:#fbbf24;border-color:rgba(251,191,36,.26)}
+.v28-chip.bad{background:rgba(248,113,113,.14);color:#f87171;border-color:rgba(248,113,113,.26)}
+.v28-chip.info{background:rgba(96,165,250,.14);color:#60a5fa;border-color:rgba(96,165,250,.26)}
+.v28-chip.muted{background:rgba(148,163,184,.10);color:#94a3b8;border-color:rgba(148,163,184,.20)}
+.v28-tools-row{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--bd);background:var(--sf2)}
+.v28-tools-row button,.v28-mini-btn{border:1px solid var(--bd);background:var(--el);color:var(--t1);border-radius:var(--r-md);padding:7px 10px;font-weight:800;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:all var(--tr)}
+.v28-tools-row button:hover,.v28-mini-btn:hover{background:var(--elh);border-color:var(--bd2);transform:translateY(-1px)}
+.v28-tools-row button.primary,.v28-mini-btn.primary{background:var(--ac);border-color:var(--ac);color:#fff;box-shadow:var(--ac-glow)}
+.v28-tools-row button.danger,.v28-mini-btn.danger{color:var(--rd)}
+.v28-list-head{padding:15px 16px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--sf),var(--sf2));display:grid;gap:5px}
+.v28-list-head h3{font-family:var(--font-head);font-size:18px;letter-spacing:.01em;margin:0}.v28-list-head p{margin:0;color:var(--t2);font-size:13px;line-height:1.5}
+.v28-metric-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.v28-detail-panel{border:1px solid var(--bd);background:var(--glass),var(--sf2);border-radius:var(--r-lg);padding:14px 16px;margin:10px 18px;display:grid;gap:10px}
+.v28-detail-panel h4{font-family:var(--font-head);font-size:14px;text-transform:uppercase;letter-spacing:.07em;color:var(--t2);margin:0}.v28-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}.v28-detail-box{background:var(--el);border:1px solid var(--bd);border-radius:var(--r-md);padding:10px}.v28-detail-num{font-family:var(--font-head);font-size:24px;font-weight:800;color:var(--ac)}.v28-detail-lab{font-size:12px;color:var(--t3);font-weight:700}.v28-reasons{display:flex;gap:5px;flex-wrap:wrap}
+.v28-dash-section{margin-top:20px}.v28-dash-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px}.v28-dash-section-title h2{font-family:var(--font-head);font-size:18px;letter-spacing:-.01em}.v28-dash-section-title button{border:1px solid var(--bd);background:var(--el);color:var(--t1);border-radius:var(--r-md);padding:7px 10px;font-weight:800;cursor:pointer}.v28-dash-section-title button:hover{background:var(--elh)}
+.v28-dash-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}.v28-panel{background:var(--glass),var(--sf);border:1px solid var(--bd);border-radius:var(--r-lg);padding:14px;min-height:180px}.v28-panel h3{font-family:var(--font-head);font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:7px}.v28-panel p{font-size:12px;color:var(--t3);line-height:1.45;margin-bottom:8px}.v28-panel-list{display:grid;gap:7px}.v28-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--el);border:1px solid var(--bd);border-radius:var(--r-md);padding:9px 10px;cursor:pointer;transition:all var(--tr)}.v28-row:hover{background:var(--elh);border-color:var(--bd2);transform:translateY(-1px)}.v28-row b{font-size:13px}.v28-row span{display:block;color:var(--t3);font-size:11px;margin-top:2px}.v28-row .v28-score{font-family:var(--font-mono);font-weight:900;color:var(--ac);white-space:nowrap}
+.v28-pair{border:1px solid var(--bd);background:var(--el);border-radius:var(--r-lg);padding:12px;margin-bottom:10px}.v28-pair-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.v28-pair-title{font-weight:900}.v28-pair-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}.v28-pair-card{border:1px solid var(--bd);background:var(--sf2);border-radius:var(--r-md);padding:10px;cursor:pointer}.v28-pair-card:hover{border-color:var(--ac)}.v28-pair-card b{display:block;margin-bottom:4px}.v28-pair-card small{display:block;color:var(--t3);line-height:1.35}.v28-pair-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.v28-pair-actions button{border:1px solid var(--bd);background:var(--sf);color:var(--t1);border-radius:var(--r-md);padding:6px 9px;font-size:12px;font-weight:800;cursor:pointer}.v28-pair-actions button:hover{background:var(--elh)}
+.v28-clean-card{width:min(780px,96vw);background:var(--sf);border:1px solid var(--bd2);border-radius:24px;padding:24px;box-shadow:0 30px 90px rgba(0,0,0,.7);max-height:92vh;overflow:auto}.v28-clean-card h2{font-family:var(--font-head);font-size:26px;margin:0 0 8px}.v28-clean-card p{color:var(--t2);line-height:1.55}.v28-clean-prompt{background:var(--el);border:1px solid var(--bd);border-radius:var(--r-lg);padding:15px;margin:16px 0}.v28-clean-prompt h3{font-family:var(--font-head);font-size:19px;margin-bottom:5px}.v28-clean-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.v28-clean-actions button{border:none;border-radius:var(--r-md);padding:9px 12px;font-weight:900;cursor:pointer}.v28-clean-actions .primary{background:var(--ac);color:#fff}.v28-clean-actions .secondary{background:var(--el);color:var(--t1);border:1px solid var(--bd)}.v28-clean-actions .danger{background:var(--rd);color:#fff}.v28-clean-progress{height:8px;background:var(--el);border-radius:30px;overflow:hidden;margin:12px 0}.v28-clean-progress div{height:100%;background:linear-gradient(90deg,var(--ac),var(--cy));width:0}
+.v28-archive-badge{background:rgba(148,163,184,.14)!important;color:#cbd5e1!important;border-color:rgba(148,163,184,.26)!important}.v28-ignored{opacity:.62}.v28-priority-high{box-shadow:inset 0 0 0 1px rgba(248,113,113,.28)}.v28-priority-medium{box-shadow:inset 0 0 0 1px rgba(251,191,36,.22)}.v28-priority-low{box-shadow:inset 0 0 0 1px rgba(52,211,153,.18)}
+@media(max-width:700px){.v28-pair-cols{grid-template-columns:1fr}.v28-clean-actions{justify-content:stretch}.v28-clean-actions button{flex:1}.v28-dash-panels{grid-template-columns:1fr}}
+
 @media(max-width:1100px){:root{--w-cat:230px;--w-sub:230px}}
 @media(max-width:900px){.hd{height:auto;min-height:62px;flex-wrap:wrap;padding:10px}.hd>div[style*="max-width"]{order:3;width:100%;max-width:none!important}.hr{margin-left:0;flex-wrap:wrap}.cat-select{min-width:140px}.mn.v3,.mn.v2{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}.mn.v1{grid-template-columns:1fr}.co{min-width:100%;scroll-snap-align:start;border-right:none;border-bottom:1px solid var(--bd)}.sh{display:none}.dash-hero{flex-direction:column}.dash-actions{justify-content:flex-start}.item-actions{opacity:1}.more-menu{right:auto;left:0}}
 </style>
@@ -366,6 +392,7 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
     <button class="ib ib-dash" id="dashBtn" title="Dashboard"><i class="fa-solid fa-house"></i></button>
     <button class="ib ib-cmd" id="cmdBtn" title="Comandi rapidi (Ctrl+K)"><i class="fa-solid fa-command"></i></button>
     <button class="ib ib-backup" id="bkCenterBtn" title="Backup e ripristino"><i class="fa-solid fa-shield-halved"></i></button>
+    <button class="ib ib-clean" id="cleanBtn" title="Pulizia guidata e valutazione utilità"><i class="fa-solid fa-broom"></i></button>
     <div class="hdiv"></div>
     <button class="ib ib-theme" id="thB" title="Cambia tema"><i class="fa-solid fa-moon"></i></button>
     <button class="ib ib-settings" id="stBtn" title="Impostazioni"><i class="fa-solid fa-gear"></i></button>
@@ -1917,8 +1944,231 @@ function v27ShowOnboarding(){
   const ov=document.createElement('div');ov.className='v27-onboarding';ov.innerHTML='<div class="v27-on-card"><h2>Prompt Studio v27</h2><p>Questa versione mette in evidenza le azioni principali e riduce il disordine visivo.</p><div class="v27-steps"><div class="v27-step"><b>1. Trova</b><span>Usa Dashboard, sidebar o Ctrl/Cmd+K.</span></div><div class="v27-step"><b>2. Compila</b><span>Inserisci le variabili dinamiche rilevate.</span></div><div class="v27-step"><b>3. Controlla</b><span>Usa Split per vedere prompt e anteprima.</span></div><div class="v27-step"><b>4. Copia</b><span>Il pulsante principale è sempre in basso.</span></div><div class="v27-step"><b>5. Proteggi</b><span>Scarica periodicamente un backup JSON.</span></div></div><div class="v27-on-actions"><button class="secondary" data-v27-on="skip">Non mostrare più</button><button class="primary" data-v27-on="start">Inizia ora</button></div></div>';document.body.appendChild(ov);
   const close=async()=>{S.settings.onboardedV27=true;await DB.saveSt(S.settings);ov.remove()};ov.querySelector('[data-v27-on="skip"]').onclick=close;ov.querySelector('[data-v27-on="start"]').onclick=close;
 }
-function v27Enhance(){try{S.v27=S.v27||{};if(!document.querySelector('.det'))document.body.classList.remove('clean-read');v27EnhanceHeader();v27EnhanceSidebar();v27EnhancePromptCards();v27EnhanceDetail();v27EnhanceDashboard();v27ShowOnboarding();}catch(e){console.warn('V27 enhancement skipped',e)}}
+function v27Enhance(){try{S.v27=S.v27||{};v27EnhanceHeader();v27EnhanceSidebar();v27EnhancePromptCards();v27EnhanceDetail();v27EnhanceDashboard();v27ShowOnboarding();}catch(e){console.warn('V27 enhancement skipped',e)}}
 const __renderV26=render;render=function(){__renderV26();v27Enhance()};
+
+
+/* ── PROMPT STUDIO V28: CURATION, UTILITY SCORE, CLEANUP ── */
+const V28_SPECIAL_VIEWS=['best','least','useless','duplicates','archived','review'];
+function v28IsTrashCat(c){return /cestino|🗑️/i.test(String(c?.name||''))}
+function v28IsArchived(p){return !!p.archived}
+function v28All(opts={}){
+  const includeArchived=!!opts.includeArchived, includeTrash=!!opts.includeTrash;
+  const out=[];
+  S.allData.forEach(c=>{
+    if(!includeTrash && v28IsTrashCat(c))return;
+    (c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>{
+      if(!includeArchived && p.archived)return;
+      out.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id});
+    }));
+  });
+  return out;
+}
+function v28LastUsed(pid){const r=(S.recents||[]).find(x=>x.pid===pid);return r?r.ts:0}
+function v28Days(ts){return ts?Math.max(0,Math.floor((Date.now()-ts)/86400000)):9999}
+function v28PromptPlain(p){return v27Plain(p?.description||'')}
+function v28Metrics(p){
+  const q=promptQuality(p), txt=v28PromptPlain(p), wc2=wc(p.description||''), last=v28LastUsed(p.id), daysUsed=v28Days(last), daysUpdated=v28Days(p.updatedAt), vars=exVars(p.description||'').length;
+  let utility=0;
+  utility+=Math.min(34,(p.copyCount||0)*6);
+  if(last)utility+=Math.max(0,18-Math.min(18,Math.floor(daysUsed/7)*3));
+  if(p.favorite)utility+=12;if(p.pinned)utility+=10;
+  if((p.tags||[]).length)utility+=6;if(vars)utility+=6;
+  if(q.score>=75)utility+=8;if(daysUpdated<60)utility+=6;
+  if(p.priority==='alta')utility+=12;if(p.priority==='media')utility+=7;if(p.priority==='bassa')utility+=2;
+  if(p.reviewedAt&&v28Days(p.reviewedAt)<120)utility+=7;
+  if((p.copyCount||0)===0)utility-=12;if(!last)utility-=8;if(daysUpdated>180)utility-=10;if(!txt||txt.length<80)utility-=8;if(!(p.tags||[]).length)utility-=5;
+  if(p.archived)utility=Math.min(utility,20);
+  utility=Math.max(0,Math.min(100,Math.round(utility)));
+  let risk=0;
+  if(q.score<45)risk+=24;if((p.copyCount||0)===0)risk+=24;if(!last)risk+=14;if(daysUpdated>120)risk+=12;if(daysUpdated>240)risk+=8;if(!(p.tags||[]).length)risk+=7;if(vars===0)risk+=5;if(wc2.w<35)risk+=10;if(p.favorite||p.pinned)risk-=18;if(p.priority==='alta')risk-=14;if(p.ignoreSuggestion)risk-=100;if(p.archived)risk=0;
+  risk=Math.max(0,Math.min(100,Math.round(risk)));
+  const reasons=[];
+  if(q.score<58)reasons.push('qualità bassa');
+  if((p.copyCount||0)===0)reasons.push('mai copiato');
+  if(!last)reasons.push('mai aperto di recente');
+  if(daysUpdated>120)reasons.push('vecchio');
+  if(!(p.tags||[]).length)reasons.push('senza tag');
+  if(vars===0)reasons.push('senza variabili');
+  if(wc2.w<35)reasons.push('troppo corto');
+  return{quality:q.score,missing:q.missing,summary:q.summary,utility,risk,reasons,words:wc2.w,vars,last,daysUsed,daysUpdated};
+}
+function v28Best(){return v28All().map(p=>({...p,m:v28Metrics(p)})).sort((a,b)=>(b.m.utility+b.m.quality*0.7+(b.favorite?8:0)+(b.pinned?8:0))- (a.m.utility+a.m.quality*0.7+(a.favorite?8:0)+(a.pinned?8:0))).slice(0,50)}
+function v28Least(){return v28All().map(p=>({...p,m:v28Metrics(p)})).filter(p=>!p.favorite&&!p.pinned&&!p.ignoreSuggestion).sort((a,b)=>a.m.utility-b.m.utility||a.m.quality-b.m.quality).slice(0,80)}
+function v28Useless(){return v28All().map(p=>({...p,m:v28Metrics(p)})).filter(p=>p.m.risk>=38&&!p.ignoreSuggestion&&!p.favorite&&!p.pinned).sort((a,b)=>b.m.risk-a.m.risk||a.m.utility-b.m.utility).slice(0,80)}
+function v28Review(){return v28All().map(p=>({...p,m:v28Metrics(p)})).filter(p=>!p.reviewedAt||v28Days(p.reviewedAt)>90).sort((a,b)=>b.m.risk-a.m.risk||b.m.daysUpdated-a.m.daysUpdated).slice(0,80)}
+function v28Archived(){return v28All({includeArchived:true}).filter(p=>p.archived).map(p=>({...p,m:v28Metrics(p)})).sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0))}
+function v28DuplicatePairs(){
+  const arr=v28All().filter(p=>!p.ignoreSuggestion), pairs=[];
+  for(let i=0;i<arr.length;i++){
+    for(let j=i+1;j<arr.length;j++){
+      const a=arr[i],b=arr[j];
+      const ta=(a.title+' '+v28PromptPlain(a).slice(0,900)).toLowerCase();
+      const tb=(b.title+' '+v28PromptPlain(b).slice(0,900)).toLowerCase();
+      const titleScore=simil(a.title,b.title), bodyScore=simil(ta,tb), tagScore=((a.tags||[]).filter(t=>(b.tags||[]).includes(t)).length)/Math.max(1,new Set([...(a.tags||[]),...(b.tags||[])]).size);
+      const score=Math.round(Math.max(titleScore*100,bodyScore*85+tagScore*15));
+      if(score>=70)pairs.push({a:{...a,m:v28Metrics(a)},b:{...b,m:v28Metrics(b)},score});
+    }
+  }
+  return pairs.sort((x,y)=>y.score-x.score).slice(0,50);
+}
+function v28PromptScoreChip(m){const cls=m.utility>=70?'good':m.utility>=40?'warn':'bad';return '<span class="v28-chip '+cls+'">Utilità '+m.utility+'</span><span class="v28-chip '+(m.quality>=70?'good':m.quality>=50?'warn':'bad')+'">Qualità '+m.quality+'</span>'+(m.risk?'<span class="v28-chip bad">Rischio '+m.risk+'</span>':'')}
+function v28Open(pid,edit=false){v27OpenPrompt(pid,edit)}
+async function v28PatchPrompt(pid,fn,opts={}){const d=structuredClone(S.allData),f=FP(d,pid);if(!f)return false;fn(f.prompt,f);f.prompt.updatedAt=Date.now();await save(d,{hist:opts.hist!==false,ids:opts.ids||{}});return true}
+async function v28ArchivePrompt(pid){await v28PatchPrompt(pid,p=>{p.archived=true;p.archivedAt=Date.now()}, {hist:true,ids:{pid:null}});Toast.show('Archiviato.','ok')}
+async function v28RestoreArchived(pid){await v28PatchPrompt(pid,p=>{delete p.archived;delete p.archivedAt}, {hist:true});Toast.show('Ripristinato dall’archivio.','ok')}
+async function v28MarkReviewed(pid){await v28PatchPrompt(pid,p=>{p.reviewedAt=Date.now();p.ignoreSuggestion=false}, {hist:false});Toast.show('Segnato come revisionato.','ok')}
+async function v28IgnoreSuggestion(pid){await v28PatchPrompt(pid,p=>{p.ignoreSuggestion=true;p.ignoredAt=Date.now()}, {hist:false});Toast.show('Suggerimento ignorato.','ok')}
+async function v28SetPriority(pid){const v=await Modal.prompt('Priorità prompt',[{label:'Priorità',type:'select',options:['nessuna','alta','media','bassa']}]);if(!v)return;await v28PatchPrompt(pid,p=>{if(v.f0==='nessuna')delete p.priority;else p.priority=v.f0}, {hist:false});Toast.show('Priorità aggiornata.','ok')}
+async function v28TrashPrompt(pid,ask=true){
+  const f=FP(S.allData,pid);if(!f)return;
+  if(ask&&!await Modal.confirm('Sposta nel cestino','Spostare "'+f.prompt.title+'" nel cestino?'))return;
+  const d=structuredClone(S.allData),f2=FP(d,pid);if(!f2)return;
+  let trash=d.find(c=>v28IsTrashCat(c));
+  if(!trash){trash={id:uid(),name:'🗑️ Cestino',icon:'🗑️',subcategories:[{id:uid(),name:'Eliminati',icon:'',prompts:[]}]};d.push(trash)}
+  if(!trash.subcategories.length)trash.subcategories.push({id:uid(),name:'Eliminati',icon:'',prompts:[]});
+  const idx=f2.sub.prompts.findIndex(x=>x.id===pid);if(idx!==-1){const rm=f2.sub.prompts.splice(idx,1)[0];rm.deletedAt=Date.now();rm.deletedFrom={catId:f2.cat.id,subId:f2.sub.id,catName:f2.cat.name,subName:f2.sub.name};trash.subcategories[0].prompts.push(rm)}
+  S.recents=S.recents.filter(r=>r.pid!==pid);
+  await save(d,{ids:{pid:null}});Toast.show('Spostato nel cestino.','')
+}
+function v28ImproveSkeleton(pid){const f=FP(S.allData,pid);if(!f)return;const p=f.prompt;const txt=v28PromptPlain(p);const enhanced='Agisci come [ruolo esperto].\n\nObiettivo: '+(txt?txt.slice(0,220):'[descrivi cosa deve fare il prompt]')+'\n\nContesto: {{contesto}}\nTarget: {{target}}\nOutput richiesto: [formato:tabella|testo strutturato|HTML|JSON]\nVincoli: mantieni tono {{tono}}, evita informazioni non verificate, includi passaggi chiari.\n\nInput disponibili:\n- Keyword/tema: {{keyword_o_tema}}\n- Servizio/prodotto: {{servizio_o_prodotto}}\n\nRestituisci una risposta completa, ordinata e pronta da usare.';navigator.clipboard.writeText(enhanced).then(()=>Toast.show('Struttura migliorata copiata: incollala nel prompt e personalizzala.','ok'),()=>Toast.show('Errore copia.','er'))}
+function v28RenderCurationView(type){
+  const col=$('cL'),detail=$('cD');let title='',desc='',items=[];
+  if(type==='best'){title='🏆 Migliori prompt';desc='Prompt con qualità, utilità e segnali d’uso più forti.';items=v28Best();}
+  if(type==='least'){title='📉 Meno usati';desc='Prompt poco copiati o poco consultati. Non sono per forza inutili: controllali prima.';items=v28Least();}
+  if(type==='useless'){title='🧹 Probabilmente inutili';desc='Prompt con basso utilizzo, struttura debole o segnali di abbandono.';items=v28Useless();}
+  if(type==='archived'){title='📦 Archivio';desc='Prompt conservati ma esclusi dalle liste principali.';items=v28Archived();}
+  if(type==='review'){title='🔎 Da revisionare';desc='Prompt vecchi o mai revisionati negli ultimi 90 giorni.';items=v28Review();}
+  col.innerHTML='<div class="v28-list-head"><h3>'+title+'</h3><p>'+desc+'</p></div><div class="v28-tools-row"><button class="primary" data-v28-clean><i class="fa-solid fa-broom"></i>Pulizia guidata</button><button data-v28-refresh><i class="fa-solid fa-rotate"></i>Aggiorna</button></div><div class="cl" role="listbox"></div>';
+  const list=col.querySelector('.cl');
+  col.querySelector('[data-v28-clean]').onclick=v28StartCleanup;col.querySelector('[data-v28-refresh]').onclick=render;
+  if(!items.length){list.innerHTML='<div class="em v27-empty"><i class="fa-regular fa-circle-check"></i><span>Nessun elemento in questa sezione.</span><small style="color:var(--t3)">La libreria non ha prompt che soddisfano questi criteri.</small></div>';detail.innerHTML='<div class="em">Seleziona un prompt da analizzare.</div>';S.pid=null;return;}
+  if(!items.find(x=>x.id===S.pid)){S.pid=items[0].id;S.catId=items[0].ci;S.subId=items[0].si;}
+  items.forEach(p=>{mkItem(list,p);const el=list.querySelector('.it[data-id="'+CSS.escape(p.id)+'"]')||list.lastElementChild; if(el){el.classList.toggle('v28-ignored',!!p.ignoreSuggestion); if(p.priority)el.classList.add('v28-priority-'+p.priority.replace('alta','high').replace('media','medium').replace('bassa','low')); const m=p.m||v28Metrics(p); const meta=document.createElement('div');meta.className='v28-metric-row';meta.innerHTML=v28PromptScoreChip(m)+(p.archived?'<span class="v28-chip v28-archive-badge">Archiviato</span>':'')+(p.reviewedAt?'<span class="v28-chip info">Revisionato '+v28Days(p.reviewedAt)+'g fa</span>':'')+(p.priority?'<span class="v28-chip warn">Priorità '+p.priority+'</span>':'');el.appendChild(meta);}});
+  renderDet();v28EnhanceDetailPanel();
+}
+function v28RenderDuplicates(){
+  const col=$('cL'),detail=$('cD'),pairs=v28DuplicatePairs();
+  col.innerHTML='<div class="v28-list-head"><h3>🧬 Duplicati o simili</h3><p>Coppie di prompt con titolo, contenuto o tag molto simili. Nessuna eliminazione è automatica.</p></div><div class="v28-tools-row"><button class="primary" data-v28-clean><i class="fa-solid fa-broom"></i>Pulizia guidata</button><button data-v28-refresh><i class="fa-solid fa-rotate"></i>Aggiorna</button></div><div class="cl"></div>';
+  col.querySelector('[data-v28-clean]').onclick=v28StartCleanup;col.querySelector('[data-v28-refresh]').onclick=render;
+  const list=col.querySelector('.cl');
+  if(!pairs.length){list.innerHTML='<div class="em v27-empty"><i class="fa-regular fa-circle-check"></i><span>Nessun duplicato evidente.</span></div>';detail.innerHTML='<div class="em">Ottimo: non ho trovato prompt molto simili.</div>';return;}
+  pairs.forEach((pair,idx)=>{const weaker=(pair.a.m.utility+pair.a.m.quality)<(pair.b.m.utility+pair.b.m.quality)?pair.a:pair.b;const stronger=weaker.id===pair.a.id?pair.b:pair.a;const el=document.createElement('div');el.className='v28-pair';el.innerHTML='<div class="v28-pair-top"><div class="v28-pair-title">Possibile duplicato #'+(idx+1)+'</div><span class="v28-chip warn">Somiglianza '+pair.score+'%</span></div><div class="v28-pair-cols"><div class="v28-pair-card" data-open="'+esc(pair.a.id)+'"><b>'+esc(pair.a.title)+'</b><small>'+esc(pair.a.cn)+' › '+esc(pair.a.sn)+' · Q '+pair.a.m.quality+' · U '+pair.a.m.utility+'</small></div><div class="v28-pair-card" data-open="'+esc(pair.b.id)+'"><b>'+esc(pair.b.title)+'</b><small>'+esc(pair.b.cn)+' › '+esc(pair.b.sn)+' · Q '+pair.b.m.quality+' · U '+pair.b.m.utility+'</small></div></div><div class="v28-pair-actions"><button data-open-strong>Apri migliore</button><button data-archive-weak>Archivia più debole</button><button data-ignore-pair>Ignora coppia</button></div>';list.appendChild(el);el.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>v28Open(x.dataset.open));el.querySelector('[data-open-strong]').onclick=()=>v28Open(stronger.id);el.querySelector('[data-archive-weak]').onclick=()=>v28ArchivePrompt(weaker.id);el.querySelector('[data-ignore-pair]').onclick=async()=>{await v28IgnoreSuggestion(pair.a.id);await v28IgnoreSuggestion(pair.b.id)}});
+}
+function v28EnhanceDetailPanel(){
+  const det=document.querySelector('.det');if(!det||det.querySelector('.v28-detail-panel'))return;const f=FP(S.allData,S.pid);if(!f)return;const p=f.prompt,m=v28Metrics(p);
+  const di=det.querySelector('.di');if(di){di.insertAdjacentHTML('beforeend','<span class="di-chip"><i class="fa-solid fa-signal"></i> Utilità <b>'+m.utility+'</b></span><span class="di-chip"><i class="fa-solid fa-triangle-exclamation"></i> Rischio <b>'+m.risk+'</b></span>'+(p.archived?'<span class="di-chip"><i class="fa-solid fa-box-archive"></i> Archiviato</span>':'')+(p.priority?'<span class="di-chip"><i class="fa-solid fa-flag"></i> Priorità <b>'+esc(p.priority)+'</b></span>':''));}
+  const panel=document.createElement('div');panel.className='v28-detail-panel';panel.innerHTML='<h4>Valutazione utilità v28</h4><div class="v28-detail-grid"><div class="v28-detail-box"><div class="v28-detail-num">'+m.quality+'</div><div class="v28-detail-lab">Qualità</div></div><div class="v28-detail-box"><div class="v28-detail-num">'+m.utility+'</div><div class="v28-detail-lab">Utilità</div></div><div class="v28-detail-box"><div class="v28-detail-num">'+m.risk+'</div><div class="v28-detail-lab">Rischio inutilità</div></div><div class="v28-detail-box"><div class="v28-detail-num">'+m.vars+'</div><div class="v28-detail-lab">Variabili</div></div></div><div class="v28-reasons">'+(m.reasons.length?m.reasons.map(r=>'<span class="v28-chip muted">'+esc(r)+'</span>').join(''):'<span class="v28-chip good">Nessun segnale critico</span>')+'</div><div class="v28-tools-row" style="padding:0;border:0;background:transparent"><button data-v28-review><i class="fa-regular fa-circle-check"></i>Revisionato</button><button data-v28-priority><i class="fa-solid fa-flag"></i>Priorità</button><button data-v28-ignore><i class="fa-regular fa-eye-slash"></i>Ignora suggerimento</button><button data-v28-archive><i class="fa-solid fa-box-archive"></i>'+(p.archived?'Ripristina':'Archivia')+'</button><button data-v28-improve><i class="fa-solid fa-wand-magic-sparkles"></i>Struttura migliorata</button></div>';
+  const anchor=det.querySelector('.tgs')||det.querySelector('.dd')||det.querySelector('.qbox');anchor?.before(panel);
+  panel.querySelector('[data-v28-review]').onclick=()=>v28MarkReviewed(p.id);
+  panel.querySelector('[data-v28-priority]').onclick=()=>v28SetPriority(p.id);
+  panel.querySelector('[data-v28-ignore]').onclick=()=>v28IgnoreSuggestion(p.id);
+  panel.querySelector('[data-v28-archive]').onclick=()=>p.archived?v28RestoreArchived(p.id):v28ArchivePrompt(p.id);
+  panel.querySelector('[data-v28-improve]').onclick=()=>v28ImproveSkeleton(p.id);
+}
+function v28DashFill(id,items,empty,field='utility'){
+  const l=$(id);if(!l)return;if(!items.length){l.innerHTML='<div class="em" style="height:auto;padding:16px">'+empty+'</div>';return}
+  l.innerHTML='';items.slice(0,6).forEach(p=>{const m=p.m||v28Metrics(p);const r=document.createElement('div');r.className='v28-row';r.innerHTML='<div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div><div class="v28-score">'+(field==='risk'?m.risk:field==='quality'?m.quality:m.utility)+'</div>';r.onclick=()=>v28Open(p.id);l.appendChild(r)});
+}
+function v28EnhanceDashboard2(){
+  const dash=document.querySelector('.dashboard');if(!dash)return;const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28';
+  const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Centro operativo per creare, trovare, valutare, archiviare e pulire la tua libreria di prompt.';
+  if(dash.querySelector('.v28-dash-section'))return;
+  const best=v28Best(),least=v28Least(),useless=v28Useless(),dups=v28DuplicatePairs(),rev=v28Review(),arch=v28Archived();
+  const sec=document.createElement('div');sec.className='v28-dash-section';sec.innerHTML='<div class="v28-dash-section-title"><h2>🧠 Pulizia intelligente v28</h2><div><button data-v28-view="best">Apri migliori</button> <button data-v28-clean>Avvia pulizia</button></div></div><div class="v28-dash-panels"><div class="v28-panel"><h3>🏆 Migliori</h3><p>Qualità + utilità + segnali d’uso.</p><div class="v28-panel-list" id="v28Best"></div></div><div class="v28-panel"><h3>📉 Meno usati</h3><p>Poco consultati, non preferiti e non pinnati.</p><div class="v28-panel-list" id="v28Least"></div></div><div class="v28-panel"><h3>🧹 Probabilmente inutili</h3><p>Prompt deboli, vecchi o mai usati.</p><div class="v28-panel-list" id="v28Useless"></div></div><div class="v28-panel"><h3>🧬 Duplicati</h3><p>Possibili sovrapposizioni da controllare.</p><div class="v28-panel-list" id="v28Dup"></div></div><div class="v28-panel"><h3>🔎 Da revisionare</h3><p>Non revisionati negli ultimi 90 giorni.</p><div class="v28-panel-list" id="v28Review"></div></div><div class="v28-panel"><h3>📦 Archivio</h3><p>Prompt conservati ma nascosti dalle liste principali.</p><div class="v28-panel-list" id="v28Archive"></div></div></div>';
+  dash.appendChild(sec);
+  v28DashFill('v28Best',best,'Nessun prompt migliore', 'utility');
+  v28DashFill('v28Least',least,'Nessun prompt poco usato','utility');
+  v28DashFill('v28Useless',useless,'Nessun prompt critico','risk');
+  v28DashFill('v28Review',rev,'Tutto revisionato','risk');
+  v28DashFill('v28Archive',arch,'Archivio vuoto','utility');
+  const dl=$('v28Dup');if(dl){if(!dups.length)dl.innerHTML='<div class="em" style="height:auto;padding:16px">Nessun duplicato</div>';else{dl.innerHTML='';dups.slice(0,6).forEach(x=>{const r=document.createElement('div');r.className='v28-row';r.innerHTML='<div><b>'+esc(x.a.title)+'</b><span>simile a '+esc(x.b.title)+'</span></div><div class="v28-score">'+x.score+'%</div>';r.onclick=()=>{S.view='duplicates';S.pid=x.a.id;render()};dl.appendChild(r)})}}
+  sec.querySelector('[data-v28-clean]').onclick=v28StartCleanup;sec.querySelector('[data-v28-view="best"]').onclick=()=>{S.view='best';S.pid=null;render()};
+}
+function v28StartCleanup(){
+  const candidates=[...v28Useless(),...v28Least().filter(p=>p.m.utility<35),...v28Review().slice(0,20)];
+  const seen=new Set(),arr=candidates.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true}).slice(0,80);
+  let i=0,done=0;
+  const ov=document.createElement('div');ov.className='v27-onboarding';
+  function draw(){
+    const p=arr[i];
+    if(!p){ov.innerHTML='<div class="v28-clean-card"><h2>Pulizia completata</h2><p>Hai revisionato '+done+' prompt. Puoi riaprire la pulizia guidata in qualsiasi momento.</p><div class="v28-clean-actions"><button class="primary" data-close>Chiudi</button></div></div>';ov.querySelector('[data-close]').onclick=()=>{ov.remove();render()};return;}
+    const m=p.m||v28Metrics(p);const pct=arr.length?Math.round((i/arr.length)*100):100;
+    ov.innerHTML='<div class="v28-clean-card"><h2>Pulizia guidata</h2><p>Controlla un prompt alla volta. Nessuna azione viene eseguita automaticamente.</p><div class="v28-clean-progress"><div style="width:'+pct+'%"></div></div><div class="v28-clean-prompt"><h3>'+esc(p.title)+'</h3><p>'+esc(p.cn)+' › '+esc(p.sn)+'</p><div class="v28-metric-row">'+v28PromptScoreChip(m)+'</div><div class="v28-reasons" style="margin-top:10px">'+(m.reasons.length?m.reasons.map(r=>'<span class="v28-chip muted">'+esc(r)+'</span>').join(''):'<span class="v28-chip good">Nessun segnale critico</span>')+'</div></div><div class="v28-clean-actions"><button class="secondary" data-open>Apri</button><button class="secondary" data-improve>Migliora</button><button class="secondary" data-keep>Tieni / revisionato</button><button class="secondary" data-ignore>Ignora</button><button class="secondary" data-archive>Archivia</button><button class="danger" data-trash>Cestino</button><button class="secondary" data-skip>Salta</button><button class="primary" data-close>Chiudi</button></div></div>';
+    ov.querySelector('[data-open]').onclick=()=>{ov.remove();v28Open(p.id)};
+    ov.querySelector('[data-improve]').onclick=()=>v28ImproveSkeleton(p.id);
+    ov.querySelector('[data-keep]').onclick=async()=>{await v28MarkReviewed(p.id);done++;i++;draw()};
+    ov.querySelector('[data-ignore]').onclick=async()=>{await v28IgnoreSuggestion(p.id);done++;i++;draw()};
+    ov.querySelector('[data-archive]').onclick=async()=>{await v28ArchivePrompt(p.id);done++;i++;draw()};
+    ov.querySelector('[data-trash]').onclick=async()=>{await v28TrashPrompt(p.id,false);done++;i++;draw()};
+    ov.querySelector('[data-skip]').onclick=()=>{i++;draw()};
+    ov.querySelector('[data-close]').onclick=()=>{ov.remove();render()};
+  }
+  if(!arr.length){Toast.show('Nessun prompt critico da revisionare.','ok');return}
+  document.body.appendChild(ov);draw();
+}
+function v28RenderDDPatch(){
+  const labels={best:'🏆 Migliori',least:'📉 Meno usati',useless:'🧹 Inutili?',duplicates:'🧬 Duplicati',archived:'📦 Archivio',review:'🔎 Da revisionare'};
+  if(!cS)return;
+  const existing=[...cS.options].map(o=>o.value);
+  if(!existing.includes('best')){
+    const sep=document.createElement('option');sep.textContent='──── V28 ────';sep.disabled=true;cS.appendChild(sep);
+    V28_SPECIAL_VIEWS.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=labels[v];cS.appendChild(o)});
+  }
+  if(V28_SPECIAL_VIEWS.includes(S.view))cS.value=S.view;
+}
+function v28BindSelect(){
+  if(!cS||cS.__v28Bound)return;cS.__v28Bound=true;
+  cS.onchange=async()=>{if(!await dirtyCheck()){renderDD();return}const v=cS.value;const specials=['dashboard','all','favorites','recents','tags','trash','search',...V28_SPECIAL_VIEWS];
+    if(specials.includes(v)){S.view=v;S.pid=null;}else{S.view='columns';S.catId=v;const c=FC(S.allData,v),fs=c?.subcategories?.[0];S.subId=fs?.id||null;S.pid=fs?.prompts?.find(p=>!p.archived)?.id||fs?.prompts?.[0]?.id||null}render()};
+}
+function v28EnhanceSidebar2(){
+  const nav=document.querySelector('.v27-sidebar-nav .v27-nav-grid');if(!nav||nav.querySelector('[data-v28-view="best"]'))return;
+  const counts={best:v28Best().length,least:v28Least().length,useless:v28Useless().length,duplicates:v28DuplicatePairs().length,archived:v28Archived().length,review:v28Review().length};
+  const items=[['best','🏆','Migliori',counts.best],['least','📉','Meno usati',counts.least],['useless','🧹','Inutili?',counts.useless],['duplicates','🧬','Duplicati',counts.duplicates],['archived','📦','Archivio',counts.archived],['review','🔎','Revisione',counts.review]];
+  items.forEach(x=>{const b=document.createElement('button');b.className='v27-nav-btn '+(S.view===x[0]?'ac':'');b.dataset.v28View=x[0];b.innerHTML='<span>'+x[1]+'</span><span>'+x[2]+'</span><small>'+x[3]+'</small>';b.onclick=async()=>{if(!await dirtyCheck())return;S.view=x[0];S.pid=null;render()};nav.appendChild(b)});
+}
+function v28EnhanceHeader(){
+  document.title='Prompt Studio v28';document.querySelector('.logo-badge')&&(document.querySelector('.logo-badge').textContent='v28');
+  const clean=$('cleanBtn');if(clean){clean.title='Pulizia guidata: migliori, meno usati, duplicati e prompt probabilmente inutili';clean.onclick=v28StartCleanup;}
+  v28BindSelect();
+  if(!window.__v28Keys){window.__v28Keys=true;document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='k'){e.preventDefault();v28StartCleanup();}})}
+}
+
+const __showCommandPaletteV27=showCommandPalette;
+showCommandPalette=function(){__showCommandPaletteV27();setTimeout(()=>{const m=$('mCmd'),list=$('cmdList');if(!m||!list)return;const extras=[
+  ['Pulizia guidata v28','Revisiona prompt inutili, poco usati o vecchi',()=>v28StartCleanup()],
+  ['Migliori prompt','Apri la sezione dei prompt migliori',()=>{S.view='best';S.pid=null;render()}],
+  ['Meno usati','Apri la sezione dei prompt meno usati',()=>{S.view='least';S.pid=null;render()}],
+  ['Probabilmente inutili','Apri i prompt da valutare',()=>{S.view='useless';S.pid=null;render()}],
+  ['Duplicati o simili','Controlla possibili duplicati',()=>{S.view='duplicates';S.pid=null;render()}],
+  ['Archivio','Apri i prompt archiviati',()=>{S.view='archived';S.pid=null;render()}]
+];
+if(list.querySelector('[data-v28-cmd]'))return;
+extras.reverse().forEach(([t,d,fn])=>{const box=document.createElement('div');box.className='cmd-item';box.dataset.v28Cmd='1';box.innerHTML='<b>'+esc(t)+'</b><span>'+esc(d)+'</span>';box.onclick=()=>{m.classList.remove('show');fn()};list.prepend(box)});
+},30)};
+
+function v28EnhanceCommandPalette(){
+  // Estende la palette esistente aggiungendo scorciatoie v28 quando è aperta.
+  const m=$('mCmd'),list=$('cmdList');if(!m||!list||!m.classList.contains('show')||list.__v28)return;list.__v28=true;
+  const box=document.createElement('div');box.className='cmd-item';box.innerHTML='<b>🧹 Pulizia guidata v28</b><span>Revisiona prompt inutili, poco usati o vecchi</span>';box.onclick=()=>{m.classList.remove('show');v28StartCleanup()};list.prepend(box);
+}
+function v28Enhance(){try{v28EnhanceHeader();v28RenderDDPatch();v28EnhanceSidebar2();v28EnhanceDashboard2();v28EnhanceDetailPanel();v28EnhanceCommandPalette();}catch(e){console.warn('V28 enhancement skipped',e)}}
+const __renderV27=render;
+render=function(){
+  if(V28_SPECIAL_VIEWS.includes(S.view)){
+    renderDD();MA.className='mn v2';MA.innerHTML='<div id="cL" class="co"></div><div id="cD" class="co dc"></div>';
+    if(S.view==='duplicates')v28RenderDuplicates();else v28RenderCurationView(S.view);
+    $('bU').disabled=!S.hist.length;$('bR').disabled=!S.redo.length;
+    document.querySelectorAll('.co').forEach(x=>x.classList.remove('focus-target'));
+    (document.querySelector('#cD')||document.querySelector('#c3'))?.classList.add('focus-target');
+    document.body.classList.toggle('focus-mode',!!S.focusMode);
+    v27Enhance();v28Enhance();return;
+  }
+  __renderV27();v28Enhance();
+};
+const __renderDDV27=renderDD;
+renderDD=function(){__renderDDV27();v28RenderDDPatch()};
 
 async function init(){
     Loader.show();try{
@@ -1961,8 +2211,8 @@ if (!['compact', 'normal', 'comfortable'].includes(S.settings.density)) S.settin
           const wid=uid(),wsid=uid(),wpid=uid();
           S.allData=[{id:wid,name:'Guide',icon:'📚',subcategories:[{id:wsid,name:'Benvenuto',icon:'',prompts:[{
             id:wpid,
-            title:'✨ Prompt Studio v27 — UI guidata, autosave e prompt quality',
-            description:'<b>Prompt Studio v27</b> — UI più guidata, dashboard iniziale, autosalvataggio, anteprima finale, qualità prompt e backup guidato.<br><br><b>Tipi di variabile ora supportati:</b><br><br>🔷 <code>{{variabile}}</code> — Doppie graffe (originale)<br>🔶 <code>((variabile))</code> — Doppie tonde ✨NUOVO<br>🟦 <code>[variabile]</code> — Quadre (originale)<br>🟧 <code>{variabile}</code> — Singola graffa (originale)<br>🟨 <code>(variabile)</code> — Singola tonda ✨NUOVO<br><br><b>Esempi con default e scelte multiple:</b><br>• <code>{{nome:Mario}}</code> — campo con valore default<br>• <code>[scelta:sì|no|forse]</code> — menu a tendina<br>• <code>((città:Milano))</code> — doppie tonde con default<br>• <code>(livello:Junior|Senior|Lead)</code> — tonda con opzioni<br>• <code>{azienda}</code> — singola graffa semplice<br><br><b>Prompt di esempio — prova a copiarlo:</b><br>Scrivi un\'email professionale per <b>((destinatario:Mario Rossi))</b> riguardo a <b>{{argomento}}</b>. Il tono deve essere <b>[tono:formale|amichevole|neutro]</b>. Firma come <b>(nome:La direzione)</b>.<br><br>Quando copi un prompt, le variabili vengono sostituite automaticamente con i valori inseriti! ✅',
+            title:'✨ Prompt Studio v28 — pulizia intelligente, utilità e prompt quality',
+            description:'<b>Prompt Studio v28</b> — UI guidata, dashboard, autosalvataggio, anteprima finale, qualità prompt, utilità, archivio e pulizia intelligente.<br><br><b>Tipi di variabile ora supportati:</b><br><br>🔷 <code>{{variabile}}</code> — Doppie graffe (originale)<br>🔶 <code>((variabile))</code> — Doppie tonde ✨NUOVO<br>🟦 <code>[variabile]</code> — Quadre (originale)<br>🟧 <code>{variabile}</code> — Singola graffa (originale)<br>🟨 <code>(variabile)</code> — Singola tonda ✨NUOVO<br><br><b>Esempi con default e scelte multiple:</b><br>• <code>{{nome:Mario}}</code> — campo con valore default<br>• <code>[scelta:sì|no|forse]</code> — menu a tendina<br>• <code>((città:Milano))</code> — doppie tonde con default<br>• <code>(livello:Junior|Senior|Lead)</code> — tonda con opzioni<br>• <code>{azienda}</code> — singola graffa semplice<br><br><b>Prompt di esempio — prova a copiarlo:</b><br>Scrivi un\'email professionale per <b>((destinatario:Mario Rossi))</b> riguardo a <b>{{argomento}}</b>. Il tono deve essere <b>[tono:formale|amichevole|neutro]</b>. Firma come <b>(nome:La direzione)</b>.<br><br>Quando copi un prompt, le variabili vengono sostituite automaticamente con i valori inseriti! ✅',
             favorite:true,tags:['guida','v27','variabili','autosave','ui'],versions:[],copyCount:0,pinned:true,createdAt:Date.now(),updatedAt:Date.now(),related:[]
           }]}]}];
         S.catId = wid;
