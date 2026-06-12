@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28</title>
+<title>Prompt Studio v28.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2134,20 +2134,6 @@ function v28EnhanceHeader(){
   v28BindSelect();
   if(!window.__v28Keys){window.__v28Keys=true;document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='k'){e.preventDefault();v28StartCleanup();}})}
 }
-
-const __showCommandPaletteV27=showCommandPalette;
-showCommandPalette=function(){__showCommandPaletteV27();setTimeout(()=>{const m=$('mCmd'),list=$('cmdList');if(!m||!list)return;const extras=[
-  ['Pulizia guidata v28','Revisiona prompt inutili, poco usati o vecchi',()=>v28StartCleanup()],
-  ['Migliori prompt','Apri la sezione dei prompt migliori',()=>{S.view='best';S.pid=null;render()}],
-  ['Meno usati','Apri la sezione dei prompt meno usati',()=>{S.view='least';S.pid=null;render()}],
-  ['Probabilmente inutili','Apri i prompt da valutare',()=>{S.view='useless';S.pid=null;render()}],
-  ['Duplicati o simili','Controlla possibili duplicati',()=>{S.view='duplicates';S.pid=null;render()}],
-  ['Archivio','Apri i prompt archiviati',()=>{S.view='archived';S.pid=null;render()}]
-];
-if(list.querySelector('[data-v28-cmd]'))return;
-extras.reverse().forEach(([t,d,fn])=>{const box=document.createElement('div');box.className='cmd-item';box.dataset.v28Cmd='1';box.innerHTML='<b>'+esc(t)+'</b><span>'+esc(d)+'</span>';box.onclick=()=>{m.classList.remove('show');fn()};list.prepend(box)});
-},30)};
-
 function v28EnhanceCommandPalette(){
   // Estende la palette esistente aggiungendo scorciatoie v28 quando è aperta.
   const m=$('mCmd'),list=$('cmdList');if(!m||!list||!m.classList.contains('show')||list.__v28)return;list.__v28=true;
@@ -2169,6 +2155,159 @@ render=function(){
 };
 const __renderDDV27=renderDD;
 renderDD=function(){__renderDDV27();v28RenderDDPatch()};
+
+
+
+/* ── PROMPT STUDIO V28.1: PERFORMANCE PATCH ──
+   Obiettivo: caricamento più rapido, calcoli pesanti lazy, cache metriche,
+   duplicati calcolati solo a richiesta e su un campione controllato. */
+(function(){
+  const V281_MAX_DUP_POOL = 260;
+  const V281_MAX_DUP_COMPARISONS = 22000;
+  const V281_MAX_METRIC_CACHE = 2500;
+
+  function v281CountPrompts(){
+    let n=0;
+    try{(S.allData||[]).forEach(c=>(c.subcategories||[]).forEach(s=>n+=(s.prompts||[]).length));}catch(e){}
+    return n;
+  }
+  function v281Stamp(){
+    let count=0,maxTs=0,flags=0;
+    try{
+      (S.allData||[]).forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>{
+        count++;
+        maxTs=Math.max(maxTs,p.updatedAt||0,p.archivedAt||0,p.reviewedAt||0,p.ignoredAt||0,p.deletedAt||0);
+        flags+=(p.copyCount||0)+(p.favorite?3:0)+(p.pinned?5:0)+(p.archived?7:0)+(p.ignoreSuggestion?11:0);
+      })));
+      const lr=(S.recents||[])[0]?.ts||0;
+      return count+'|'+maxTs+'|'+flags+'|'+(S.recents||[]).length+'|'+lr;
+    }catch(e){return String(Date.now())}
+  }
+
+  const __v281RawMetrics = typeof v28Metrics === 'function' ? v28Metrics : null;
+  if(__v281RawMetrics){
+    v28Metrics=function(p){
+      S.__v281MetricCache=S.__v281MetricCache||new Map();
+      const recent=typeof v28LastUsed==='function'?v28LastUsed(p.id):0;
+      const key=[p.id,p.updatedAt||0,p.copyCount||0,p.favorite?1:0,p.pinned?1:0,p.archived?1:0,p.reviewedAt||0,p.ignoreSuggestion?1:0,p.priority||'',(p.tags||[]).join(','),recent].join('|');
+      const hit=S.__v281MetricCache.get(key); if(hit) return hit;
+      const val=__v281RawMetrics(p);
+      S.__v281MetricCache.set(key,val);
+      if(S.__v281MetricCache.size>V281_MAX_METRIC_CACHE){
+        const kill=Math.ceil(V281_MAX_METRIC_CACHE*.25);let i=0;
+        for(const k of S.__v281MetricCache.keys()){S.__v281MetricCache.delete(k);if(++i>=kill)break;}
+      }
+      return val;
+    }
+  }
+
+  function v281Rankings(){
+    const stamp=v281Stamp();
+    if(S.__v281Rankings && S.__v281Rankings.stamp===stamp) return S.__v281Rankings;
+    const arr=(typeof v28All==='function'?v28All():[]).map(p=>({...p,m:v28Metrics(p)}));
+    const best=[...arr].sort((a,b)=>(b.m.utility+b.m.quality*.7+(b.favorite?8:0)+(b.pinned?8:0))- (a.m.utility+a.m.quality*.7+(a.favorite?8:0)+(a.pinned?8:0))).slice(0,50);
+    const least=[...arr].filter(p=>!p.favorite&&!p.pinned&&!p.ignoreSuggestion).sort((a,b)=>a.m.utility-b.m.utility||a.m.quality-b.m.quality).slice(0,80);
+    const useless=[...arr].filter(p=>p.m.risk>=38&&!p.ignoreSuggestion&&!p.favorite&&!p.pinned).sort((a,b)=>b.m.risk-a.m.risk||a.m.utility-b.m.utility).slice(0,80);
+    const review=[...arr].filter(p=>!p.reviewedAt||v28Days(p.reviewedAt)>90).sort((a,b)=>b.m.risk-a.m.risk||b.m.daysUpdated-a.m.daysUpdated).slice(0,80);
+    const archived=(typeof v28All==='function'?v28All({includeArchived:true}):[]).filter(p=>p.archived).map(p=>({...p,m:v28Metrics(p)})).sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0));
+    S.__v281Rankings={stamp,best,least,useless,review,archived,total:arr.length};
+    return S.__v281Rankings;
+  }
+
+  v28Best=function(){return v281Rankings().best};
+  v28Least=function(){return v281Rankings().least};
+  v28Useless=function(){return v281Rankings().useless};
+  v28Review=function(){return v281Rankings().review};
+  v28Archived=function(){return v281Rankings().archived};
+
+  function v281Tokens(s){
+    return new Set(String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9àèéìòù_\s-]/gi,' ').split(/\s+/).filter(w=>w.length>3).slice(0,90));
+  }
+  function v281Jacc(a,b){
+    if(!a.size||!b.size)return 0;
+    let inter=0;for(const x of a){if(b.has(x))inter++}
+    return inter/Math.max(a.size,b.size);
+  }
+  function v281TitleSim(a,b){
+    const aa=v281Tokens(a),bb=v281Tokens(b);return v281Jacc(aa,bb);
+  }
+  v28DuplicatePairs=function(){
+    const stamp='dup|'+v281Stamp();
+    if(S.__v281Dup && S.__v281Dup.stamp===stamp) return S.__v281Dup.pairs;
+    let arr=(typeof v28All==='function'?v28All():[]).filter(p=>!p.ignoreSuggestion&&!p.archived);
+    arr=arr.sort((a,b)=>((b.copyCount||0)+(b.favorite?8:0)+(b.pinned?8:0)+(b.updatedAt||0)/1e13)-((a.copyCount||0)+(a.favorite?8:0)+(a.pinned?8:0)+(a.updatedAt||0)/1e13)).slice(0,V281_MAX_DUP_POOL);
+    const norm=arr.map(p=>{
+      const plain=(typeof v28PromptPlain==='function'?v28PromptPlain(p):'').slice(0,420);
+      return {p,title:String(p.title||''),tokens:v281Tokens((p.title||'')+' '+(p.tags||[]).join(' ')+' '+plain),tags:new Set(p.tags||[]),m:v28Metrics(p)};
+    });
+    const pairs=[];let comps=0;
+    for(let i=0;i<norm.length;i++){
+      for(let j=i+1;j<norm.length;j++){
+        if(++comps>V281_MAX_DUP_COMPARISONS) break;
+        const a=norm[i],b=norm[j];
+        let sharedTags=0;for(const t of a.tags){if(b.tags.has(t))sharedTags++}
+        const titleScore=v281TitleSim(a.title,b.title);
+        if(titleScore<.35 && sharedTags===0) continue;
+        const bodyScore=v281Jacc(a.tokens,b.tokens);
+        const tagScore=sharedTags/Math.max(1,new Set([...a.tags,...b.tags]).size);
+        const score=Math.round(Math.max(titleScore*100,bodyScore*86+tagScore*14));
+        if(score>=70)pairs.push({a:{...a.p,m:a.m},b:{...b.p,m:b.m},score});
+      }
+      if(comps>V281_MAX_DUP_COMPARISONS) break;
+    }
+    const result=pairs.sort((x,y)=>y.score-x.score).slice(0,50);
+    S.__v281Dup={stamp,pairs:result,limited:arr.length>=V281_MAX_DUP_POOL||comps>=V281_MAX_DUP_COMPARISONS};
+    return result;
+  };
+
+  v28EnhanceDashboard2=function(){
+    const dash=document.querySelector('.dashboard');if(!dash)return;
+    const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28.1';
+    const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Centro operativo veloce per creare, trovare, valutare, archiviare e pulire la tua libreria di prompt.';
+    if(dash.querySelector('.v28-dash-section'))return;
+    const sec=document.createElement('div');sec.className='v28-dash-section';sec.innerHTML='<div class="v28-dash-section-title"><h2>🧠 Pulizia intelligente v28.1</h2><div><button data-v28-view="best">Apri migliori</button> <button data-v28-clean>Avvia pulizia</button></div></div><div class="v28-dash-panels"><div class="v28-panel"><h3>🏆 Migliori</h3><p>Qualità + utilità + segnali d’uso.</p><div class="v28-panel-list" id="v28Best"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📉 Meno usati</h3><p>Poco consultati, non preferiti e non pinnati.</p><div class="v28-panel-list" id="v28Least"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧹 Probabilmente inutili</h3><p>Prompt deboli, vecchi o mai usati.</p><div class="v28-panel-list" id="v28Useless"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧬 Duplicati</h3><p>Calcolo pesante: ora si avvia solo quando apri la sezione.</p><div class="v28-panel-list" id="v28Dup"><div class="v28-row" data-open-dups><div><b>Calcola duplicati</b><span>Apri la sezione per analizzare i prompt simili</span></div><div class="v28-score">↗</div></div></div></div><div class="v28-panel"><h3>🔎 Da revisionare</h3><p>Non revisionati negli ultimi 90 giorni.</p><div class="v28-panel-list" id="v28Review"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📦 Archivio</h3><p>Prompt conservati ma nascosti dalle liste principali.</p><div class="v28-panel-list" id="v28Archive"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div></div>';
+    dash.appendChild(sec);
+    sec.querySelector('[data-v28-clean]').onclick=v28StartCleanup;
+    sec.querySelector('[data-v28-view="best"]').onclick=()=>{S.view='best';S.pid=null;render()};
+    sec.querySelector('[data-open-dups]').onclick=()=>{S.view='duplicates';S.pid=null;render()};
+    const fill=()=>{
+      const r=v281Rankings();
+      v28DashFill('v28Best',r.best,'Nessun prompt migliore','utility');
+      v28DashFill('v28Least',r.least,'Nessun prompt poco usato','utility');
+      v28DashFill('v28Useless',r.useless,'Nessun prompt critico','risk');
+      v28DashFill('v28Review',r.review,'Tutto revisionato','risk');
+      v28DashFill('v28Archive',r.archived,'Archivio vuoto','utility');
+    };
+    (window.requestIdleCallback||window.setTimeout)(fill,40);
+  };
+
+  v28EnhanceSidebar2=function(){
+    const nav=document.querySelector('.v27-sidebar-nav .v27-nav-grid');if(!nav||nav.querySelector('[data-v28-view="best"]'))return;
+    const labels={best:['🏆','Migliori'],least:['📉','Meno usati'],useless:['🧹','Inutili?'],duplicates:['🧬','Duplicati'],archived:['📦','Archivio'],review:['🔎','Revisione']};
+    Object.entries(labels).forEach(([view,x])=>{const b=document.createElement('button');b.className='v27-nav-btn '+(S.view===view?'ac':'');b.dataset.v28View=view;b.innerHTML='<span>'+x[0]+'</span><span>'+x[1]+'</span><small>↗</small>';b.onclick=async()=>{if(!await dirtyCheck())return;S.view=view;S.pid=null;render()};nav.appendChild(b)});
+  };
+
+  v28RenderDuplicates=function(){
+    const col=$('cL'),detail=$('cD');
+    col.innerHTML='<div class="v28-list-head"><h3>🧬 Duplicati o simili</h3><p>Analisi ottimizzata: confronta un campione controllato dei prompt più rilevanti per evitare blocchi.</p></div><div class="v28-tools-row"><button class="primary" data-v28-clean><i class="fa-solid fa-broom"></i>Pulizia guidata</button><button data-v28-refresh><i class="fa-solid fa-rotate"></i>Ricalcola</button></div><div class="cl"><div class="em"><i class="fa-solid fa-spinner fa-spin"></i><span>Calcolo duplicati in corso…</span><small style="color:var(--t3)">Se hai molti prompt, ora il controllo è limitato per mantenere l’app fluida.</small></div></div>';
+    col.querySelector('[data-v28-clean]').onclick=v28StartCleanup;col.querySelector('[data-v28-refresh]').onclick=()=>{delete S.__v281Dup;v28RenderDuplicates()};
+    detail.innerHTML='<div class="em">Sto calcolando i duplicati senza bloccare l’avvio dell’app.</div>';
+    setTimeout(()=>{
+      const list=col.querySelector('.cl');const pairs=v28DuplicatePairs();
+      if(!pairs.length){list.innerHTML='<div class="em v27-empty"><i class="fa-regular fa-circle-check"></i><span>Nessun duplicato evidente.</span><small style="color:var(--t3)">L’analisi è ottimizzata: i confronti più costosi sono limitati.</small></div>';detail.innerHTML='<div class="em">Ottimo: non ho trovato prompt molto simili.</div>';return;}
+      list.innerHTML='';
+      if(S.__v281Dup?.limited){const warn=document.createElement('div');warn.className='v28-chip warn';warn.style.margin='10px';warn.textContent='Analisi limitata per performance: mostra i duplicati più probabili.';list.appendChild(warn)}
+      pairs.forEach((pair,idx)=>{const weaker=(pair.a.m.utility+pair.a.m.quality)<(pair.b.m.utility+pair.b.m.quality)?pair.a:pair.b;const stronger=weaker.id===pair.a.id?pair.b:pair.a;const el=document.createElement('div');el.className='v28-pair';el.innerHTML='<div class="v28-pair-top"><div class="v28-pair-title">Possibile duplicato #'+(idx+1)+'</div><span class="v28-chip warn">Somiglianza '+pair.score+'%</span></div><div class="v28-pair-cols"><div class="v28-pair-card" data-open="'+esc(pair.a.id)+'"><b>'+esc(pair.a.title)+'</b><small>'+esc(pair.a.cn)+' › '+esc(pair.a.sn)+' · Q '+pair.a.m.quality+' · U '+pair.a.m.utility+'</small></div><div class="v28-pair-card" data-open="'+esc(pair.b.id)+'"><b>'+esc(pair.b.title)+'</b><small>'+esc(pair.b.cn)+' › '+esc(pair.b.sn)+' · Q '+pair.b.m.quality+' · U '+pair.b.m.utility+'</small></div></div><div class="v28-pair-actions"><button data-open-strong>Apri migliore</button><button data-archive-weak>Archivia più debole</button><button data-ignore-pair>Ignora coppia</button></div>';list.appendChild(el);el.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>v28Open(x.dataset.open));el.querySelector('[data-open-strong]').onclick=()=>v28Open(stronger.id);el.querySelector('[data-archive-weak]').onclick=()=>v28ArchivePrompt(weaker.id);el.querySelector('[data-ignore-pair]').onclick=async()=>{await v28IgnoreSuggestion(pair.a.id);await v28IgnoreSuggestion(pair.b.id)}});
+    },30);
+  };
+
+  const __v281EnhanceHeaderRaw = v28EnhanceHeader;
+  v28EnhanceHeader=function(){
+    __v281EnhanceHeaderRaw();
+    document.title='Prompt Studio v28.1';
+    const b=document.querySelector('.logo-badge');if(b)b.textContent='v28.1';
+  };
+})();
 
 async function init(){
     Loader.show();try{
