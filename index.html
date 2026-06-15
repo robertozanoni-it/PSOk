@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28.1</title>
+<title>Prompt Studio v28.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -218,6 +218,29 @@ mark.ps-hl.cur{background:var(--or);color:#fff;border-radius:2px;box-shadow:0 0 
 .dd{padding:20px 22px;line-height:1.75;flex:1;overflow-y:auto;min-height:0;font-size:var(--font-size);background:var(--bg);color:var(--t1);}
 .dd:focus{outline:none}
 .dd[contenteditable="true"]{background:var(--sf2);outline:none;border-left:3px solid var(--ac);}
+.it{contain:layout style paint}
+.cl{content-visibility:auto;contain-intrinsic-size:1px 640px}
+.dd img{max-width:100%;height:auto}
+.v282-status{display:flex;align-items:center;gap:8px;min-width:0;max-width:240px;color:var(--t3);font-size:12px;font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v282-status b{color:var(--ac);font-weight:700}
+@media (max-width: 980px){
+  html,body{overflow:auto}
+  body{min-height:100%}
+  .hd{height:auto;min-height:58px;flex-wrap:wrap;padding:10px 12px;gap:10px;position:sticky;top:0}
+  .logo{font-size:21px}
+  .search-wrap{order:3;flex-basis:100%;max-width:none}
+  .cat-select{flex:1;min-width:160px}
+  .hr{margin-left:0;gap:3px;overflow-x:auto;max-width:100%;padding-bottom:2px}
+  .ib{width:36px;height:36px;font-size:16px;flex:0 0 auto}
+  .font-size-indicator{min-width:42px;font-size:12px;padding:4px 6px}
+  .mn.v3,.mn.v2{grid-template-columns:1fr}
+  .co{min-height:42vh;border-right:none;border-bottom:1px solid var(--bd)}
+  .co.dc{min-height:68vh}
+  .sh{display:none}
+  .dti h1{font-size:21px;white-space:normal}
+  .da{justify-content:flex-end}
+  .v27-actionbar{left:10px;right:10px;bottom:10px;overflow-x:auto}
+}
 .dd[contenteditable="true"].drag-over{border-left-color:var(--yl);background:rgba(251,191,36,.04);}
 .dd a{color:var(--or);text-decoration:underline}.dd a:hover{color:var(--gd)}
 .dd img{max-width:100%;height:auto;border-radius:var(--r-md);margin:10px 0;display:block}
@@ -2262,10 +2285,10 @@ renderDD=function(){__renderDDV27();v28RenderDDPatch()};
 
   v28EnhanceDashboard2=function(){
     const dash=document.querySelector('.dashboard');if(!dash)return;
-    const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28.1';
+    const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28.2';
     const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Centro operativo veloce per creare, trovare, valutare, archiviare e pulire la tua libreria di prompt.';
     if(dash.querySelector('.v28-dash-section'))return;
-    const sec=document.createElement('div');sec.className='v28-dash-section';sec.innerHTML='<div class="v28-dash-section-title"><h2>🧠 Pulizia intelligente v28.1</h2><div><button data-v28-view="best">Apri migliori</button> <button data-v28-clean>Avvia pulizia</button></div></div><div class="v28-dash-panels"><div class="v28-panel"><h3>🏆 Migliori</h3><p>Qualità + utilità + segnali d’uso.</p><div class="v28-panel-list" id="v28Best"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📉 Meno usati</h3><p>Poco consultati, non preferiti e non pinnati.</p><div class="v28-panel-list" id="v28Least"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧹 Probabilmente inutili</h3><p>Prompt deboli, vecchi o mai usati.</p><div class="v28-panel-list" id="v28Useless"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧬 Duplicati</h3><p>Calcolo pesante: ora si avvia solo quando apri la sezione.</p><div class="v28-panel-list" id="v28Dup"><div class="v28-row" data-open-dups><div><b>Calcola duplicati</b><span>Apri la sezione per analizzare i prompt simili</span></div><div class="v28-score">↗</div></div></div></div><div class="v28-panel"><h3>🔎 Da revisionare</h3><p>Non revisionati negli ultimi 90 giorni.</p><div class="v28-panel-list" id="v28Review"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📦 Archivio</h3><p>Prompt conservati ma nascosti dalle liste principali.</p><div class="v28-panel-list" id="v28Archive"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div></div>';
+    const sec=document.createElement('div');sec.className='v28-dash-section';sec.innerHTML='<div class="v28-dash-section-title"><h2>🧠 Pulizia intelligente v28.2</h2><div><button data-v28-view="best">Apri migliori</button> <button data-v28-clean>Avvia pulizia</button></div></div><div class="v28-dash-panels"><div class="v28-panel"><h3>🏆 Migliori</h3><p>Qualità + utilità + segnali d’uso.</p><div class="v28-panel-list" id="v28Best"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📉 Meno usati</h3><p>Poco consultati, non preferiti e non pinnati.</p><div class="v28-panel-list" id="v28Least"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧹 Probabilmente inutili</h3><p>Prompt deboli, vecchi o mai usati.</p><div class="v28-panel-list" id="v28Useless"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧬 Duplicati</h3><p>Calcolo pesante: ora si avvia solo quando apri la sezione.</p><div class="v28-panel-list" id="v28Dup"><div class="v28-row" data-open-dups><div><b>Calcola duplicati</b><span>Apri la sezione per analizzare i prompt simili</span></div><div class="v28-score">↗</div></div></div></div><div class="v28-panel"><h3>🔎 Da revisionare</h3><p>Non revisionati negli ultimi 90 giorni.</p><div class="v28-panel-list" id="v28Review"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📦 Archivio</h3><p>Prompt conservati ma nascosti dalle liste principali.</p><div class="v28-panel-list" id="v28Archive"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div></div>';
     dash.appendChild(sec);
     sec.querySelector('[data-v28-clean]').onclick=v28StartCleanup;
     sec.querySelector('[data-v28-view="best"]').onclick=()=>{S.view='best';S.pid=null;render()};
@@ -2278,7 +2301,8 @@ renderDD=function(){__renderDDV27();v28RenderDDPatch()};
       v28DashFill('v28Review',r.review,'Tutto revisionato','risk');
       v28DashFill('v28Archive',r.archived,'Archivio vuoto','utility');
     };
-    (window.requestIdleCallback||window.setTimeout)(fill,40);
+    if(window.requestIdleCallback)window.requestIdleCallback(fill,{timeout:300});
+    else window.setTimeout(fill,40);
   };
 
   v28EnhanceSidebar2=function(){
@@ -2307,6 +2331,171 @@ renderDD=function(){__renderDDV27();v28RenderDDPatch()};
     document.title='Prompt Studio v28.1';
     const b=document.querySelector('.logo-badge');if(b)b.textContent='v28.1';
   };
+})();
+
+/* ── PROMPT STUDIO V28.2: STABILITY, USABILITY, FAST SEARCH ──
+   Fixes: queued saves, safer URL imports, faster repeated list scans,
+   clearer status in the header, and more resilient navigation state. */
+(function(){
+  const V282_VERSION='v28.2';
+  const V282_SPECIAL=['dashboard','all','favorites','recents','tags','trash','search',...V28_SPECIAL_VIEWS];
+
+  function v282Stamp(data){
+    let count=0,maxTs=0,flags=0;
+    try{
+      (data||[]).forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>{
+        count++;
+        maxTs=Math.max(maxTs,p.updatedAt||0,p.createdAt||0,p.deletedAt||0,p.archivedAt||0,p.reviewedAt||0);
+        flags+=(p.copyCount||0)+(p.favorite?3:0)+(p.pinned?5:0)+(p.archived?7:0)+(p.ignoreSuggestion?11:0);
+      })));
+    }catch(e){}
+    return count+'|'+maxTs+'|'+flags+'|'+(data||[]).length;
+  }
+
+  const __v282AllP=allP;
+  let v282AllPCache=null;
+  allP=function(data){
+    if(data===S.allData){
+      const stamp=v282Stamp(data);
+      if(v282AllPCache&&v282AllPCache.stamp===stamp)return v282AllPCache.items;
+      const items=__v282AllP(data);
+      v282AllPCache={stamp,items};
+      return items;
+    }
+    return __v282AllP(data);
+  };
+
+  const __v282SaveRaw=save;
+  let v282QueuedSave=null;
+  save=async function(nd,opts={}){
+    if(saving){
+      v282QueuedSave={
+        nd:structuredClone(nd),
+        opts:{...opts,hist:false,ids:opts.ids||{}}
+      };
+      Toast.show('Modifiche accodate...','',1200);
+      return true;
+    }
+    const ok=await __v282SaveRaw(nd,opts);
+    v282AllPCache=null;
+    if(v282QueuedSave&&!saving){
+      const next=v282QueuedSave;
+      v282QueuedSave=null;
+      return save(next.nd,next.opts);
+    }
+    return ok;
+  };
+
+  function v282EnsureSelection(){
+    if(V282_SPECIAL.includes(S.view))return;
+    const c=FC(S.allData,S.catId)||S.allData.find(x=>!v28IsTrashCat(x))||S.allData[0];
+    if(!c){S.view='dashboard';S.catId=null;S.subId=null;S.pid=null;return}
+    S.catId=c.id;
+    const s=(c.subcategories||[]).find(x=>x.id===S.subId)||c.subcategories?.[0];
+    S.subId=s?.id||null;
+    if(!s){S.pid=null;return}
+    const p=(s.prompts||[]).find(x=>x.id===S.pid)||s.prompts?.find(x=>!x.archived)||s.prompts?.[0];
+    S.pid=p?.id||null;
+  }
+
+  function v282Plain(html){
+    const t=document.createElement('div');
+    t.innerHTML=html||'';
+    return (t.textContent||'').toLowerCase();
+  }
+
+  function v282SearchItems(q,filter){
+    const out=[];
+    allP(S.allData).forEach(p=>{
+      const title=String(p.title||'').toLowerCase();
+      const tags=(p.tags||[]).map(t=>String(t).toLowerCase());
+      const desc=v282Plain(p.description||'');
+      let score=0;
+      if(title===q)score+=100;
+      if(title.startsWith(q))score+=70;
+      if(title.includes(q))score+=55;
+      if(tags.some(t=>t===q))score+=60;
+      if(tags.some(t=>t.includes(q)))score+=40;
+      if(desc.includes(q))score+=20;
+      if(p.favorite)score+=5;
+      if((p.copyCount||0)>0)score+=Math.min(10,p.copyCount);
+      const pass=filter==='all'||(filter==='title'&&title.includes(q))||(filter==='tag'&&tags.some(t=>t.includes(q)))||(filter==='content'&&desc.includes(q))||(filter==='fav'&&p.favorite&&(title.includes(q)||desc.includes(q)||tags.some(t=>t.includes(q))));
+      if(score>0&&pass)out.push({...p,_score:score});
+    });
+    return out.sort((a,b)=>b._score-a._score||String(a.title||'').localeCompare(String(b.title||''))).slice(0,160);
+  }
+
+  renderSearch=function(){
+    const q=sI.value.toLowerCase().trim(),col=$('cL');
+    col.innerHTML='<div class="ch"><div class="chl"><h3>🔍 Ricerca</h3><span class="cnt" id="searchCnt">0</span></div></div><div class="search-filters"><button data-f="all">Tutto</button><button data-f="title">Titolo</button><button data-f="tag">Tag</button><button data-f="content">Contenuto</button><button data-f="fav">Preferiti</button></div><div class="cl" role="listbox"></div>';
+    col.querySelectorAll('[data-f]').forEach(b=>{b.classList.toggle('ac',(S.searchFilter||'all')===b.dataset.f);b.onclick=()=>{S.searchFilter=b.dataset.f;renderSearch()}});
+    if(!q){col.querySelector('.cl').innerHTML='<div class="em">Digita per cercare...</div>';$('cD').innerHTML='<div class="em">Suggerimento: usa Ctrl/Cmd+K per cercare ovunque e lanciare comandi.</div>';return}
+    const items=v282SearchItems(q,S.searchFilter||'all'),list=col.querySelector('.cl'),cnt=$('searchCnt');
+    if(cnt)cnt.textContent=items.length+(items.length===160?'+':'');
+    if(!items.length){list.innerHTML='<div class="em"><i class="fa-solid fa-magnifying-glass"></i><span>Nessun risultato per "'+esc(q)+'"</span></div>';$('cD').innerHTML='<div class="em">Prova un filtro diverso o una parola più corta.</div>';return}
+    if(!items.find(x=>x.id===S.pid)){S.pid=items[0].id;S.catId=items[0].ci;S.subId=items[0].si}
+    const frag=document.createDocumentFragment();
+    items.forEach(p=>mkItem(frag,p));
+    list.appendChild(frag);
+    renderDet();
+  };
+
+  function v282StatusText(){
+    const total=allP(S.allData).length;
+    const f=FP(S.allData,S.pid);
+    if(f)return esc(f.cat.name)+' / '+esc(f.sub.name)+' · <b>'+total+'</b>';
+    return '<b>'+total+'</b> prompt';
+  }
+
+  function v282EnhanceHeader(){
+    document.title='Prompt Studio '+V282_VERSION;
+    const badge=document.querySelector('.logo-badge');if(badge)badge.textContent=V282_VERSION;
+    if(!document.querySelector('.v282-status')){
+      const st=document.createElement('div');
+      st.className='v282-status';
+      st.title='Stato libreria';
+      const sep=document.querySelector('.hr .hdiv');
+      (sep?.parentNode||document.querySelector('.hr'))?.insertBefore(st,sep||null);
+    }
+    const st=document.querySelector('.v282-status');
+    if(st)st.innerHTML=v282StatusText();
+  }
+
+  const __v282Render=render;
+  render=function(){
+    v282EnsureSelection();
+    __v282Render();
+    v282EnhanceHeader();
+  };
+
+  const __v282CheckHash=checkHash;
+  checkHash=function(){
+    const h=location.hash;
+    if(!h.startsWith('#import='))return __v282CheckHash();
+    try{
+      const j=JSON.parse(decodeURIComponent(escape(atob(h.substring(8)))));
+      if(j.title)Modal.confirm('Importa Prompt','Importare "'+j.title+'"?').then(async ok=>{
+        if(!ok)return;
+        const d=structuredClone(S.allData);
+        if(!d.length)d.push({id:uid(),name:'Importati',icon:'',subcategories:[]});
+        const target=d.find(c=>!v28IsTrashCat(c))||d[0];
+        if(!target.subcategories)target.subcategories=[];
+        if(!target.subcategories.length)target.subcategories.push({id:uid(),name:'Inbox',icon:'',prompts:[]});
+        const sub=target.subcategories[0];
+        const np={id:uid(),title:String(j.title||'Nuovo prompt'),description:san(j.description||''),favorite:false,tags:Array.isArray(j.tags)?j.tags:[],versions:[],copyCount:0,pinned:false,createdAt:Date.now(),updatedAt:Date.now(),related:[],noAutoVars:!!j.noAutoVars};
+        sub.prompts.push(np);
+        await save(d,{ids:{view:'columns',catId:target.id,subId:sub.id,pid:np.id},hist:false});
+        Toast.show('Prompt importato!','ok');
+        history.replaceState(null,'',location.pathname);
+      });
+    }catch(e){history.replaceState(null,'',location.pathname)}
+  };
+
+  window.addEventListener('beforeunload',e=>{
+    if(!S.dirty)return;
+    e.preventDefault();
+    e.returnValue='';
+  });
 })();
 
 async function init(){
