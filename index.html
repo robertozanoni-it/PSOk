@@ -354,6 +354,329 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 
 @media(max-width:1100px){:root{--w-cat:230px;--w-sub:230px}}
 @media(max-width:900px){.hd{height:auto;min-height:62px;flex-wrap:wrap;padding:10px}.hd>div[style*="max-width"]{order:3;width:100%;max-width:none!important}.hr{margin-left:0;flex-wrap:wrap}.cat-select{min-width:140px}.mn.v3,.mn.v2{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}.mn.v1{grid-template-columns:1fr}.co{min-width:100%;scroll-snap-align:start;border-right:none;border-bottom:1px solid var(--bd)}.sh{display:none}.dash-hero{flex-direction:column}.dash-actions{justify-content:flex-start}.item-actions{opacity:1}.more-menu{right:auto;left:0}}
+
+
+/* ── DASHBOARD COLORATA E FONT GRANDI ─────────────────────── */
+.dashboard.dash-fun{
+  --dash-glass:rgba(255,255,255,.105);
+  --dash-glass-strong:rgba(255,255,255,.16);
+  --dash-text-soft:rgba(244,246,255,.82);
+  padding:34px;
+  overflow:auto;
+  height:100%;
+  font-size:22px;
+  background:
+    radial-gradient(circle at 7% 8%,rgba(244,114,182,.30),transparent 360px),
+    radial-gradient(circle at 88% 4%,rgba(34,211,238,.24),transparent 380px),
+    radial-gradient(circle at 50% 112%,rgba(251,191,36,.22),transparent 420px),
+    linear-gradient(135deg,#090a14 0%,#111638 45%,#160d2b 100%);
+}
+[data-theme="light"] .dashboard.dash-fun{
+  --dash-glass:rgba(255,255,255,.72);
+  --dash-glass-strong:rgba(255,255,255,.86);
+  --dash-text-soft:rgba(20,22,34,.76);
+  background:
+    radial-gradient(circle at 7% 8%,rgba(244,114,182,.25),transparent 350px),
+    radial-gradient(circle at 88% 4%,rgba(34,211,238,.22),transparent 380px),
+    radial-gradient(circle at 50% 112%,rgba(251,191,36,.24),transparent 420px),
+    linear-gradient(135deg,#fff7ed 0%,#eef6ff 48%,#faf5ff 100%);
+}
+.dashboard.dash-fun .dash-hero{
+  position:relative;
+  overflow:hidden;
+  align-items:center;
+  padding:34px 36px;
+  margin-bottom:24px;
+  border-radius:32px;
+  border:1px solid rgba(255,255,255,.18);
+  background:
+    linear-gradient(135deg,rgba(124,111,255,.42),rgba(244,114,182,.26) 48%,rgba(34,211,238,.22)),
+    var(--dash-glass);
+  box-shadow:0 28px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+  backdrop-filter:blur(14px);
+}
+.dashboard.dash-fun .dash-hero::after{
+  content:'✨';
+  position:absolute;
+  right:28px;
+  bottom:-20px;
+  font-size:120px;
+  line-height:1;
+  opacity:.14;
+  transform:rotate(-10deg);
+  pointer-events:none;
+}
+.dashboard.dash-fun .dash-hero-copy{position:relative;z-index:1;max-width:780px}
+.dashboard.dash-fun .dash-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 13px;
+  margin-bottom:13px;
+  border-radius:999px;
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.22);
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  font-family:var(--font-mono);
+}
+[data-theme="light"] .dashboard.dash-fun .dash-kicker{color:#312e81;background:rgba(255,255,255,.72)}
+.dashboard.dash-fun .dash-hero h1{
+  font-size:clamp(42px,5vw,64px);
+  line-height:.98;
+  margin:0 0 14px;
+  letter-spacing:-.055em;
+  color:#fff;
+  text-shadow:0 8px 34px rgba(0,0,0,.22);
+}
+[data-theme="light"] .dashboard.dash-fun .dash-hero h1{color:#111827;text-shadow:none}
+.dashboard.dash-fun .dash-hero p{
+  max-width:820px;
+  font-size:21px;
+  line-height:1.55;
+  color:var(--dash-text-soft);
+}
+.dashboard.dash-fun .dash-hero-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+.dashboard.dash-fun .dash-hero-chips span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 13px;
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.20);
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+}
+[data-theme="light"] .dashboard.dash-fun .dash-hero-chips span{color:#1f2937;background:rgba(255,255,255,.72)}
+.dashboard.dash-fun .dash-actions{
+  position:relative;
+  z-index:1;
+  gap:11px;
+}
+.dashboard.dash-fun .dash-btn{
+  border-radius:18px;
+  padding:15px 18px;
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:-.01em;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 12px 30px rgba(124,111,255,.28);
+  transition:transform var(--tr),box-shadow var(--tr),opacity var(--tr),background var(--tr);
+}
+.dashboard.dash-fun .dash-btn:hover{transform:translateY(-3px);box-shadow:0 18px 36px rgba(124,111,255,.34)}
+.dashboard.dash-fun .dash-btn.secondary{
+  background:rgba(255,255,255,.13);
+  color:#fff;
+  border-color:rgba(255,255,255,.22);
+  box-shadow:none;
+}
+[data-theme="light"] .dashboard.dash-fun .dash-btn.secondary{color:#111827;background:rgba(255,255,255,.76)}
+.dashboard.dash-fun .dash-grid{
+  gap:18px;
+  margin-bottom:24px;
+}
+.dashboard.dash-fun .dash-card{
+  min-height:132px;
+  border-radius:26px;
+  padding:24px;
+  border:1px solid rgba(255,255,255,.18);
+  background:var(--dash-glass);
+  box-shadow:0 18px 46px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.12);
+  backdrop-filter:blur(12px);
+}
+.dashboard.dash-fun .dash-card:nth-child(1){background:linear-gradient(135deg,rgba(124,111,255,.30),rgba(255,255,255,.08))}
+.dashboard.dash-fun .dash-card:nth-child(2){background:linear-gradient(135deg,rgba(251,191,36,.33),rgba(244,114,182,.16))}
+.dashboard.dash-fun .dash-card:nth-child(3){background:linear-gradient(135deg,rgba(34,211,238,.29),rgba(96,165,250,.15))}
+.dashboard.dash-fun .dash-card:nth-child(4){background:linear-gradient(135deg,rgba(251,146,60,.34),rgba(52,211,153,.14))}
+.dashboard.dash-fun .dash-num{
+  font-size:52px;
+  line-height:.95;
+  color:#fff;
+  text-shadow:0 8px 26px rgba(0,0,0,.24);
+}
+[data-theme="light"] .dashboard.dash-fun .dash-num{color:#111827;text-shadow:none}
+.dashboard.dash-fun .dash-lab{
+  margin-top:10px;
+  font-size:18px;
+  color:var(--dash-text-soft);
+  font-weight:800;
+}
+.dashboard.dash-fun .dash-panels{
+  grid-template-columns:repeat(3,minmax(280px,1fr))!important;
+  gap:22px;
+  align-items:stretch;
+}
+.dashboard.dash-fun .dash-panel{
+  position:relative;
+  overflow:hidden;
+  min-height:460px;
+  border-radius:30px;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 24px 58px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.13);
+  backdrop-filter:blur(12px);
+}
+.dashboard.dash-fun .dash-panel::before{
+  content:'';
+  position:absolute;
+  inset:-120px -80px auto auto;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  background:rgba(255,255,255,.18);
+  pointer-events:none;
+}
+.dashboard.dash-fun .dash-panel-fav{
+  background:
+    radial-gradient(circle at 90% 0%,rgba(255,255,255,.22),transparent 170px),
+    linear-gradient(160deg,rgba(251,191,36,.36),rgba(244,114,182,.22) 52%,rgba(124,111,255,.16)),
+    var(--sf);
+}
+.dashboard.dash-fun .dash-panel-recent{
+  background:
+    radial-gradient(circle at 90% 0%,rgba(255,255,255,.21),transparent 170px),
+    linear-gradient(160deg,rgba(34,211,238,.34),rgba(96,165,250,.22) 54%,rgba(124,111,255,.15)),
+    var(--sf);
+}
+.dashboard.dash-fun .dash-panel-top{
+  background:
+    radial-gradient(circle at 90% 0%,rgba(255,255,255,.22),transparent 170px),
+    linear-gradient(160deg,rgba(251,146,60,.36),rgba(251,191,36,.20) 50%,rgba(52,211,153,.17)),
+    var(--sf);
+}
+.dashboard.dash-fun .dash-panel-title{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:24px 24px 20px;
+  border-bottom:1px solid rgba(255,255,255,.15);
+}
+.dashboard.dash-fun .dash-panel-icon{
+  width:56px;
+  height:56px;
+  display:grid;
+  place-items:center;
+  border-radius:19px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+  font-size:28px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
+}
+.dashboard.dash-fun .dash-panel .dash-panel-title h3{
+  padding:0!important;
+  border:0!important;
+  margin:0;
+  font-size:28px;
+  line-height:1.05;
+  letter-spacing:-.035em;
+  text-transform:none;
+  color:#fff;
+}
+[data-theme="light"] .dashboard.dash-fun .dash-panel .dash-panel-title h3{color:#111827}
+.dashboard.dash-fun .dash-panel-title p{
+  margin:6px 0 0;
+  font-size:16px;
+  line-height:1.35;
+  color:var(--dash-text-soft);
+}
+.dashboard.dash-fun .dash-list{
+  position:relative;
+  z-index:1;
+  padding:18px;
+}
+.dashboard.dash-fun .dash-item{
+  position:relative;
+  padding:17px 18px;
+  margin-bottom:13px;
+  border-radius:21px;
+  background:rgba(255,255,255,.105);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 10px 24px rgba(0,0,0,.12);
+  backdrop-filter:blur(8px);
+  transition:transform var(--tr),background var(--tr),border-color var(--tr),box-shadow var(--tr);
+}
+.dashboard.dash-fun .dash-item:hover{
+  background:rgba(255,255,255,.17);
+  border-color:rgba(255,255,255,.28);
+  transform:translateY(-3px) scale(1.01);
+  box-shadow:0 18px 34px rgba(0,0,0,.20);
+}
+.dashboard.dash-fun .dash-item-left{
+  display:flex;
+  align-items:flex-start;
+  gap:13px;
+  min-width:0;
+}
+.dashboard.dash-fun .dash-item-emoji{
+  flex:0 0 auto;
+  width:38px;
+  height:38px;
+  display:grid!important;
+  place-items:center;
+  border-radius:14px;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.18);
+  font-size:20px!important;
+  margin:0!important;
+}
+.dashboard.dash-fun .dash-item b{
+  font-size:20px!important;
+  line-height:1.25;
+  color:#fff;
+  letter-spacing:-.02em;
+}
+[data-theme="light"] .dashboard.dash-fun .dash-item b{color:#111827}
+.dashboard.dash-fun .dash-item span{
+  color:var(--dash-text-soft);
+  font-size:15px;
+  line-height:1.35;
+}
+.dashboard.dash-fun .dash-badge{
+  align-self:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.18);
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+}
+[data-theme="light"] .dashboard.dash-fun .dash-badge{color:#111827;background:rgba(255,255,255,.72)}
+.dashboard.dash-fun .em{
+  min-height:190px;
+  padding:34px 20px!important;
+  color:var(--dash-text-soft);
+  font-size:18px;
+  line-height:1.55;
+}
+.dashboard.dash-fun .em i{font-size:42px;opacity:.35}
+@media(max-width:1120px){
+  .dashboard.dash-fun .dash-panels{grid-template-columns:1fr!important}
+  .dashboard.dash-fun .dash-panel{min-height:auto}
+}
+@media(max-width:760px){
+  .dashboard.dash-fun{padding:18px;font-size:19px}
+  .dashboard.dash-fun .dash-hero{padding:25px;align-items:flex-start}
+  .dashboard.dash-fun .dash-hero h1{font-size:40px}
+  .dashboard.dash-fun .dash-hero p{font-size:18px}
+  .dashboard.dash-fun .dash-actions{justify-content:flex-start}
+  .dashboard.dash-fun .dash-btn{width:100%;justify-content:center}
+  .dashboard.dash-fun .dash-num{font-size:44px}
+  .dashboard.dash-fun .dash-panel .dash-panel-title h3{font-size:24px}
+  .dashboard.dash-fun .dash-item b{font-size:18px!important}
+}
+
 </style>
 </head>
 <body>
@@ -1773,29 +2096,35 @@ function renderDashboard(){
   const copies=all.reduce((sum,p)=>sum+(p.copyCount||0),0);
 
   el.innerHTML=
-    '<div class="dashboard">'+
+    '<div class="dashboard dash-fun">'+
       '<div class="dash-hero">'+
-        '<div>'+ 
-          '<h1>Prompt Studio</h1>'+ 
-          '<p>Dashboard semplificata: accesso immediato ai prompt che usi davvero, con Preferiti, Recenti e Più utilizzati in primo piano.</p>'+ 
+        '<div class="dash-hero-copy">'+
+          '<div class="dash-kicker">✨ Prompt pronti al volo</div>'+ 
+          '<h1>Dashboard più chiara, grande e colorata</h1>'+ 
+          '<p>Tre blocchi grandi e leggibili per tornare subito ai prompt che contano: Preferiti, Recenti e Più utilizzati.</p>'+ 
+          '<div class="dash-hero-chips">'+
+            '<span>⭐ '+favItems.length+' preferiti</span>'+ 
+            '<span>🕒 '+recentItems.length+' recenti</span>'+ 
+            '<span>🔥 '+copies+' copie totali</span>'+ 
+          '</div>'+ 
         '</div>'+ 
         '<div class="dash-actions">'+
           '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
-          '<button class="dash-btn secondary" data-dash="favorites">Preferiti</button>'+ 
-          '<button class="dash-btn secondary" data-dash="recents">Recenti</button>'+ 
-          '<button class="dash-btn secondary" data-dash="top">Più utilizzati</button>'+ 
+          '<button class="dash-btn secondary" data-dash="favorites">⭐ Preferiti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="recents">🕒 Recenti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="top">🔥 Più utilizzati</button>'+ 
         '</div>'+ 
       '</div>'+ 
       '<div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+
         '<div class="dash-card"><div class="dash-num">'+all.length+'</div><div class="dash-lab">Prompt attivi</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+favItems.length+'</div><div class="dash-lab">Preferiti</div></div>'+ 
-        '<div class="dash-card"><div class="dash-num">'+recentItems.length+'</div><div class="dash-lab">Recenti</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+recentItems.length+'</div><div class="dash-lab">Recenti aperti</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+copies+'</div><div class="dash-lab">Copie totali</div></div>'+ 
       '</div>'+ 
-      '<div class="dash-panels" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">'+
-        '<div class="dash-panel"><h3>⭐ Preferiti</h3><div class="dash-list" id="dashFavorites"></div></div>'+ 
-        '<div class="dash-panel"><h3>🕒 Recenti</h3><div class="dash-list" id="dashRecent"></div></div>'+ 
-        '<div class="dash-panel"><h3>🔥 Più utilizzati</h3><div class="dash-list" id="dashTop"></div></div>'+ 
+      '<div class="dash-panels" style="grid-template-columns:repeat(3,minmax(280px,1fr))">'+
+        '<div class="dash-panel dash-panel-fav"><div class="dash-panel-title"><div class="dash-panel-icon">⭐</div><div><h3>Preferiti</h3><p>I prompt importanti sempre in vista.</p></div></div><div class="dash-list" id="dashFavorites"></div></div>'+ 
+        '<div class="dash-panel dash-panel-recent"><div class="dash-panel-title"><div class="dash-panel-icon">🕒</div><div><h3>Recenti</h3><p>Riparti da dove eri rimasto.</p></div></div><div class="dash-list" id="dashRecent"></div></div>'+ 
+        '<div class="dash-panel dash-panel-top"><div class="dash-panel-title"><div class="dash-panel-icon">🔥</div><div><h3>Più utilizzati</h3><p>I prompt che funzionano di più.</p></div></div><div class="dash-list" id="dashTop"></div></div>'+ 
       '</div>'+ 
     '</div>';
 
@@ -1813,7 +2142,8 @@ function renderDashboard(){
     if(!l) return;
 
     if(!items.length){
-      l.innerHTML='<div class="em" style="height:auto;padding:26px 18px">'+empty+'</div>';
+      const icon=mode==='favorite'?'fa-star':mode==='recent'?'fa-clock':'fa-fire';
+      l.innerHTML='<div class="em" style="height:auto"><i class="fa-solid '+icon+'"></i><span>'+empty+'</span></div>';
       return;
     }
 
@@ -1824,9 +2154,10 @@ function renderDashboard(){
       const badge=mode==='recent'
         ? (p.ts ? fmtD(p.ts).split(',')[0] : '')
         : ((p.copyCount||0) ? (p.copyCount||0)+'×' : '★');
+      const emoji=mode==='favorite'?'⭐':mode==='recent'?'🕒':'🔥';
 
       r.innerHTML=
-        '<div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div>'+ 
+        '<div class="dash-item-left"><span class="dash-item-emoji">'+emoji+'</span><div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div></div>'+ 
         '<span class="dash-badge">'+esc(badge)+'</span>';
 
       r.onclick=()=>openPrompt(p);
@@ -1856,9 +2187,13 @@ function renderDashboard(){
   el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
   el.querySelector('[data-dash="top"]').onclick=()=>{
     const panel=$('dashTop')?.closest('.dash-panel');
-    if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
+    if(panel){
+      panel.scrollIntoView({behavior:'smooth',block:'start'});
+      panel.animate([{transform:'scale(1)'},{transform:'scale(1.015)'},{transform:'scale(1)'}],{duration:520,easing:'ease-out'});
+    }
   };
 }
+
 function renderTrash(){
   const trash=S.allData.find(c=>/cestino|🗑️/i.test(String(c.name||'')));const col=$('cL');col.innerHTML='<div class="ch"><div class="chl"><h3>🗑️ Cestino</h3></div></div><div class="cl"></div>';const list=col.querySelector('.cl');
   const items=[];trash?.subcategories?.forEach(s=>s.prompts?.forEach(p=>items.push({...p,cn:trash.name,sn:s.name,ci:trash.id,si:s.id})));
@@ -2585,6 +2920,20 @@ renderDD=function(){__renderDDV27();v28RenderDDPatch()};
     e.returnValue='';
   });
 })();
+
+
+
+/* ── Dashboard finale: solo Preferiti, Recenti e Più utilizzati ── */
+v27EnhanceDashboard=function(){};
+v28EnhanceDashboard2=function(){
+  const dash=document.querySelector('.dashboard');
+  if(!dash)return;
+  const h1=dash.querySelector('.dash-hero h1');
+  if(h1 && !h1.dataset.customDashTitle){h1.dataset.customDashTitle='1'}
+  document.title='Prompt Studio v28.2';
+  const b=document.querySelector('.logo-badge');
+  if(b)b.textContent='v28.2';
+};
 
 async function init(){
     Loader.show();try{
