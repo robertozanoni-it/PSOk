@@ -809,6 +809,47 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
   border:1px solid rgba(255,255,255,.16)!important;
 }
 
+
+
+/* ── DASHBOARD 4 COLONNE: DA MIGLIORARE ─────────────────── */
+.dashboard.dash-fun .dash-panels{
+  grid-template-columns:repeat(4,minmax(250px,1fr))!important;
+}
+.dashboard.dash-fun .dash-panel-improve{
+  background-color:#ea580c!important;
+}
+.dashboard.dash-fun .dash-actions .dash-btn.secondary[data-dash="improve"]{
+  background-color:#ea580c!important;
+  border-color:#c2410c!important;
+  color:#ffffff!important;
+}
+.dashboard.dash-fun .dash-card:nth-child(5){
+  background-color:#ea580c!important;
+}
+.dashboard.dash-fun .dash-panel-improve .dash-item-emoji,
+.dashboard.dash-fun .dash-panel-improve .dash-badge{
+  background-color:#ea580c!important;
+  color:#ffffff!important;
+  border-color:#c2410c!important;
+}
+.dashboard.dash-fun .dash-panel-improve .dash-badge{
+  min-width:58px;
+  text-align:center;
+}
+.dashboard.dash-fun .dash-item-reason{
+  display:block!important;
+  margin-top:5px!important;
+  color:#64748b!important;
+  font-size:13px!important;
+  font-weight:700!important;
+}
+@media(max-width:1380px){
+  .dashboard.dash-fun .dash-panels{grid-template-columns:repeat(2,minmax(280px,1fr))!important}
+}
+@media(max-width:820px){
+  .dashboard.dash-fun .dash-panels{grid-template-columns:1fr!important}
+}
+
 </style>
 </head>
 <body>
@@ -2225,6 +2266,16 @@ function renderDashboard(){
     })
     .slice(0,10);
 
+  const improveItems=all
+    .map(p=>({...p,q:promptQuality(p)}))
+    .filter(p=>p.q.score<75)
+    .sort((a,b)=>{
+      if(a.q.score!==b.q.score) return a.q.score-b.q.score;
+      if((a.copyCount||0)!==(b.copyCount||0)) return (b.copyCount||0)-(a.copyCount||0);
+      return String(a.title||'').localeCompare(String(b.title||''));
+    });
+
+  const improve=improveItems.slice(0,10);
   const copies=all.reduce((sum,p)=>sum+(p.copyCount||0),0);
 
   el.innerHTML=
@@ -2236,6 +2287,7 @@ function renderDashboard(){
             '<span>⭐ '+favItems.length+' preferiti</span>'+ 
             '<span>🕒 '+recentItems.length+' recenti</span>'+ 
             '<span>🔥 '+copies+' copie totali</span>'+ 
+            '<span>🛠️ '+improveItems.length+' da migliorare</span>'+ 
           '</div>'+ 
         '</div>'+ 
         '<div class="dash-actions">'+
@@ -2243,18 +2295,21 @@ function renderDashboard(){
           '<button class="dash-btn secondary" data-dash="favorites">⭐ Preferiti</button>'+ 
           '<button class="dash-btn secondary" data-dash="recents">🕒 Recenti</button>'+ 
           '<button class="dash-btn secondary" data-dash="top">🔥 Più utilizzati</button>'+ 
+          '<button class="dash-btn secondary" data-dash="improve">🛠️ Da migliorare</button>'+ 
         '</div>'+ 
       '</div>'+ 
-      '<div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+
+      '<div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">'+
         '<div class="dash-card"><div class="dash-num">'+all.length+'</div><div class="dash-lab">Prompt attivi</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+favItems.length+'</div><div class="dash-lab">Preferiti</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+recentItems.length+'</div><div class="dash-lab">Recenti aperti</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+copies+'</div><div class="dash-lab">Copie totali</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+improveItems.length+'</div><div class="dash-lab">Da migliorare</div></div>'+ 
       '</div>'+ 
-      '<div class="dash-panels" style="grid-template-columns:repeat(3,minmax(280px,1fr))">'+
+      '<div class="dash-panels">'+
         '<div class="dash-panel dash-panel-fav"><div class="dash-panel-title"><div class="dash-panel-icon">⭐</div><div><h3>Preferiti</h3><p>I prompt importanti sempre in vista.</p></div></div><div class="dash-list" id="dashFavorites"></div></div>'+ 
         '<div class="dash-panel dash-panel-recent"><div class="dash-panel-title"><div class="dash-panel-icon">🕒</div><div><h3>Recenti</h3><p>Riparti da dove eri rimasto.</p></div></div><div class="dash-list" id="dashRecent"></div></div>'+ 
         '<div class="dash-panel dash-panel-top"><div class="dash-panel-title"><div class="dash-panel-icon">🔥</div><div><h3>Più utilizzati</h3><p>I prompt che funzionano di più.</p></div></div><div class="dash-list" id="dashTop"></div></div>'+ 
+        '<div class="dash-panel dash-panel-improve"><div class="dash-panel-title"><div class="dash-panel-icon">🛠️</div><div><h3>Da migliorare</h3><p>Prompt con qualità più bassa o struttura incompleta.</p></div></div><div class="dash-list" id="dashImprove"></div></div>'+ 
       '</div>'+ 
     '</div>';
 
@@ -2272,7 +2327,7 @@ function renderDashboard(){
     if(!l) return;
 
     if(!items.length){
-      const icon=mode==='favorite'?'fa-star':mode==='recent'?'fa-clock':'fa-fire';
+      const icon=mode==='favorite'?'fa-star':mode==='recent'?'fa-clock':mode==='improve'?'fa-screwdriver-wrench':'fa-fire';
       l.innerHTML='<div class="em" style="height:auto"><i class="fa-solid '+icon+'"></i><span>'+empty+'</span></div>';
       return;
     }
@@ -2281,13 +2336,19 @@ function renderDashboard(){
       const r=document.createElement('div');
       r.className='dash-item';
       r.dataset.pid=p.id;
-      const badge=mode==='recent'
-        ? (p.ts ? fmtD(p.ts).split(',')[0] : '')
-        : ((p.copyCount||0) ? (p.copyCount||0)+'×' : '★');
-      const emoji=mode==='favorite'?'⭐':mode==='recent'?'🕒':'🔥';
+
+      let badge='★';
+      if(mode==='recent') badge=p.ts ? fmtD(p.ts).split(',')[0] : '';
+      else if(mode==='improve') badge=(p.q?.score ?? promptQuality(p).score)+'/100';
+      else if((p.copyCount||0)) badge=(p.copyCount||0)+'×';
+
+      const emoji=mode==='favorite'?'⭐':mode==='recent'?'🕒':mode==='improve'?'🛠️':'🔥';
+      const reason=mode==='improve' && p.q?.missing?.length
+        ? '<span class="dash-item-reason">Manca: '+esc(p.q.missing.slice(0,3).join(', '))+'</span>'
+        : '';
 
       r.innerHTML=
-        '<div class="dash-item-left"><span class="dash-item-emoji">'+emoji+'</span><div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div></div>'+ 
+        '<div class="dash-item-left"><span class="dash-item-emoji">'+emoji+'</span><div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span>'+reason+'</div></div>'+ 
         '<span class="dash-badge">'+esc(badge)+'</span>';
 
       r.onclick=()=>openPrompt(p);
@@ -2298,6 +2359,7 @@ function renderDashboard(){
   fill('dashFavorites',favs,'Nessun preferito. Apri un prompt e premi ⭐ per fissarlo qui.','favorite');
   fill('dashRecent',recent,'Nessun recente. I prompt che apri appariranno qui.','recent');
   fill('dashTop',top,'Ancora nessun prompt utilizzato. Quando copi un prompt apparirà qui.','top');
+  fill('dashImprove',improve,'Ottimo: non ci sono prompt sotto la soglia qualità 75/100.','improve');
 
   el.querySelector('[data-dash="new"]').onclick=()=>{
     const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];
@@ -2315,13 +2377,17 @@ function renderDashboard(){
 
   el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
   el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
-  el.querySelector('[data-dash="top"]').onclick=()=>{
-    const panel=$('dashTop')?.closest('.dash-panel');
+
+  const pulsePanel=id=>{
+    const panel=$(id)?.closest('.dash-panel');
     if(panel){
       panel.scrollIntoView({behavior:'smooth',block:'start'});
       panel.animate([{transform:'scale(1)'},{transform:'scale(1.015)'},{transform:'scale(1)'}],{duration:520,easing:'ease-out'});
     }
   };
+
+  el.querySelector('[data-dash="top"]').onclick=()=>pulsePanel('dashTop');
+  el.querySelector('[data-dash="improve"]').onclick=()=>pulsePanel('dashImprove');
 }
 
 function renderTrash(){
