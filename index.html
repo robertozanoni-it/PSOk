@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28.2</title>
+<title>Prompt Studio v28.2 - Dashboard Preferiti Recenti Più Utilizzati</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -1760,27 +1760,42 @@ function renderDashboard(){
 
   const recent=recentItems.slice(0,10);
 
+  const usedItems=all.filter(p=>(p.copyCount||0)>0);
+
+  const top=[...usedItems]
+    .sort((a,b)=>{
+      if((b.copyCount||0)!==(a.copyCount||0)) return (b.copyCount||0)-(a.copyCount||0);
+      if((b.updatedAt||0)!==(a.updatedAt||0)) return (b.updatedAt||0)-(a.updatedAt||0);
+      return String(a.title||'').localeCompare(String(b.title||''));
+    })
+    .slice(0,10);
+
+  const copies=all.reduce((sum,p)=>sum+(p.copyCount||0),0);
+
   el.innerHTML=
     '<div class="dashboard">'+
       '<div class="dash-hero">'+
         '<div>'+ 
           '<h1>Prompt Studio</h1>'+ 
-          '<p>Dashboard semplificata: accesso immediato ai prompt che usi davvero, con Preferiti e Recenti in primo piano.</p>'+ 
+          '<p>Dashboard semplificata: accesso immediato ai prompt che usi davvero, con Preferiti, Recenti e Più utilizzati in primo piano.</p>'+ 
         '</div>'+ 
         '<div class="dash-actions">'+
           '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
           '<button class="dash-btn secondary" data-dash="favorites">Preferiti</button>'+ 
           '<button class="dash-btn secondary" data-dash="recents">Recenti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="top">Più utilizzati</button>'+ 
         '</div>'+ 
       '</div>'+ 
       '<div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+
         '<div class="dash-card"><div class="dash-num">'+all.length+'</div><div class="dash-lab">Prompt attivi</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+favItems.length+'</div><div class="dash-lab">Preferiti</div></div>'+ 
         '<div class="dash-card"><div class="dash-num">'+recentItems.length+'</div><div class="dash-lab">Recenti</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+copies+'</div><div class="dash-lab">Copie totali</div></div>'+ 
       '</div>'+ 
       '<div class="dash-panels" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">'+
         '<div class="dash-panel"><h3>⭐ Preferiti</h3><div class="dash-list" id="dashFavorites"></div></div>'+ 
         '<div class="dash-panel"><h3>🕒 Recenti</h3><div class="dash-list" id="dashRecent"></div></div>'+ 
+        '<div class="dash-panel"><h3>🔥 Più utilizzati</h3><div class="dash-list" id="dashTop"></div></div>'+ 
       '</div>'+ 
     '</div>';
 
@@ -1821,6 +1836,7 @@ function renderDashboard(){
 
   fill('dashFavorites',favs,'Nessun preferito. Apri un prompt e premi ⭐ per fissarlo qui.','favorite');
   fill('dashRecent',recent,'Nessun recente. I prompt che apri appariranno qui.','recent');
+  fill('dashTop',top,'Ancora nessun prompt utilizzato. Quando copi un prompt apparirà qui.','top');
 
   el.querySelector('[data-dash="new"]').onclick=()=>{
     const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];
@@ -1838,6 +1854,10 @@ function renderDashboard(){
 
   el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
   el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
+  el.querySelector('[data-dash="top"]').onclick=()=>{
+    const panel=$('dashTop')?.closest('.dash-panel');
+    if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
+  };
 }
 function renderTrash(){
   const trash=S.allData.find(c=>/cestino|🗑️/i.test(String(c.name||'')));const col=$('cL');col.innerHTML='<div class="ch"><div class="chl"><h3>🗑️ Cestino</h3></div></div><div class="cl"></div>';const list=col.querySelector('.cl');
@@ -2189,7 +2209,7 @@ function v28EnhanceDashboard2(){
   const h1=dash.querySelector('.dash-hero h1');
   if(h1)h1.textContent='Prompt Studio v28.2';
   const p=dash.querySelector('.dash-hero p');
-  if(p)p.textContent='Dashboard semplificata con Preferiti e Recenti in primo piano.';
+  if(p)p.textContent='Dashboard semplificata con Preferiti, Recenti e Più utilizzati in primo piano.';
 }
 function v28StartCleanup(){
   const candidates=[...v28Useless(),...v28Least().filter(p=>p.m.utility<35),...v28Review().slice(0,20)];
@@ -2369,7 +2389,7 @@ renderDD=function(){__renderDDV27();v28RenderDDPatch()};
   v28EnhanceDashboard2=function(){
     const dash=document.querySelector('.dashboard');if(!dash)return;
     const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28.2';
-    const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Dashboard semplificata: Preferiti e Recenti in primo piano, senza pannelli di pulizia o analytics.';
+    const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Dashboard semplificata: Preferiti, Recenti e Più utilizzati in primo piano, senza pannelli di pulizia o analytics.';
   };
 
 
