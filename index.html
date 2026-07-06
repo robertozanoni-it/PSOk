@@ -1734,18 +1734,110 @@ async function createPromptWizard(cat,sub){
   if(!s2.prompts)s2.prompts=[];s2.prompts.push(np);S.editNew=true;await save(d,{ids:{pid:np.id}});Toast.show('Prompt creato con template!','ok')
 }
 function renderDashboard(){
-  const el=$('cDash'),all=allP(S.allData),tags=allTags(S.allData);let subs=0;S.allData.forEach(c=>subs+=(c.subcategories||[]).length);
-  const fav=all.filter(p=>p.favorite).length,copies=all.reduce((a,p)=>a+(p.copyCount||0),0),unused=all.filter(p=>!p.copyCount).length;
-  const recent=S.recents.map(r=>{const f=FP(S.allData,r.pid);return f?{...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts}:null}).filter(Boolean).slice(0,6);
-  const top=[...all].sort((a,b)=>(b.copyCount||0)-(a.copyCount||0)).slice(0,6);
-  const weak=[...all].map(p=>({...p,q:promptQuality(p)})).sort((a,b)=>a.q.score-b.q.score).slice(0,6);
-  el.innerHTML='<div class="dashboard"><div class="dash-hero"><div><h1>Prompt Studio v27</h1><p>Centro operativo per creare, trovare, migliorare e copiare prompt. Usa la dashboard per partire più velocemente oppure Ctrl/Cmd+K per aprire i comandi rapidi.</p></div><div class="dash-actions"><button class="dash-btn" data-dash="new">+ Nuovo prompt</button><button class="dash-btn secondary" data-dash="backup">Backup</button><button class="dash-btn secondary" data-dash="import">Importa</button></div></div><div class="dash-grid"><div class="dash-card"><div class="dash-num">'+all.length+'</div><div class="dash-lab">Prompt</div></div><div class="dash-card"><div class="dash-num">'+S.allData.length+'</div><div class="dash-lab">Categorie</div></div><div class="dash-card"><div class="dash-num">'+subs+'</div><div class="dash-lab">Sottocategorie</div></div><div class="dash-card"><div class="dash-num">'+fav+'</div><div class="dash-lab">Preferiti</div></div><div class="dash-card"><div class="dash-num">'+copies+'</div><div class="dash-lab">Copie totali</div></div><div class="dash-card"><div class="dash-num">'+unused+'</div><div class="dash-lab">Mai copiati</div></div></div><div class="dash-panels"><div class="dash-panel"><h3>Recenti</h3><div class="dash-list" id="dashRecent"></div></div><div class="dash-panel"><h3>Più usati</h3><div class="dash-list" id="dashTop"></div></div><div class="dash-panel"><h3>Da migliorare</h3><div class="dash-list" id="dashWeak"></div></div><div class="dash-panel"><h3>Tag</h3><div class="dash-list" id="dashTags"></div></div></div></div>';
-  const fill=(id,items,empty)=>{const l=$(id);if(!items.length){l.innerHTML='<div class="em" style="height:auto;padding:20px">'+empty+'</div>';return}items.forEach(p=>{const r=document.createElement('div');r.className='dash-item';r.dataset.pid=p.id;r.innerHTML='<div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div><span class="dash-badge">'+(p.q?p.q.score:(p.copyCount||0)+'×')+'</span>';r.onclick=()=>{S.view='columns';S.catId=p.ci;S.subId=p.si;S.pid=p.id;trackR(p.id,p.si,p.ci);render()};l.appendChild(r)})};
-  fill('dashRecent',recent,'Nessun recente');fill('dashTop',top.filter(p=>p.copyCount),'Ancora nessuna copia');fill('dashWeak',weak,'Nessun prompt');
-  const tl=$('dashTags');if(tags.length)tl.innerHTML=tags.slice(0,28).map(t=>'<span class="tg" style="background:'+tc(t)+';margin:3px;cursor:pointer" data-tag="'+esc(t)+'">'+esc(t)+'</span>').join('');else tl.innerHTML='<div class="em" style="height:auto;padding:20px">Nessun tag</div>';
-  tl.querySelectorAll('[data-tag]').forEach(x=>x.onclick=()=>{S.view='tags';S.tag=x.dataset.tag;render()});
-  el.querySelector('[data-dash="new"]').onclick=()=>{const c=S.allData.find(c=>!/cestino|🗑️/i.test(c.name))||S.allData[0];const sub=c?.subcategories?.[0];if(c&&sub){S.view='columns';S.catId=c.id;S.subId=sub.id;render();setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80)}else Toast.show('Crea prima una categoria e una sottocategoria.','er')};
-  el.querySelector('[data-dash="backup"]').onclick=showBackupCenter;el.querySelector('[data-dash="import"]').onclick=()=>$('fB').click();
+  const el=$('cDash');
+
+  const all=allP(S.allData).filter(p=>{
+    return !p.archived && !/cestino|🗑️/i.test(String(p.cn||''));
+  });
+
+  const favItems=all.filter(p=>p.favorite);
+
+  const favs=[...favItems]
+    .sort((a,b)=>{
+      if((b.pinned?1:0)!==(a.pinned?1:0)) return (b.pinned?1:0)-(a.pinned?1:0);
+      if((b.copyCount||0)!==(a.copyCount||0)) return (b.copyCount||0)-(a.copyCount||0);
+      return String(a.title||'').localeCompare(String(b.title||''));
+    })
+    .slice(0,10);
+
+  const recentItems=S.recents
+    .map(r=>{
+      const f=FP(S.allData,r.pid);
+      if(!f || f.prompt.archived || /cestino|🗑️/i.test(String(f.cat.name||''))) return null;
+      return {...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts};
+    })
+    .filter(Boolean);
+
+  const recent=recentItems.slice(0,10);
+
+  el.innerHTML=
+    '<div class="dashboard">'+
+      '<div class="dash-hero">'+
+        '<div>'+ 
+          '<h1>Prompt Studio</h1>'+ 
+          '<p>Dashboard semplificata: accesso immediato ai prompt che usi davvero, con Preferiti e Recenti in primo piano.</p>'+ 
+        '</div>'+ 
+        '<div class="dash-actions">'+
+          '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
+          '<button class="dash-btn secondary" data-dash="favorites">Preferiti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="recents">Recenti</button>'+ 
+        '</div>'+ 
+      '</div>'+ 
+      '<div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+
+        '<div class="dash-card"><div class="dash-num">'+all.length+'</div><div class="dash-lab">Prompt attivi</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+favItems.length+'</div><div class="dash-lab">Preferiti</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+recentItems.length+'</div><div class="dash-lab">Recenti</div></div>'+ 
+      '</div>'+ 
+      '<div class="dash-panels" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">'+
+        '<div class="dash-panel"><h3>⭐ Preferiti</h3><div class="dash-list" id="dashFavorites"></div></div>'+ 
+        '<div class="dash-panel"><h3>🕒 Recenti</h3><div class="dash-list" id="dashRecent"></div></div>'+ 
+      '</div>'+ 
+    '</div>';
+
+  const openPrompt=p=>{
+    S.view='columns';
+    S.catId=p.ci;
+    S.subId=p.si;
+    S.pid=p.id;
+    trackR(p.id,p.si,p.ci);
+    render();
+  };
+
+  const fill=(id,items,empty,mode)=>{
+    const l=$(id);
+    if(!l) return;
+
+    if(!items.length){
+      l.innerHTML='<div class="em" style="height:auto;padding:26px 18px">'+empty+'</div>';
+      return;
+    }
+
+    items.forEach(p=>{
+      const r=document.createElement('div');
+      r.className='dash-item';
+      r.dataset.pid=p.id;
+      const badge=mode==='recent'
+        ? (p.ts ? fmtD(p.ts).split(',')[0] : '')
+        : ((p.copyCount||0) ? (p.copyCount||0)+'×' : '★');
+
+      r.innerHTML=
+        '<div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div>'+ 
+        '<span class="dash-badge">'+esc(badge)+'</span>';
+
+      r.onclick=()=>openPrompt(p);
+      l.appendChild(r);
+    });
+  };
+
+  fill('dashFavorites',favs,'Nessun preferito. Apri un prompt e premi ⭐ per fissarlo qui.','favorite');
+  fill('dashRecent',recent,'Nessun recente. I prompt che apri appariranno qui.','recent');
+
+  el.querySelector('[data-dash="new"]').onclick=()=>{
+    const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];
+    const sub=c?.subcategories?.[0];
+    if(c&&sub){
+      S.view='columns';
+      S.catId=c.id;
+      S.subId=sub.id;
+      render();
+      setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80);
+    }else{
+      Toast.show('Crea prima una categoria e una sottocategoria.','er');
+    }
+  };
+
+  el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
+  el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
 }
 function renderTrash(){
   const trash=S.allData.find(c=>/cestino|🗑️/i.test(String(c.name||'')));const col=$('cL');col.innerHTML='<div class="ch"><div class="chl"><h3>🗑️ Cestino</h3></div></div><div class="cl"></div>';const list=col.querySelector('.cl');
@@ -1959,14 +2051,12 @@ function v27EnhanceDetail(){
   if(!det.querySelector('.v27-actionbar')){const bar=document.createElement('div');bar.className='v27-actionbar';bar.innerHTML='<span class="v27-actionhint">Azioni principali · Ctrl/Cmd+J split · Ctrl/Cmd+Shift+L lettura pulita</span><button data-v27-bar="edit"><i class="fa-solid fa-pencil"></i>Modifica</button><button data-v27-bar="preview"><i class="fa-regular fa-eye"></i>Anteprima</button><button data-v27-bar="split"><i class="fa-solid fa-table-columns"></i>'+(S.v27.split?'Chiudi split':'Split')+'</button><button data-v27-bar="clean"><i class="fa-solid fa-book-open-reader"></i>'+(S.v27.clean?'Esci lettura':'Vista pulita')+'</button><button class="primary" data-v27-bar="copy"><i class="fa-regular fa-copy"></i>Copia finale</button>';det.appendChild(bar);bar.querySelector('[data-v27-bar="edit"]').onclick=()=>document.querySelector('[data-a="edit"]')?.click();bar.querySelector('[data-v27-bar="preview"]').onclick=()=>document.querySelector('[data-a="preview"]')?.click();bar.querySelector('[data-v27-bar="copy"]').onclick=()=>document.querySelector('[data-a="copy"]')?.click();bar.querySelector('[data-v27-bar="split"]').onclick=()=>{S.v27.split=!S.v27.split;render()};bar.querySelector('[data-v27-bar="clean"]').onclick=()=>{S.v27.clean=!S.v27.clean;render()}}
 }
 function v27EnhanceDashboard(){
-  const dash=document.querySelector('.dashboard');if(!dash)return;const hero=dash.querySelector('.dash-hero');if(hero&&!dash.querySelector('.v27-dash-tip')){const tip=document.createElement('div');tip.className='v27-dash-tip';tip.innerHTML='<i class="fa-solid fa-compass" style="color:var(--ac);font-size:20px"></i><div><b>Flusso consigliato:</b> scegli un prompt dai recenti, compila le variabili, apri la split view e copia il risultato finale.</div>';hero.after(tip)}
-  if(hero&&!hero.querySelector('.v27-meter')){const meter=document.createElement('div');meter.className='v27-meter';meter.innerHTML='<div class="v27-meter-top"><span>Spazio locale browser</span><span id="v27StoreTxt">calcolo…</span></div><div class="v27-meter-bar"><div class="v27-meter-fill" id="v27StoreFill"></div></div>';hero.appendChild(meter);if(navigator.storage?.estimate){navigator.storage.estimate().then(e=>{const used=e.usage||0,quota=e.quota||0,pct=quota?Math.min(100,used/quota*100):0,mb=n=>(n/1024/1024).toFixed(n>10485760?0:1)+' MB';const t=$('v27StoreTxt'),f=$('v27StoreFill');if(t)t.textContent=mb(used)+(quota?' / '+mb(quota):'');if(f)f.style.width=pct+'%';}).catch(()=>{$('v27StoreTxt')&&($('v27StoreTxt').textContent='non disponibile')})}}
+  const dash=document.querySelector('.dashboard');
+  if(!dash)return;
+  const h1=dash.querySelector('.dash-hero h1');
+  if(h1)h1.textContent='Prompt Studio';
 }
-function v27ShowOnboarding(){
-  if(!S.settings||S.settings.onboardedV27||document.querySelector('.v27-onboarding')||S.view!=='dashboard')return;
-  const ov=document.createElement('div');ov.className='v27-onboarding';ov.innerHTML='<div class="v27-on-card"><h2>Prompt Studio v27</h2><p>Questa versione mette in evidenza le azioni principali e riduce il disordine visivo.</p><div class="v27-steps"><div class="v27-step"><b>1. Trova</b><span>Usa Dashboard, sidebar o Ctrl/Cmd+K.</span></div><div class="v27-step"><b>2. Compila</b><span>Inserisci le variabili dinamiche rilevate.</span></div><div class="v27-step"><b>3. Controlla</b><span>Usa Split per vedere prompt e anteprima.</span></div><div class="v27-step"><b>4. Copia</b><span>Il pulsante principale è sempre in basso.</span></div><div class="v27-step"><b>5. Proteggi</b><span>Scarica periodicamente un backup JSON.</span></div></div><div class="v27-on-actions"><button class="secondary" data-v27-on="skip">Non mostrare più</button><button class="primary" data-v27-on="start">Inizia ora</button></div></div>';document.body.appendChild(ov);
-  const close=async()=>{S.settings.onboardedV27=true;await DB.saveSt(S.settings);ov.remove()};ov.querySelector('[data-v27-on="skip"]').onclick=close;ov.querySelector('[data-v27-on="start"]').onclick=close;
-}
+function v27ShowOnboarding(){}
 function v27Enhance(){try{S.v27=S.v27||{};v27EnhanceHeader();v27EnhanceSidebar();v27EnhancePromptCards();v27EnhanceDetail();v27EnhanceDashboard();v27ShowOnboarding();}catch(e){console.warn('V27 enhancement skipped',e)}}
 const __renderV26=render;render=function(){__renderV26();v27Enhance()};
 
@@ -2094,19 +2184,12 @@ function v28DashFill(id,items,empty,field='utility'){
   l.innerHTML='';items.slice(0,6).forEach(p=>{const m=p.m||v28Metrics(p);const r=document.createElement('div');r.className='v28-row';r.innerHTML='<div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span></div><div class="v28-score">'+(field==='risk'?m.risk:field==='quality'?m.quality:m.utility)+'</div>';r.onclick=()=>v28Open(p.id);l.appendChild(r)});
 }
 function v28EnhanceDashboard2(){
-  const dash=document.querySelector('.dashboard');if(!dash)return;const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28';
-  const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Centro operativo per creare, trovare, valutare, archiviare e pulire la tua libreria di prompt.';
-  if(dash.querySelector('.v28-dash-section'))return;
-  const best=v28Best(),least=v28Least(),useless=v28Useless(),dups=v28DuplicatePairs(),rev=v28Review(),arch=v28Archived();
-  const sec=document.createElement('div');sec.className='v28-dash-section';sec.innerHTML='<div class="v28-dash-section-title"><h2>🧠 Pulizia intelligente v28</h2><div><button data-v28-view="best">Apri migliori</button> <button data-v28-clean>Avvia pulizia</button></div></div><div class="v28-dash-panels"><div class="v28-panel"><h3>🏆 Migliori</h3><p>Qualità + utilità + segnali d’uso.</p><div class="v28-panel-list" id="v28Best"></div></div><div class="v28-panel"><h3>📉 Meno usati</h3><p>Poco consultati, non preferiti e non pinnati.</p><div class="v28-panel-list" id="v28Least"></div></div><div class="v28-panel"><h3>🧹 Probabilmente inutili</h3><p>Prompt deboli, vecchi o mai usati.</p><div class="v28-panel-list" id="v28Useless"></div></div><div class="v28-panel"><h3>🧬 Duplicati</h3><p>Possibili sovrapposizioni da controllare.</p><div class="v28-panel-list" id="v28Dup"></div></div><div class="v28-panel"><h3>🔎 Da revisionare</h3><p>Non revisionati negli ultimi 90 giorni.</p><div class="v28-panel-list" id="v28Review"></div></div><div class="v28-panel"><h3>📦 Archivio</h3><p>Prompt conservati ma nascosti dalle liste principali.</p><div class="v28-panel-list" id="v28Archive"></div></div></div>';
-  dash.appendChild(sec);
-  v28DashFill('v28Best',best,'Nessun prompt migliore', 'utility');
-  v28DashFill('v28Least',least,'Nessun prompt poco usato','utility');
-  v28DashFill('v28Useless',useless,'Nessun prompt critico','risk');
-  v28DashFill('v28Review',rev,'Tutto revisionato','risk');
-  v28DashFill('v28Archive',arch,'Archivio vuoto','utility');
-  const dl=$('v28Dup');if(dl){if(!dups.length)dl.innerHTML='<div class="em" style="height:auto;padding:16px">Nessun duplicato</div>';else{dl.innerHTML='';dups.slice(0,6).forEach(x=>{const r=document.createElement('div');r.className='v28-row';r.innerHTML='<div><b>'+esc(x.a.title)+'</b><span>simile a '+esc(x.b.title)+'</span></div><div class="v28-score">'+x.score+'%</div>';r.onclick=()=>{S.view='duplicates';S.pid=x.a.id;render()};dl.appendChild(r)})}}
-  sec.querySelector('[data-v28-clean]').onclick=v28StartCleanup;sec.querySelector('[data-v28-view="best"]').onclick=()=>{S.view='best';S.pid=null;render()};
+  const dash=document.querySelector('.dashboard');
+  if(!dash)return;
+  const h1=dash.querySelector('.dash-hero h1');
+  if(h1)h1.textContent='Prompt Studio v28.2';
+  const p=dash.querySelector('.dash-hero p');
+  if(p)p.textContent='Dashboard semplificata con Preferiti e Recenti in primo piano.';
 }
 function v28StartCleanup(){
   const candidates=[...v28Useless(),...v28Least().filter(p=>p.m.utility<35),...v28Review().slice(0,20)];
@@ -2286,24 +2369,9 @@ renderDD=function(){__renderDDV27();v28RenderDDPatch()};
   v28EnhanceDashboard2=function(){
     const dash=document.querySelector('.dashboard');if(!dash)return;
     const h1=dash.querySelector('.dash-hero h1');if(h1)h1.textContent='Prompt Studio v28.2';
-    const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Centro operativo veloce per creare, trovare, valutare, archiviare e pulire la tua libreria di prompt.';
-    if(dash.querySelector('.v28-dash-section'))return;
-    const sec=document.createElement('div');sec.className='v28-dash-section';sec.innerHTML='<div class="v28-dash-section-title"><h2>🧠 Pulizia intelligente v28.2</h2><div><button data-v28-view="best">Apri migliori</button> <button data-v28-clean>Avvia pulizia</button></div></div><div class="v28-dash-panels"><div class="v28-panel"><h3>🏆 Migliori</h3><p>Qualità + utilità + segnali d’uso.</p><div class="v28-panel-list" id="v28Best"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📉 Meno usati</h3><p>Poco consultati, non preferiti e non pinnati.</p><div class="v28-panel-list" id="v28Least"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧹 Probabilmente inutili</h3><p>Prompt deboli, vecchi o mai usati.</p><div class="v28-panel-list" id="v28Useless"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>🧬 Duplicati</h3><p>Calcolo pesante: ora si avvia solo quando apri la sezione.</p><div class="v28-panel-list" id="v28Dup"><div class="v28-row" data-open-dups><div><b>Calcola duplicati</b><span>Apri la sezione per analizzare i prompt simili</span></div><div class="v28-score">↗</div></div></div></div><div class="v28-panel"><h3>🔎 Da revisionare</h3><p>Non revisionati negli ultimi 90 giorni.</p><div class="v28-panel-list" id="v28Review"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div><div class="v28-panel"><h3>📦 Archivio</h3><p>Prompt conservati ma nascosti dalle liste principali.</p><div class="v28-panel-list" id="v28Archive"><div class="em" style="height:auto;padding:16px">caricamento…</div></div></div></div>';
-    dash.appendChild(sec);
-    sec.querySelector('[data-v28-clean]').onclick=v28StartCleanup;
-    sec.querySelector('[data-v28-view="best"]').onclick=()=>{S.view='best';S.pid=null;render()};
-    sec.querySelector('[data-open-dups]').onclick=()=>{S.view='duplicates';S.pid=null;render()};
-    const fill=()=>{
-      const r=v281Rankings();
-      v28DashFill('v28Best',r.best,'Nessun prompt migliore','utility');
-      v28DashFill('v28Least',r.least,'Nessun prompt poco usato','utility');
-      v28DashFill('v28Useless',r.useless,'Nessun prompt critico','risk');
-      v28DashFill('v28Review',r.review,'Tutto revisionato','risk');
-      v28DashFill('v28Archive',r.archived,'Archivio vuoto','utility');
-    };
-    if(window.requestIdleCallback)window.requestIdleCallback(fill,{timeout:300});
-    else window.setTimeout(fill,40);
+    const p=dash.querySelector('.dash-hero p');if(p)p.textContent='Dashboard semplificata: Preferiti e Recenti in primo piano, senza pannelli di pulizia o analytics.';
   };
+
 
   v28EnhanceSidebar2=function(){
     const nav=document.querySelector('.v27-sidebar-nav .v27-nav-grid');if(!nav||nav.querySelector('[data-v28-view="best"]'))return;
