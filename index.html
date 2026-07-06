@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28.2 - Dashboard Pastello</title>
+<title>Prompt Studio v28.2 - Dashboard Sidebar Colorate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -849,6 +849,809 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 @media(max-width:820px){
   .dashboard.dash-fun .dash-panels{grid-template-columns:1fr!important}
 }
+
+
+
+/* ── ROBERTO UX PATCH: DASHBOARD + SIDEBAR COLORATE ───────────────
+   Obiettivo: dashboard più bella/leggibile, prompt alternati a colori
+   in tutte le sidebar e rimozione degli elementi "in uso"/status superflui.
+*/
+:root{
+  --rb-green:#16a34a;
+  --rb-blue:#2563eb;
+  --rb-red:#dc2626;
+  --rb-orange:#ea580c;
+  --rb-yellow:#facc15;
+  --rb-purple:#7c3aed;
+  --rb-cyan:#0891b2;
+  --rb-pink:#db2777;
+  --rb-black:#000000;
+  --rb-card:#0f172a;
+}
+
+/* Header più pulito: elimina indicatore/stato "in uso" sulla destra */
+.v282-status{display:none!important;}
+
+/* Font globali più leggibili nelle aree prompt */
+.co .ch h3,
+.v28-list-head h3,
+.dashboard.dash-fun .dash-panel .dash-panel-title h3{font-size:22px!important;line-height:1.15!important;}
+.co .cnt{font-size:14px!important;padding:4px 10px!important;}
+.cl .it,
+.cl .dash-item,
+.v28-row,
+.v28-pair-card{font-size:18px!important;line-height:1.45!important;}
+.it .in,
+.v27-prompt-card .in,
+.dash-item b,
+.v28-row b{font-size:19px!important;font-weight:900!important;letter-spacing:-.01em!important;}
+.it .ip,
+.it .iv,
+.v27-card-meta,
+.v28-row span,
+.dash-item span{font-size:14px!important;line-height:1.35!important;}
+.tg,.v28-chip,.v27-meta-chip,.v27-status{font-size:12px!important;}
+
+/* Sidebar più estetiche: contenitori più ariosi */
+.co{background:#050505!important;border-color:rgba(255,255,255,.14)!important;}
+.co .ch{background:#0b0f19!important;border-bottom:1px solid rgba(255,255,255,.14)!important;min-height:72px!important;padding:18px 20px!important;}
+.cl{padding:12px!important;background:#000!important;}
+.p-search-wrap{background:#050505!important;padding:12px!important;border-bottom:1px solid rgba(255,255,255,.12)!important;}
+.p-search-input{font-size:16px!important;padding:10px 34px 10px 38px!important;border-radius:18px!important;}
+.p-search-wrap i{left:25px!important;font-size:14px!important;}
+
+/* Alternanza colori background per tutti gli elementi/prompt nelle sidebar */
+.cl > .it,
+#pList > .it,
+#subList > .it,
+#cL .cl > .it{
+  border:0!important;
+  border-left:0!important;
+  border-radius:20px!important;
+  margin-bottom:12px!important;
+  padding:18px 18px!important;
+  color:#fff!important;
+  box-shadow:0 12px 24px rgba(0,0,0,.28)!important;
+  transform:translateZ(0);
+  transition:transform .16s ease, box-shadow .16s ease, filter .16s ease!important;
+}
+.cl > .it:nth-child(8n+1),#pList > .it:nth-child(8n+1),#subList > .it:nth-child(8n+1),#cL .cl > .it:nth-child(8n+1){background:#16a34a!important;}
+.cl > .it:nth-child(8n+2),#pList > .it:nth-child(8n+2),#subList > .it:nth-child(8n+2),#cL .cl > .it:nth-child(8n+2){background:#2563eb!important;}
+.cl > .it:nth-child(8n+3),#pList > .it:nth-child(8n+3),#subList > .it:nth-child(8n+3),#cL .cl > .it:nth-child(8n+3){background:#dc2626!important;}
+.cl > .it:nth-child(8n+4),#pList > .it:nth-child(8n+4),#subList > .it:nth-child(8n+4),#cL .cl > .it:nth-child(8n+4){background:#ea580c!important;}
+.cl > .it:nth-child(8n+5),#pList > .it:nth-child(8n+5),#subList > .it:nth-child(8n+5),#cL .cl > .it:nth-child(8n+5){background:#7c3aed!important;}
+.cl > .it:nth-child(8n+6),#pList > .it:nth-child(8n+6),#subList > .it:nth-child(8n+6),#cL .cl > .it:nth-child(8n+6){background:#0891b2!important;}
+.cl > .it:nth-child(8n+7),#pList > .it:nth-child(8n+7),#subList > .it:nth-child(8n+7),#cL .cl > .it:nth-child(8n+7){background:#db2777!important;}
+.cl > .it:nth-child(8n+8),#pList > .it:nth-child(8n+8),#subList > .it:nth-child(8n+8),#cL .cl > .it:nth-child(8n+8){background:#ca8a04!important;}
+.cl > .it:hover,
+#pList > .it:hover,
+#subList > .it:hover,
+#cL .cl > .it:hover{filter:brightness(1.08)!important;transform:translateY(-2px)!important;box-shadow:0 18px 34px rgba(0,0,0,.36)!important;}
+.cl > .it.ac,
+#pList > .it.ac,
+#subList > .it.ac,
+#cL .cl > .it.ac{outline:3px solid #fff!important;box-shadow:0 0 0 5px rgba(255,255,255,.16),0 20px 40px rgba(0,0,0,.45)!important;}
+.cl > .it .in,
+.cl > .it .ip,
+.cl > .it .iv,
+.cl > .it .v27-card-meta,
+.cl > .it .v27-meta-chip,
+.cl > .it .v27-status,
+.cl > .it .tg{color:#fff!important;}
+.cl > .it .ip,
+.cl > .it .iv,
+.cl > .it .v27-card-meta{opacity:.92!important;}
+.cl > .it .tg,
+.cl > .it .v27-meta-chip,
+.cl > .it .v27-status{background:rgba(255,255,255,.20)!important;border-color:rgba(255,255,255,.28)!important;color:#fff!important;}
+.cl > .it .item-actions{background:transparent!important;opacity:1!important;}
+.cl > .it .item-actions button{background:rgba(255,255,255,.18)!important;color:#fff!important;}
+
+/* Nasconde micro-metriche/etichette "in uso" nelle card prompt della sidebar: UI più pulita */
+.v27-prompt-card .v27-card-meta .v27-meta-chip:nth-of-type(3),
+.v27-prompt-card .v27-card-meta .v27-meta-chip:nth-of-type(4),
+.v27-prompt-card .v27-card-meta .v27-meta-chip:nth-of-type(5){display:none!important;}
+
+/* Dettaglio destro più pulito: elimina blocco valutazione utilità e box qualità troppo tecnico */
+.det .v28-detail-panel,
+.det .qbox{display:none!important;}
+.det .dh{background:#050505!important;min-height:64px!important;}
+.det .dti{background:#050505!important;padding:22px 24px!important;}
+.det .dti h1{font-size:34px!important;line-height:1.12!important;}
+.det .bread,
+.det .di,
+.det .tgs{font-size:16px!important;}
+.det .dd{font-size:22px!important;line-height:1.85!important;padding:28px 32px!important;}
+.det .di .di-chip:nth-child(3),
+.det .di .di-chip:nth-child(4),
+.det .di .di-chip:nth-child(5),
+.det .di .di-chip:nth-child(6){display:none!important;}
+
+/* Dashboard: nero, più grande, più utile, più visuale */
+.dashboard.dash-fun,
+[data-theme="dark"] .dashboard.dash-fun,
+[data-theme="light"] .dashboard.dash-fun{background:#000!important;color:#fff!important;padding:28px!important;}
+.dashboard.dash-fun .dash-hero{background:#080808!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:32px!important;padding:28px!important;box-shadow:0 24px 60px rgba(0,0,0,.65)!important;}
+.dashboard.dash-fun .dash-kicker{font-size:22px!important;border-radius:999px!important;padding:10px 16px!important;background:#fff!important;color:#000!important;}
+.dashboard.dash-fun .dash-hero-chips{gap:12px!important;margin-top:18px!important;}
+.dashboard.dash-fun .dash-hero-chips span{font-size:17px!important;border-radius:999px!important;padding:10px 14px!important;font-weight:900!important;}
+.dashboard.dash-fun .dash-actions{gap:12px!important;}
+.dashboard.dash-fun .dash-btn{font-size:18px!important;border-radius:18px!important;padding:14px 18px!important;font-weight:900!important;}
+.dashboard.dash-fun .dash-grid{gap:16px!important;margin:22px 0!important;}
+.dashboard.dash-fun .dash-card{border-radius:26px!important;padding:24px!important;min-height:130px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;}
+.dashboard.dash-fun .dash-num{font-size:54px!important;line-height:1!important;}
+.dashboard.dash-fun .dash-lab{font-size:18px!important;font-weight:900!important;}
+.dashboard.dash-fun .dash-panels{grid-template-columns:repeat(4,minmax(280px,1fr))!important;gap:18px!important;}
+.dashboard.dash-fun .dash-panel{border-radius:30px!important;padding:0!important;min-height:520px!important;overflow:hidden!important;box-shadow:0 22px 46px rgba(0,0,0,.48)!important;}
+.dashboard.dash-fun .dash-panel-title{padding:24px!important;gap:14px!important;}
+.dashboard.dash-fun .dash-panel-icon{font-size:28px!important;width:58px!important;height:58px!important;display:grid!important;place-items:center!important;border-radius:20px!important;}
+.dashboard.dash-fun .dash-panel-title h3{font-size:28px!important;line-height:1.05!important;}
+.dashboard.dash-fun .dash-panel-title p{font-size:16px!important;line-height:1.35!important;}
+.dashboard.dash-fun .dash-list{padding:16px!important;gap:12px!important;display:grid!important;}
+.dashboard.dash-fun .dash-item{border-radius:22px!important;padding:18px!important;min-height:94px!important;}
+.dashboard.dash-fun .dash-item-emoji{width:44px!important;height:44px!important;font-size:21px!important;display:grid!important;place-items:center!important;border-radius:16px!important;}
+.dashboard.dash-fun .dash-item b{font-size:19px!important;line-height:1.2!important;}
+.dashboard.dash-fun .dash-item span{font-size:14px!important;}
+.dashboard.dash-fun .dash-item-reason{font-size:13px!important;color:#475569!important;margin-top:5px!important;}
+.dashboard.dash-fun .dash-badge{font-size:15px!important;padding:7px 11px!important;border-radius:999px!important;font-weight:900!important;}
+.dashboard.dash-fun .dash-panel-fav{background:#16a34a!important;}
+.dashboard.dash-fun .dash-panel-recent{background:#2563eb!important;}
+.dashboard.dash-fun .dash-panel-top{background:#dc2626!important;}
+.dashboard.dash-fun .dash-panel-improve{background:#ea580c!important;}
+.dashboard.dash-fun .dash-item{background:#fff!important;color:#111827!important;}
+.dashboard.dash-fun .dash-item:nth-child(4n+1){background:#ffffff!important;}
+.dashboard.dash-fun .dash-item:nth-child(4n+2){background:#f1f5f9!important;}
+.dashboard.dash-fun .dash-item:nth-child(4n+3){background:#fff7ed!important;}
+.dashboard.dash-fun .dash-item:nth-child(4n+4){background:#fef2f2!important;}
+
+@media(max-width:1280px){
+  .dashboard.dash-fun .dash-panels{grid-template-columns:repeat(2,minmax(280px,1fr))!important;}
+}
+@media(max-width:760px){
+  .dashboard.dash-fun{padding:16px!important;}
+  .dashboard.dash-fun .dash-panels{grid-template-columns:1fr!important;}
+  .det .dti h1{font-size:26px!important;}
+  .det .dd{font-size:20px!important;padding:22px!important;}
+}
+
+
+
+/* ── PATCH ROBERTO: BLUE ELEGANT UI ─────────────────────────────
+   Alternanza monocromatica: blu intenso / blu medio / blu chiaro.
+   Obiettivo: look più elegante, meno "arcobaleno", testi sempre leggibili.
+*/
+:root{
+  --rb-blue-dark:#0b1f4d;
+  --rb-blue-deep:#123a7a;
+  --rb-blue-main:#1d4ed8;
+  --rb-blue-soft:#dbeafe;
+  --rb-blue-ink:#071225;
+  --rb-blue-border:rgba(147,197,253,.34);
+}
+
+/* Base elegante per sidebar e liste */
+.co,
+#c1.co,
+#c2.co,
+#cL.co{
+  background:#020817!important;
+  border-color:rgba(147,197,253,.18)!important;
+}
+.co .ch{
+  background:#06142e!important;
+  border-bottom:1px solid rgba(147,197,253,.22)!important;
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.03)!important;
+}
+.cl,
+#pList,
+#subList,
+#cL .cl{
+  background:#020817!important;
+}
+.p-search-wrap{
+  background:#020817!important;
+  border-bottom:1px solid rgba(147,197,253,.18)!important;
+}
+.p-search-input,
+.search-input,
+.cat-select{
+  background:#0b1f4d!important;
+  border-color:rgba(147,197,253,.26)!important;
+  color:#f8fbff!important;
+}
+.p-search-input::placeholder,
+.search-input::placeholder{color:#bfdbfe!important;opacity:.78!important;}
+
+/* Alternanza elegante: stesso colore, tonalità diverse */
+.cl > .it,
+#pList > .it,
+#subList > .it,
+#cL .cl > .it{
+  color:#f8fbff!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-left:5px solid rgba(191,219,254,.40)!important;
+  border-radius:18px!important;
+  margin-bottom:11px!important;
+  padding:18px 18px!important;
+  box-shadow:0 14px 28px rgba(0,0,0,.28)!important;
+}
+.cl > .it:nth-child(2n+1),
+#pList > .it:nth-child(2n+1),
+#subList > .it:nth-child(2n+1),
+#cL .cl > .it:nth-child(2n+1){
+  background:#0b1f4d!important;
+}
+.cl > .it:nth-child(2n),
+#pList > .it:nth-child(2n),
+#subList > .it:nth-child(2n),
+#cL .cl > .it:nth-child(2n){
+  background:#123a7a!important;
+}
+.cl > .it:nth-child(4n),
+#pList > .it:nth-child(4n),
+#subList > .it:nth-child(4n),
+#cL .cl > .it:nth-child(4n){
+  background:#1d4ed8!important;
+}
+.cl > .it:hover,
+#pList > .it:hover,
+#subList > .it:hover,
+#cL .cl > .it:hover{
+  background:#2563eb!important;
+  filter:none!important;
+  transform:translateY(-2px)!important;
+  box-shadow:0 18px 34px rgba(37,99,235,.26),0 16px 32px rgba(0,0,0,.34)!important;
+}
+.cl > .it.ac,
+#pList > .it.ac,
+#subList > .it.ac,
+#cL .cl > .it.ac{
+  background:#dbeafe!important;
+  color:#071225!important;
+  border-color:#93c5fd!important;
+  border-left-color:#2563eb!important;
+  outline:0!important;
+  box-shadow:0 0 0 3px rgba(147,197,253,.28),0 18px 34px rgba(0,0,0,.28)!important;
+}
+.cl > .it.ac .in,
+.cl > .it.ac .ip,
+.cl > .it.ac .iv,
+.cl > .it.ac .v27-card-meta,
+.cl > .it.ac .v27-meta-chip,
+.cl > .it.ac .v27-status,
+.cl > .it.ac .tg{
+  color:#071225!important;
+}
+.cl > .it .in,
+.cl > .it .ip,
+.cl > .it .iv,
+.cl > .it .v27-card-meta,
+.cl > .it .v27-meta-chip,
+.cl > .it .v27-status,
+.cl > .it .tg{
+  color:#f8fbff!important;
+  text-shadow:none!important;
+}
+.cl > .it .ip,
+.cl > .it .iv,
+.cl > .it .v27-card-meta{
+  opacity:.95!important;
+}
+.cl > .it .tg,
+.cl > .it .v27-meta-chip,
+.cl > .it .v27-status{
+  background:rgba(219,234,254,.18)!important;
+  border-color:rgba(219,234,254,.30)!important;
+  color:#eff6ff!important;
+}
+.cl > .it.ac .tg,
+.cl > .it.ac .v27-meta-chip,
+.cl > .it.ac .v27-status{
+  background:rgba(29,78,216,.13)!important;
+  border-color:rgba(29,78,216,.28)!important;
+  color:#071225!important;
+}
+.cl > .it .item-actions button{
+  background:rgba(219,234,254,.18)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+}
+.cl > .it.ac .item-actions button{
+  background:rgba(29,78,216,.16)!important;
+  color:#071225!important;
+  border-color:rgba(29,78,216,.22)!important;
+}
+
+/* Dashboard elegante monocromatica */
+.dashboard.dash-fun,
+[data-theme="dark"] .dashboard.dash-fun,
+[data-theme="light"] .dashboard.dash-fun{
+  background:#020817!important;
+  color:#f8fbff!important;
+}
+.dashboard.dash-fun .dash-hero{
+  background:#06142e!important;
+  border:1px solid rgba(147,197,253,.22)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.52)!important;
+}
+.dashboard.dash-fun .dash-kicker{
+  background:#dbeafe!important;
+  color:#071225!important;
+}
+.dashboard.dash-fun .dash-hero-chips span{
+  background:#0b1f4d!important;
+  color:#f8fbff!important;
+  border:1px solid rgba(147,197,253,.22)!important;
+}
+.dashboard.dash-fun .dash-btn{
+  background:#1d4ed8!important;
+  color:#fff!important;
+  border:1px solid rgba(191,219,254,.22)!important;
+  box-shadow:0 12px 28px rgba(29,78,216,.28)!important;
+}
+.dashboard.dash-fun .dash-btn.secondary{
+  background:#0b1f4d!important;
+  color:#eff6ff!important;
+  box-shadow:none!important;
+}
+.dashboard.dash-fun .dash-card{
+  background:#0b1f4d!important;
+  color:#eff6ff!important;
+  border:1px solid rgba(147,197,253,.20)!important;
+}
+.dashboard.dash-fun .dash-card:nth-child(2n){
+  background:#123a7a!important;
+}
+.dashboard.dash-fun .dash-num{color:#dbeafe!important;}
+.dashboard.dash-fun .dash-lab{color:#eff6ff!important;}
+.dashboard.dash-fun .dash-panel{
+  border:1px solid rgba(147,197,253,.26)!important;
+  box-shadow:0 24px 50px rgba(0,0,0,.42)!important;
+}
+.dashboard.dash-fun .dash-panel-fav,
+.dashboard.dash-fun .dash-panel-recent,
+.dashboard.dash-fun .dash-panel-top,
+.dashboard.dash-fun .dash-panel-improve{
+  background:#06142e!important;
+}
+.dashboard.dash-fun .dash-panel:nth-child(2n){
+  background:#0b1f4d!important;
+}
+.dashboard.dash-fun .dash-panel-title{
+  background:#0b1f4d!important;
+  border-bottom:1px solid rgba(147,197,253,.20)!important;
+}
+.dashboard.dash-fun .dash-panel:nth-child(2n) .dash-panel-title{
+  background:#123a7a!important;
+}
+.dashboard.dash-fun .dash-panel-icon{
+  background:#dbeafe!important;
+  color:#071225!important;
+}
+.dashboard.dash-fun .dash-panel-title h3,
+.dashboard.dash-fun .dash-panel-title p{
+  color:#f8fbff!important;
+}
+.dashboard.dash-fun .dash-list{
+  background:#06142e!important;
+}
+.dashboard.dash-fun .dash-panel:nth-child(2n) .dash-list{
+  background:#0b1f4d!important;
+}
+.dashboard.dash-fun .dash-item{
+  background:#dbeafe!important;
+  color:#071225!important;
+  border:1px solid rgba(7,18,37,.08)!important;
+}
+.dashboard.dash-fun .dash-item:nth-child(2n){
+  background:#bfdbfe!important;
+  color:#071225!important;
+}
+.dashboard.dash-fun .dash-item b,
+.dashboard.dash-fun .dash-item span,
+.dashboard.dash-fun .dash-item-reason{
+  color:#071225!important;
+}
+.dashboard.dash-fun .dash-badge,
+.dashboard.dash-fun .dash-item-emoji{
+  background:#0b1f4d!important;
+  color:#eff6ff!important;
+}
+
+/* Dettaglio destro coerente con lo stile blu, ma più leggibile */
+.det .dh,
+.det .dti{
+  background:#020817!important;
+  border-color:rgba(147,197,253,.18)!important;
+}
+.det .bread,
+.det .di,
+.det .tgs,
+.det .wc{
+  background:#06142e!important;
+  border-color:rgba(147,197,253,.18)!important;
+  color:#dbeafe!important;
+}
+.det .dd{
+  background:#020817!important;
+  color:#f8fbff!important;
+}
+.det .di-chip,
+.tgi input{
+  background:#0b1f4d!important;
+  border-color:rgba(147,197,253,.22)!important;
+  color:#f8fbff!important;
+}
+
+
+
+/* ── ROBERTO PATCH: DASHBOARD BLUE COLUMNS + DROPDOWN LISTS ── */
+.dashboard.dash-blue-columns{
+  --rb-blue-900:#071a3a;
+  --rb-blue-850:#09224d;
+  --rb-blue-800:#0b2d63;
+  --rb-blue-700:#123f82;
+  --rb-blue-600:#1d5fbd;
+  --rb-blue-300:#b9d8ff;
+  --rb-cream:#f7fbff;
+  background:#050b18!important;
+  padding:18px!important;
+  height:100%;
+  overflow:auto;
+}
+.dash-blue-columns .dash-hero{
+  background:#07111f!important;
+  border:1px solid rgba(185,216,255,.16)!important;
+  border-radius:22px!important;
+  box-shadow:none!important;
+  padding:18px 20px!important;
+  margin-bottom:18px!important;
+}
+.dash-blue-columns .dash-kicker{
+  font-size:18px!important;
+  color:#d9eaff!important;
+  font-weight:900!important;
+  letter-spacing:.01em!important;
+}
+.dash-blue-columns .dash-hero-chips span{
+  background:#0a244f!important;
+  border:1px solid rgba(185,216,255,.22)!important;
+  color:#eaf3ff!important;
+  font-size:14px!important;
+  border-radius:999px!important;
+  padding:6px 10px!important;
+}
+.dash-blue-columns .dash-actions{
+  align-items:center!important;
+}
+.dash-blue-columns .dash-btn{
+  min-height:44px!important;
+  border-radius:14px!important;
+  font-size:15px!important;
+  font-weight:900!important;
+  box-shadow:none!important;
+  background:#1d5fbd!important;
+  color:#fff!important;
+}
+.dash-blue-columns .dash-btn.secondary{
+  background:#0e2e64!important;
+  color:#eaf3ff!important;
+  border:1px solid rgba(185,216,255,.24)!important;
+}
+.dash-blue-column-grid{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(220px,1fr))!important;
+  gap:16px!important;
+  align-items:start!important;
+}
+.dash-blue-col{
+  min-width:0!important;
+}
+.dash-blue-stat{
+  height:132px!important;
+  border-radius:22px!important;
+  border:1px solid rgba(185,216,255,.22)!important;
+  padding:20px 20px!important;
+  margin-bottom:14px!important;
+  background:#0b2d63!important;
+  color:#fff!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  box-shadow:0 18px 36px rgba(0,0,0,.28)!important;
+}
+.dash-blue-col:nth-child(odd) .dash-blue-stat{background:#09224d!important;}
+.dash-blue-col:nth-child(even) .dash-blue-stat{background:#123f82!important;}
+.dash-blue-stat.is-orange{background:#d94f05!important;border-color:rgba(255,190,140,.35)!important;}
+.dash-blue-num{
+  font-family:var(--font-head)!important;
+  font-size:54px!important;
+  line-height:.88!important;
+  font-weight:900!important;
+  letter-spacing:-.06em!important;
+  color:#fff!important;
+  text-shadow:0 2px 0 rgba(0,0,0,.12)!important;
+}
+.dash-blue-label{
+  font-size:18px!important;
+  font-weight:900!important;
+  color:#eaf3ff!important;
+  margin-top:12px!important;
+}
+.dash-blue-columns .dash-panel{
+  background:#071a3a!important;
+  border:1px solid rgba(185,216,255,.16)!important;
+  border-radius:22px!important;
+  overflow:hidden!important;
+  box-shadow:0 20px 42px rgba(0,0,0,.32)!important;
+}
+.dash-blue-col:nth-child(odd) .dash-panel{background:#071a3a!important;}
+.dash-blue-col:nth-child(even) .dash-panel{background:#0a244f!important;}
+.dash-blue-columns .dash-panel-title{
+  background:#0e2e64!important;
+  border-bottom:1px solid rgba(185,216,255,.16)!important;
+  padding:18px 20px!important;
+  display:flex!important;
+  gap:14px!important;
+  align-items:flex-start!important;
+}
+.dash-blue-columns .dash-panel-title h3{
+  color:#fff!important;
+  font-size:22px!important;
+  line-height:1.05!important;
+  font-weight:900!important;
+  text-transform:none!important;
+  letter-spacing:-.02em!important;
+}
+.dash-blue-columns .dash-panel-title p{
+  color:#dbeafe!important;
+  font-size:15px!important;
+  line-height:1.35!important;
+  margin-top:6px!important;
+}
+.dash-blue-columns .dash-panel-icon{
+  width:48px!important;
+  height:48px!important;
+  border-radius:16px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:#dbeafe!important;
+  color:#082047!important;
+  font-size:24px!important;
+  flex-shrink:0!important;
+}
+.dash-blue-columns .dash-list{
+  padding:14px!important;
+  max-height:calc(100vh - 335px)!important;
+  overflow:auto!important;
+}
+.dash-blue-columns .dash-item{
+  min-height:86px!important;
+  border-radius:18px!important;
+  padding:16px!important;
+  margin-bottom:12px!important;
+  border:1px solid rgba(8,32,71,.08)!important;
+  background:#f8fbff!important;
+  color:#061426!important;
+  transition:transform .15s ease, border-color .15s ease, background .15s ease!important;
+}
+.dash-blue-columns .dash-item:nth-child(even){background:#cfe4ff!important;}
+.dash-blue-columns .dash-item:hover{
+  transform:translateY(-2px)!important;
+  border-color:#60a5fa!important;
+  background:#ffffff!important;
+}
+.dash-blue-columns .dash-item b{
+  color:#061426!important;
+  font-size:18px!important;
+  line-height:1.28!important;
+  font-weight:900!important;
+}
+.dash-blue-columns .dash-item span{
+  color:#23344d!important;
+  font-size:14px!important;
+  font-weight:700!important;
+}
+.dash-blue-columns .dash-item-reason{
+  color:#0f172a!important;
+  font-size:13px!important;
+  margin-top:6px!important;
+  font-weight:800!important;
+}
+.dash-blue-columns .dash-item-left{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:12px!important;
+}
+.dash-blue-columns .dash-item-emoji{
+  width:40px!important;
+  height:40px!important;
+  border-radius:13px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:#1d5fbd!important;
+  color:#fff!important;
+  font-size:19px!important;
+  flex-shrink:0!important;
+}
+.dash-blue-columns .dash-badge{
+  background:#1d5fbd!important;
+  color:#fff!important;
+  border-radius:999px!important;
+  padding:8px 10px!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  min-width:44px!important;
+  text-align:center!important;
+}
+.dash-blue-dropdown-wrap{
+  padding:14px 14px 0!important;
+}
+.dash-blue-dropdown-label{
+  display:block!important;
+  color:#dbeafe!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  margin-bottom:8px!important;
+}
+.dash-blue-dropdown{
+  width:100%!important;
+  min-height:48px!important;
+  border-radius:14px!important;
+  border:1px solid rgba(185,216,255,.28)!important;
+  background:#eef6ff!important;
+  color:#071426!important;
+  font-size:15px!important;
+  font-weight:800!important;
+  padding:9px 12px!important;
+  outline:none!important;
+}
+.dash-blue-dropdown:focus{
+  border-color:#60a5fa!important;
+  box-shadow:0 0 0 3px rgba(96,165,250,.25)!important;
+}
+.dash-blue-more-note{
+  color:#dbeafe!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  padding:0 14px 12px!important;
+}
+@media(max-width:1500px){.dash-blue-column-grid{grid-template-columns:repeat(3,minmax(240px,1fr))!important}}
+@media(max-width:1050px){.dash-blue-column-grid{grid-template-columns:repeat(2,minmax(240px,1fr))!important}.dash-blue-columns .dash-list{max-height:none!important}}
+@media(max-width:700px){.dash-blue-column-grid{grid-template-columns:1fr!important}.dash-blue-stat{height:112px!important}.dash-blue-num{font-size:46px!important}}
+
+
+/* ── ROBERTO STYLE: SOLO DROPDOWN, COLORI ALTERNATI ── */
+.dashboard.dash-dropdown-only{
+  background:#050914!important;
+  padding:22px!important;
+  min-height:100%!important;
+}
+.dash-dd-hero{
+  background:#071123!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  box-shadow:0 22px 60px rgba(0,0,0,.34)!important;
+}
+.dash-dd-grid{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(230px,1fr))!important;
+  gap:16px!important;
+  align-items:start!important;
+}
+.dash-dd-col{
+  display:grid!important;
+  gap:14px!important;
+  min-width:0!important;
+}
+.dash-dd-stat,
+.dash-dd-panel{
+  background:var(--col-bg)!important;
+  color:#fff!important;
+  border:1px solid color-mix(in srgb, var(--col-border) 60%, transparent)!important;
+  box-shadow:0 20px 48px rgba(0,0,0,.32)!important;
+}
+.dash-dd-stat{
+  min-height:132px!important;
+  border-radius:24px!important;
+  padding:24px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+}
+.dash-dd-panel{
+  border-radius:24px!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,var(--col-bg),var(--col-bg2))!important;
+}
+.dash-dd-number{
+  font-family:var(--font-head)!important;
+  font-size:58px!important;
+  line-height:.9!important;
+  font-weight:900!important;
+  letter-spacing:-.07em!important;
+  color:#fff!important;
+  text-shadow:0 3px 0 rgba(0,0,0,.22)!important;
+}
+.dash-dd-label{
+  color:#f8fbff!important;
+  font-size:18px!important;
+  font-weight:900!important;
+  margin-top:12px!important;
+}
+.dash-dd-head{
+  display:flex!important;
+  gap:14px!important;
+  align-items:center!important;
+  padding:22px!important;
+  min-height:126px!important;
+  border-bottom:1px solid rgba(255,255,255,.15)!important;
+}
+.dash-dd-icon{
+  width:54px!important;
+  height:54px!important;
+  border-radius:18px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:var(--col-icon)!important;
+  color:#071426!important;
+  font-size:25px!important;
+  flex-shrink:0!important;
+}
+.dash-dd-head h3{
+  font-family:var(--font-head)!important;
+  color:#fff!important;
+  font-size:22px!important;
+  line-height:1.05!important;
+  font-weight:900!important;
+  margin:0!important;
+  letter-spacing:-.02em!important;
+}
+.dash-dd-head p{
+  color:#f8fbff!important;
+  font-size:15px!important;
+  line-height:1.35!important;
+  margin:7px 0 0!important;
+  font-weight:700!important;
+}
+.dash-dd-select-wrap{
+  padding:18px!important;
+  background:rgba(2,6,23,.20)!important;
+}
+.dash-dd-select-wrap label{
+  display:block!important;
+  color:#ffffff!important;
+  font-size:14px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  margin-bottom:10px!important;
+}
+.dash-dd-select{
+  width:100%!important;
+  min-height:58px!important;
+  border-radius:18px!important;
+  border:2px solid rgba(255,255,255,.78)!important;
+  background:#ffffff!important;
+  color:#071426!important;
+  font-size:16px!important;
+  font-weight:900!important;
+  padding:12px 14px!important;
+  outline:none!important;
+  cursor:pointer!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.20)!important;
+}
+.dash-dd-select:focus{
+  border-color:#ffffff!important;
+  box-shadow:0 0 0 4px rgba(255,255,255,.28),0 12px 28px rgba(0,0,0,.22)!important;
+}
+.dash-dropdown-only .dash-list,
+.dash-dropdown-only .dash-item,
+.dash-dropdown-only .dash-blue-dropdown-wrap,
+.dash-dropdown-only .dash-blue-more-note{
+  display:none!important;
+}
+@media(max-width:1500px){.dash-dd-grid{grid-template-columns:repeat(3,minmax(230px,1fr))!important}}
+@media(max-width:1050px){.dash-dd-grid{grid-template-columns:repeat(2,minmax(230px,1fr))!important}}
+@media(max-width:700px){.dash-dd-grid{grid-template-columns:1fr!important}.dash-dd-number{font-size:48px!important}.dash-dd-stat{min-height:110px!important}}
 
 </style>
 </head>
@@ -3130,6 +3933,341 @@ v28EnhanceDashboard2=function(){
   const b=document.querySelector('.logo-badge');
   if(b)b.textContent='v28.2';
 };
+
+
+/* ── ROBERTO UX PATCH JS: DASHBOARD PIÙ ESTETICA + SIDEBAR CLEAN ── */
+(function(){
+  function rbPromptItems(){
+    return allP(S.allData).filter(p=>!p.archived && !/cestino|🗑️/i.test(String(p.cn||'')));
+  }
+  function rbOpenPrompt(p){
+    S.view='columns';
+    S.catId=p.ci;
+    S.subId=p.si;
+    S.pid=p.id;
+    trackR(p.id,p.si,p.ci);
+    render();
+  }
+  function rbFill(id,items,empty,mode){
+    const l=$(id);
+    if(!l)return;
+    l.innerHTML='';
+    if(!items.length){
+      const icon=mode==='favorite'?'fa-star':mode==='recent'?'fa-clock':mode==='improve'?'fa-screwdriver-wrench':'fa-fire';
+      l.innerHTML='<div class="em" style="height:auto"><i class="fa-solid '+icon+'"></i><span>'+empty+'</span></div>';
+      return;
+    }
+    items.forEach((p,i)=>{
+      const r=document.createElement('div');
+      r.className='dash-item';
+      r.dataset.pid=p.id;
+      let badge='★';
+      if(mode==='recent') badge=p.ts ? fmtD(p.ts).split(',')[0] : 'oggi';
+      else if(mode==='improve') badge=(p.q?.score ?? promptQuality(p).score)+'/100';
+      else if(mode==='top') badge=(p.copyCount||0)+'×';
+      const emoji=mode==='favorite'?'⭐':mode==='recent'?'🕒':mode==='improve'?'🛠️':'🔥';
+      const reason=mode==='improve' && p.q?.missing?.length ? '<span class="dash-item-reason">Manca: '+esc(p.q.missing.slice(0,3).join(', '))+'</span>' : '';
+      r.innerHTML='<div class="dash-item-left"><span class="dash-item-emoji">'+emoji+'</span><div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span>'+reason+'</div></div><span class="dash-badge">'+esc(badge)+'</span>';
+      r.onclick=()=>rbOpenPrompt(p);
+      l.appendChild(r);
+    });
+  }
+  renderDashboard=function(){
+    const el=$('cDash');
+    if(!el)return;
+    const all=rbPromptItems();
+    const favItems=all.filter(p=>p.favorite);
+    const favs=[...favItems].sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||''))).slice(0,10);
+    const recentItems=(S.recents||[]).map(r=>{const f=FP(S.allData,r.pid);if(!f||f.prompt.archived||/cestino|🗑️/i.test(String(f.cat.name||'')))return null;return {...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts};}).filter(Boolean);
+    const recent=recentItems.slice(0,10);
+    const top=[...all].filter(p=>(p.copyCount||0)>0).sort((a,b)=>((b.copyCount||0)-(a.copyCount||0))||((b.updatedAt||0)-(a.updatedAt||0))||String(a.title||'').localeCompare(String(b.title||''))).slice(0,10);
+    const improveItems=all.map(p=>({...p,q:promptQuality(p)})).filter(p=>p.q.score<75).sort((a,b)=>(a.q.score-b.q.score)||((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||'')));
+    const improve=improveItems.slice(0,10);
+    const copies=all.reduce((sum,p)=>sum+(p.copyCount||0),0);
+    el.innerHTML='<div class="dashboard dash-fun">'+
+      '<div class="dash-hero">'+
+        '<div class="dash-hero-copy">'+
+          '<div class="dash-kicker">🎨 Dashboard prompt</div>'+ 
+          '<div class="dash-hero-chips">'+
+            '<span>⭐ '+favItems.length+' preferiti</span>'+ 
+            '<span>🕒 '+recentItems.length+' recenti</span>'+ 
+            '<span>🔥 '+copies+' copie totali</span>'+ 
+            '<span>🛠️ '+improveItems.length+' da migliorare</span>'+ 
+          '</div>'+ 
+        '</div>'+ 
+        '<div class="dash-actions">'+
+          '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
+          '<button class="dash-btn secondary" data-dash="favorites">⭐ Preferiti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="recents">🕒 Recenti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="top">🔥 Più utilizzati</button>'+ 
+          '<button class="dash-btn secondary" data-dash="improve">🛠️ Da migliorare</button>'+ 
+        '</div>'+ 
+      '</div>'+ 
+      '<div class="dash-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">'+
+        '<div class="dash-card"><div class="dash-num">'+all.length+'</div><div class="dash-lab">Prompt attivi</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+favItems.length+'</div><div class="dash-lab">Preferiti</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+recentItems.length+'</div><div class="dash-lab">Recenti</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+top.length+'</div><div class="dash-lab">Più usati</div></div>'+ 
+        '<div class="dash-card"><div class="dash-num">'+improveItems.length+'</div><div class="dash-lab">Da migliorare</div></div>'+ 
+      '</div>'+ 
+      '<div class="dash-panels">'+
+        '<div class="dash-panel dash-panel-fav"><div class="dash-panel-title"><div class="dash-panel-icon">⭐</div><div><h3>Preferiti</h3><p>I prompt importanti, pronti da riaprire.</p></div></div><div class="dash-list" id="dashFavorites"></div></div>'+ 
+        '<div class="dash-panel dash-panel-recent"><div class="dash-panel-title"><div class="dash-panel-icon">🕒</div><div><h3>Recenti</h3><p>Riparti subito dagli ultimi prompt aperti.</p></div></div><div class="dash-list" id="dashRecent"></div></div>'+ 
+        '<div class="dash-panel dash-panel-top"><div class="dash-panel-title"><div class="dash-panel-icon">🔥</div><div><h3>Più utilizzati</h3><p>Quelli copiati più spesso.</p></div></div><div class="dash-list" id="dashTop"></div></div>'+ 
+        '<div class="dash-panel dash-panel-improve"><div class="dash-panel-title"><div class="dash-panel-icon">🛠️</div><div><h3>Da migliorare</h3><p>Prompt sotto 75/100 con indicazioni rapide.</p></div></div><div class="dash-list" id="dashImprove"></div></div>'+ 
+      '</div>'+ 
+    '</div>';
+    rbFill('dashFavorites',favs,'Nessun preferito. Apri un prompt e premi ⭐.','favorite');
+    rbFill('dashRecent',recent,'Nessun recente. Apri un prompt e apparirà qui.','recent');
+    rbFill('dashTop',top,'Ancora nessun prompt copiato.','top');
+    rbFill('dashImprove',improve,'Ottimo: nessun prompt sotto 75/100.','improve');
+    el.querySelector('[data-dash="new"]').onclick=()=>{const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];const sub=c?.subcategories?.[0];if(c&&sub){S.view='columns';S.catId=c.id;S.subId=sub.id;render();setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80)}else Toast.show('Crea prima una categoria e una sottocategoria.','er')};
+    el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
+    el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
+    const pulsePanel=id=>{const panel=$(id)?.closest('.dash-panel');if(panel){panel.scrollIntoView({behavior:'smooth',block:'start'});panel.animate([{transform:'scale(1)'},{transform:'scale(1.018)'},{transform:'scale(1)'}],{duration:520,easing:'ease-out'});}};
+    el.querySelector('[data-dash="top"]').onclick=()=>pulsePanel('dashTop');
+    el.querySelector('[data-dash="improve"]').onclick=()=>pulsePanel('dashImprove');
+  };
+})();
+
+
+
+/* ── ROBERTO PATCH: DASHBOARD A COLONNE BLU + MENU ALFABETICO ── */
+(function(){
+  function rbAllActivePrompts(){
+    return allP(S.allData).filter(p=>!p.archived && !/cestino|🗑️/i.test(String(p.cn||'')));
+  }
+  function rbOpenBluePrompt(p){
+    if(!p)return;
+    S.view='columns';
+    S.catId=p.ci;
+    S.subId=p.si;
+    S.pid=p.id;
+    trackR(p.id,p.si,p.ci);
+    render();
+  }
+  function rbAlpha(items){
+    return [...items].sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+  }
+  function rbOptionLabel(p,mode){
+    const path=(p.cn||'')+(p.sn?' › '+p.sn:'');
+    if(mode==='improve')return `${p.title} — ${(p.q?.score ?? promptQuality(p).score)}/100 — ${path}`;
+    if(mode==='top')return `${p.title} — ${p.copyCount||0} copie — ${path}`;
+    if(mode==='recent')return `${p.title} — ${path}`;
+    return `${p.title} — ${path}`;
+  }
+  function rbAttachDropdown(rootId,items,mode){
+    const root=$(rootId);
+    if(!root || items.length<=10)return;
+    const panel=root.closest('.dash-panel');
+    const sorted=rbAlpha(items);
+    const wrap=document.createElement('div');
+    wrap.className='dash-blue-dropdown-wrap';
+    wrap.innerHTML='<label class="dash-blue-dropdown-label">Elenco completo in ordine alfabetico</label><select class="dash-blue-dropdown"><option value="">Scegli un prompt...</option></select>';
+    const sel=wrap.querySelector('select');
+    sorted.forEach(p=>{
+      const op=document.createElement('option');
+      op.value=p.id;
+      op.textContent=rbOptionLabel(p,mode);
+      sel.appendChild(op);
+    });
+    sel.onchange=()=>{
+      const p=sorted.find(x=>x.id===sel.value);
+      if(p)rbOpenBluePrompt(p);
+    };
+    panel.insertBefore(wrap,root);
+    const note=document.createElement('div');
+    note.className='dash-blue-more-note';
+    note.textContent='Mostro i primi 10. Nel menu trovi tutti e '+items.length+' i prompt della sezione.';
+    panel.insertBefore(note,root);
+  }
+  function rbFillBlueList(id,items,empty,mode){
+    const l=$(id);
+    if(!l)return;
+    l.innerHTML='';
+    if(!items.length){
+      const icon=mode==='active'?'fa-layer-group':mode==='favorite'?'fa-star':mode==='recent'?'fa-clock':mode==='improve'?'fa-screwdriver-wrench':'fa-fire';
+      l.innerHTML='<div class="em" style="height:auto"><i class="fa-solid '+icon+'"></i><span>'+empty+'</span></div>';
+      return;
+    }
+    items.slice(0,10).forEach((p)=>{
+      const r=document.createElement('div');
+      r.className='dash-item';
+      r.dataset.pid=p.id;
+      let badge='★';
+      if(mode==='active') badge='↗';
+      else if(mode==='recent') badge=p.ts ? fmtD(p.ts).split(',')[0] : 'oggi';
+      else if(mode==='improve') badge=(p.q?.score ?? promptQuality(p).score)+'/100';
+      else if(mode==='top') badge=(p.copyCount||0)+'×';
+      const emoji=mode==='active'?'📚':mode==='favorite'?'⭐':mode==='recent'?'🕒':mode==='improve'?'🛠️':'🔥';
+      const reason=mode==='improve' && p.q?.missing?.length ? '<span class="dash-item-reason">Manca: '+esc(p.q.missing.slice(0,3).join(', '))+'</span>' : '';
+      r.innerHTML='<div class="dash-item-left"><span class="dash-item-emoji">'+emoji+'</span><div><b>'+esc(p.title)+'</b><span>'+esc(p.cn||'')+(p.sn?' › '+esc(p.sn):'')+'</span>'+reason+'</div></div><span class="dash-badge">'+esc(badge)+'</span>';
+      r.onclick=()=>rbOpenBluePrompt(p);
+      l.appendChild(r);
+    });
+    rbAttachDropdown(id,items,mode);
+  }
+  renderDashboard=function(){
+    const el=$('cDash');
+    if(!el)return;
+    const all=rbAllActivePrompts();
+    const activeItems=rbAlpha(all);
+    const favItems=all.filter(p=>p.favorite);
+    const favs=[...favItems].sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+    const recentItems=(S.recents||[]).map(r=>{const f=FP(S.allData,r.pid);if(!f||f.prompt.archived||/cestino|🗑️/i.test(String(f.cat.name||'')))return null;return {...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts};}).filter(Boolean);
+    const top=[...all].filter(p=>(p.copyCount||0)>0).sort((a,b)=>((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+    const improveItems=all.map(p=>({...p,q:promptQuality(p)})).filter(p=>p.q.score<75).sort((a,b)=>(a.q.score-b.q.score)||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+    const copies=all.reduce((sum,p)=>sum+(p.copyCount||0),0);
+    el.innerHTML='<div class="dashboard dash-blue-columns">'+
+      '<div class="dash-hero">'+
+        '<div class="dash-hero-copy">'+
+          '<div class="dash-kicker">Dashboard prompt</div>'+ 
+          '<div class="dash-hero-chips">'+
+            '<span>📚 '+all.length+' attivi</span>'+ 
+            '<span>⭐ '+favItems.length+' preferiti</span>'+ 
+            '<span>🕒 '+recentItems.length+' recenti</span>'+ 
+            '<span>🔥 '+copies+' copie totali</span>'+ 
+            '<span>🛠️ '+improveItems.length+' da migliorare</span>'+ 
+          '</div>'+ 
+        '</div>'+ 
+        '<div class="dash-actions">'+
+          '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
+          '<button class="dash-btn secondary" data-dash="favorites">⭐ Preferiti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="recents">🕒 Recenti</button>'+ 
+          '<button class="dash-btn secondary" data-dash="top">🔥 Più utilizzati</button>'+ 
+          '<button class="dash-btn secondary" data-dash="improve">🛠️ Da migliorare</button>'+ 
+        '</div>'+ 
+      '</div>'+ 
+      '<div class="dash-blue-column-grid">'+
+        '<div class="dash-blue-col"><div class="dash-blue-stat"><div class="dash-blue-num">'+all.length+'</div><div class="dash-blue-label">Prompt attivi</div></div><div class="dash-panel dash-panel-active"><div class="dash-panel-title"><div class="dash-panel-icon">📚</div><div><h3>Prompt attivi</h3><p>Elenco generale dei prompt disponibili.</p></div></div><div class="dash-list" id="dashActive"></div></div></div>'+ 
+        '<div class="dash-blue-col"><div class="dash-blue-stat"><div class="dash-blue-num">'+favItems.length+'</div><div class="dash-blue-label">Preferiti</div></div><div class="dash-panel dash-panel-fav"><div class="dash-panel-title"><div class="dash-panel-icon">⭐</div><div><h3>Preferiti</h3><p>I prompt importanti, pronti da riaprire.</p></div></div><div class="dash-list" id="dashFavorites"></div></div></div>'+ 
+        '<div class="dash-blue-col"><div class="dash-blue-stat"><div class="dash-blue-num">'+recentItems.length+'</div><div class="dash-blue-label">Recenti</div></div><div class="dash-panel dash-panel-recent"><div class="dash-panel-title"><div class="dash-panel-icon">🕒</div><div><h3>Recenti</h3><p>Riparti dagli ultimi prompt aperti.</p></div></div><div class="dash-list" id="dashRecent"></div></div></div>'+ 
+        '<div class="dash-blue-col"><div class="dash-blue-stat"><div class="dash-blue-num">'+top.length+'</div><div class="dash-blue-label">Più usati</div></div><div class="dash-panel dash-panel-top"><div class="dash-panel-title"><div class="dash-panel-icon">🔥</div><div><h3>Più utilizzati</h3><p>Quelli copiati più spesso.</p></div></div><div class="dash-list" id="dashTop"></div></div></div>'+ 
+        '<div class="dash-blue-col"><div class="dash-blue-stat is-orange"><div class="dash-blue-num">'+improveItems.length+'</div><div class="dash-blue-label">Da migliorare</div></div><div class="dash-panel dash-panel-improve"><div class="dash-panel-title"><div class="dash-panel-icon">🛠️</div><div><h3>Da migliorare</h3><p>Prompt sotto 75/100 con indicazioni rapide.</p></div></div><div class="dash-list" id="dashImprove"></div></div></div>'+ 
+      '</div>'+ 
+    '</div>';
+    rbFillBlueList('dashActive',activeItems,'Nessun prompt attivo.','active');
+    rbFillBlueList('dashFavorites',favs,'Nessun preferito. Apri un prompt e premi ⭐.','favorite');
+    rbFillBlueList('dashRecent',recentItems,'Nessun recente. Apri un prompt e apparirà qui.','recent');
+    rbFillBlueList('dashTop',top,'Ancora nessun prompt copiato.','top');
+    rbFillBlueList('dashImprove',improveItems,'Ottimo: nessun prompt sotto 75/100.','improve');
+    el.querySelector('[data-dash="new"]').onclick=()=>{const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];const sub=c?.subcategories?.[0];if(c&&sub){S.view='columns';S.catId=c.id;S.subId=sub.id;render();setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80)}else Toast.show('Crea prima una categoria e una sottocategoria.','er')};
+    el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
+    el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
+    const pulsePanel=id=>{const panel=$(id)?.closest('.dash-panel');if(panel){panel.scrollIntoView({behavior:'smooth',block:'start'});panel.animate([{transform:'scale(1)'},{transform:'scale(1.012)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'});}};
+    el.querySelector('[data-dash="top"]').onclick=()=>pulsePanel('dashTop');
+    el.querySelector('[data-dash="improve"]').onclick=()=>pulsePanel('dashImprove');
+  };
+})();
+
+
+/* ── ROBERTO PATCH: DASHBOARD SOLO DROPDOWN + COLORI ALTERNATI ── */
+(function(){
+  const rbPalette = [
+    {name:'blue',   bg:'#1848a8', bg2:'#123a84', text:'#ffffff', soft:'#eaf2ff', border:'#72a7ff', icon:'#dbeafe'},
+    {name:'green',  bg:'#0f8f5f', bg2:'#0b704b', text:'#ffffff', soft:'#ecfdf5', border:'#6ee7b7', icon:'#d1fae5'},
+    {name:'red',    bg:'#c92828', bg2:'#9f1d1d', text:'#ffffff', soft:'#fff1f2', border:'#fda4af', icon:'#ffe4e6'},
+    {name:'orange', bg:'#d95f0b', bg2:'#ad4706', text:'#ffffff', soft:'#fff7ed', border:'#fdba74', icon:'#ffedd5'}
+  ];
+  function rbActivePrompts(){
+    return allP(S.allData).filter(p=>!p.archived && !/cestino|🗑️/i.test(String(p.cn||'')));
+  }
+  function rbAlpha(items){
+    return [...items].sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+  }
+  function rbOpenPrompt(p){
+    if(!p)return;
+    S.view='columns';
+    S.catId=p.ci;
+    S.subId=p.si;
+    S.pid=p.id;
+    trackR(p.id,p.si,p.ci);
+    render();
+  }
+  function rbLabel(p,mode){
+    const path=(p.cn||'')+(p.sn?' › '+p.sn:'');
+    if(mode==='improve')return `${p.title} — ${(p.q?.score ?? promptQuality(p).score)}/100 — ${path}`;
+    if(mode==='top')return `${p.title} — ${p.copyCount||0} copie — ${path}`;
+    if(mode==='recent')return `${p.title} — ${path}`;
+    return `${p.title} — ${path}`;
+  }
+  function rbColumn(cfg,idx){
+    const pal=rbPalette[idx % rbPalette.length];
+    return ''+
+      '<section class="dash-dd-col" style="--col-bg:'+pal.bg+';--col-bg2:'+pal.bg2+';--col-border:'+pal.border+';--col-soft:'+pal.soft+';--col-icon:'+pal.icon+'">'+
+        '<div class="dash-dd-stat">'+
+          '<div class="dash-dd-number">'+cfg.count+'</div>'+
+          '<div class="dash-dd-label">'+cfg.label+'</div>'+
+        '</div>'+
+        '<div class="dash-dd-panel">'+
+          '<div class="dash-dd-head">'+
+            '<div class="dash-dd-icon">'+cfg.icon+'</div>'+
+            '<div><h3>'+cfg.title+'</h3><p>'+cfg.desc+'</p></div>'+
+          '</div>'+
+          '<div class="dash-dd-select-wrap">'+
+            '<label for="'+cfg.id+'">'+cfg.selectLabel+'</label>'+
+            '<select id="'+cfg.id+'" class="dash-dd-select"><option value="">'+cfg.empty+'</option></select>'+
+          '</div>'+
+        '</div>'+
+      '</section>';
+  }
+  function rbPopulateSelect(id,items,mode){
+    const sel=$(id);
+    if(!sel)return;
+    rbAlpha(items).forEach(p=>{
+      const op=document.createElement('option');
+      op.value=p.id;
+      op.textContent=rbLabel(p,mode);
+      sel.appendChild(op);
+    });
+    sel.onchange=()=>{
+      const itemsAlpha=rbAlpha(items);
+      const p=itemsAlpha.find(x=>x.id===sel.value);
+      if(p)rbOpenPrompt(p);
+    };
+  }
+  renderDashboard=function(){
+    const el=$('cDash');
+    if(!el)return;
+    const all=rbActivePrompts();
+    const favs=all.filter(p=>p.favorite).sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+    const recent=(S.recents||[]).map(r=>{const f=FP(S.allData,r.pid);if(!f||f.prompt.archived||/cestino|🗑️/i.test(String(f.cat.name||'')))return null;return {...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts};}).filter(Boolean);
+    const top=all.filter(p=>(p.copyCount||0)>0).sort((a,b)=>((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+    const improve=all.map(p=>({...p,q:promptQuality(p)})).filter(p=>p.q.score<75).sort((a,b)=>(a.q.score-b.q.score)||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+    const cols=[
+      {id:'dashDDActive',  icon:'📚', count:all.length,     label:'Prompt attivi', title:'Prompt attivi',  desc:'Tutti i prompt disponibili.', selectLabel:'Apri un prompt attivo', empty:'Scegli dall’elenco alfabetico...', items:all, mode:'active'},
+      {id:'dashDDFav',     icon:'⭐', count:favs.length,    label:'Preferiti',     title:'Preferiti',      desc:'Prompt importanti e ricorrenti.', selectLabel:'Apri un preferito', empty:'Nessun preferito selezionabile...', items:favs, mode:'favorite'},
+      {id:'dashDDRecent',  icon:'🕒', count:recent.length,  label:'Recenti',       title:'Recenti',        desc:'Ultimi prompt aperti.', selectLabel:'Apri un prompt recente', empty:'Nessun recente disponibile...', items:recent, mode:'recent'},
+      {id:'dashDDTop',     icon:'🔥', count:top.length,     label:'Più usati',     title:'Più utilizzati',  desc:'Prompt copiati più spesso.', selectLabel:'Apri un prompt molto usato', empty:'Nessun prompt copiato...', items:top, mode:'top'},
+      {id:'dashDDImprove', icon:'🛠️', count:improve.length, label:'Da migliorare', title:'Da migliorare',   desc:'Prompt sotto 75/100.', selectLabel:'Scegli un prompt da migliorare', empty:'Nessun prompt da migliorare...', items:improve, mode:'improve'}
+    ];
+    el.innerHTML=''+
+      '<div class="dashboard dash-dropdown-only">'+
+        '<div class="dash-hero dash-dd-hero">'+
+          '<div class="dash-hero-copy">'+
+            '<div class="dash-kicker">Dashboard prompt</div>'+ 
+            '<div class="dash-hero-chips">'+
+              '<span>📚 '+all.length+' attivi</span>'+ 
+              '<span>⭐ '+favs.length+' preferiti</span>'+ 
+              '<span>🕒 '+recent.length+' recenti</span>'+ 
+              '<span>🔥 '+top.length+' più usati</span>'+ 
+              '<span>🛠️ '+improve.length+' da migliorare</span>'+ 
+            '</div>'+ 
+          '</div>'+ 
+          '<div class="dash-actions">'+
+            '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
+            '<button class="dash-btn secondary" data-dash="favorites">⭐ Preferiti</button>'+ 
+            '<button class="dash-btn secondary" data-dash="recents">🕒 Recenti</button>'+ 
+          '</div>'+ 
+        '</div>'+ 
+        '<div class="dash-dd-grid">'+cols.map(rbColumn).join('')+'</div>'+ 
+      '</div>';
+    cols.forEach(c=>rbPopulateSelect(c.id,c.items,c.mode));
+    el.querySelector('[data-dash="new"]').onclick=()=>{const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];const sub=c?.subcategories?.[0];if(c&&sub){S.view='columns';S.catId=c.id;S.subId=sub.id;render();setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80)}else Toast.show('Crea prima una categoria e una sottocategoria.','er')};
+    el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
+    el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
+  };
+})();
 
 async function init(){
     Loader.show();try{
