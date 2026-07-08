@@ -1653,6 +1653,198 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 @media(max-width:1050px){.dash-dd-grid{grid-template-columns:repeat(2,minmax(230px,1fr))!important}}
 @media(max-width:700px){.dash-dd-grid{grid-template-columns:1fr!important}.dash-dd-number{font-size:48px!important}.dash-dd-stat{min-height:110px!important}}
 
+
+
+/* ── ROBERTO PATCH v28.3: CARD COMPATTE + 3 PREVIEW SOTTO OGNI BOX ── */
+.dashboard.dash-dropdown-only.dash-rz-v3{
+  background:#050914!important;
+  padding:18px!important;
+  min-height:100%!important;
+}
+.dashboard.dash-rz-v3 .dash-hero{
+  margin-bottom:14px!important;
+  padding:16px 18px!important;
+  border-radius:20px!important;
+}
+.dashboard.dash-rz-v3 .dash-kicker{
+  font-size:17px!important;
+  line-height:1.1!important;
+}
+.dashboard.dash-rz-v3 .dash-hero-chips{
+  gap:8px!important;
+  margin-top:12px!important;
+}
+.dashboard.dash-rz-v3 .dash-hero-chips span{
+  font-size:13px!important;
+  padding:6px 9px!important;
+}
+.dashboard.dash-rz-v3 .dash-actions{
+  gap:8px!important;
+}
+.dashboard.dash-rz-v3 .dash-btn{
+  min-height:38px!important;
+  border-radius:12px!important;
+  padding:9px 12px!important;
+  font-size:14px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-grid{
+  grid-template-columns:repeat(5,minmax(210px,1fr))!important;
+  gap:14px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-col{
+  gap:10px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-stat{
+  min-height:86px!important;
+  border-radius:18px!important;
+  padding:14px 16px!important;
+  box-shadow:0 14px 30px rgba(0,0,0,.28)!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-number{
+  font-size:42px!important;
+  line-height:.86!important;
+  letter-spacing:-.06em!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-label{
+  font-size:15px!important;
+  margin-top:8px!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-list{
+  display:grid!important;
+  gap:8px!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card{
+  min-height:74px!important;
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  padding:11px 12px!important;
+  border-radius:16px!important;
+  background:#ffffff!important;
+  color:#071426!important;
+  border:1px solid rgba(7,20,38,.08)!important;
+  box-shadow:0 10px 22px rgba(0,0,0,.18)!important;
+  cursor:pointer!important;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card:nth-child(2){
+  background:#f3f8ff!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card:nth-child(3){
+  background:#eaf2ff!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card:hover{
+  transform:translateY(-2px)!important;
+  box-shadow:0 14px 28px rgba(0,0,0,.24)!important;
+  background:#ffffff!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card.is-empty{
+  cursor:default!important;
+  opacity:.62!important;
+  background:rgba(255,255,255,.16)!important;
+  color:#ffffff!important;
+  border-color:rgba(255,255,255,.18)!important;
+  box-shadow:none!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card.is-empty:hover{
+  transform:none!important;
+  background:rgba(255,255,255,.16)!important;
+  box-shadow:none!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-main{
+  min-width:0!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-title{
+  display:block!important;
+  color:#071426!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+  letter-spacing:-.015em!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  max-width:100%!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card.is-empty .rz-mini-title{
+  color:#ffffff!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-meta{
+  display:block!important;
+  color:#334155!important;
+  font-size:12px!important;
+  font-weight:700!important;
+  line-height:1.25!important;
+  margin-top:5px!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card.is-empty .rz-mini-meta{
+  color:rgba(255,255,255,.86)!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-badge{
+  flex:0 0 auto!important;
+  min-width:38px!important;
+  max-width:72px!important;
+  text-align:center!important;
+  border-radius:999px!important;
+  padding:6px 8px!important;
+  background:var(--col-bg)!important;
+  color:#ffffff!important;
+  font-family:var(--font-mono)!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card.is-empty .rz-mini-badge{
+  background:rgba(255,255,255,.18)!important;
+}
+.dashboard.dash-rz-v3 .rz-select-panel{
+  border-radius:18px!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,var(--col-bg),var(--col-bg2))!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  box-shadow:0 14px 32px rgba(0,0,0,.25)!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-head{
+  min-height:auto!important;
+  padding:14px!important;
+  gap:10px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-icon{
+  width:42px!important;
+  height:42px!important;
+  border-radius:14px!important;
+  font-size:21px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-head h3{
+  font-size:18px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-head p{
+  font-size:12px!important;
+  margin-top:4px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-select-wrap{
+  padding:12px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-select-wrap label{
+  font-size:12px!important;
+  margin-bottom:8px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-select{
+  min-height:46px!important;
+  border-radius:14px!important;
+  font-size:14px!important;
+  padding:9px 11px!important;
+}
+@media(max-width:1500px){.dashboard.dash-rz-v3 .dash-dd-grid{grid-template-columns:repeat(3,minmax(220px,1fr))!important}}
+@media(max-width:1050px){.dashboard.dash-rz-v3 .dash-dd-grid{grid-template-columns:repeat(2,minmax(220px,1fr))!important}}
+@media(max-width:700px){.dashboard.dash-rz-v3{padding:14px!important}.dashboard.dash-rz-v3 .dash-dd-grid{grid-template-columns:1fr!important}.dashboard.dash-rz-v3 .dash-dd-number{font-size:36px!important}.dashboard.dash-rz-v3 .dash-dd-stat{min-height:76px!important}}
+
 </style>
 </head>
 <body>
@@ -4266,6 +4458,213 @@ v28EnhanceDashboard2=function(){
     el.querySelector('[data-dash="new"]').onclick=()=>{const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];const sub=c?.subcategories?.[0];if(c&&sub){S.view='columns';S.catId=c.id;S.subId=sub.id;render();setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80)}else Toast.show('Crea prima una categoria e una sottocategoria.','er')};
     el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
     el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
+  };
+})();
+
+
+
+/* ── ROBERTO PATCH v28.3: DASHBOARD COMPATTA CON 3 CARD PREVIEW ── */
+(function(){
+  const rbPalette = [
+    {name:'blue',   bg:'#1848a8', bg2:'#123a84', border:'#72a7ff', icon:'#dbeafe'},
+    {name:'green',  bg:'#0f8f5f', bg2:'#0b704b', border:'#6ee7b7', icon:'#d1fae5'},
+    {name:'red',    bg:'#c92828', bg2:'#9f1d1d', border:'#fda4af', icon:'#ffe4e6'},
+    {name:'orange', bg:'#d95f0b', bg2:'#ad4706', border:'#fdba74', icon:'#ffedd5'}
+  ];
+
+  function rzActivePrompts(){
+    return allP(S.allData).filter(p=>!p.archived && !/cestino|🗑️/i.test(String(p.cn||'')));
+  }
+
+  function rzAlpha(items){
+    return [...items].sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+  }
+
+  function rzOpenPrompt(p){
+    if(!p)return;
+    S.view='columns';
+    S.catId=p.ci;
+    S.subId=p.si;
+    S.pid=p.id;
+    trackR(p.id,p.si,p.ci);
+    render();
+  }
+
+  function rzDays(ts){
+    return ts ? Math.max(0,Math.floor((Date.now()-ts)/86400000)) : 9999;
+  }
+
+  function rzActivityScore(p,recentMap){
+    const recentTs=recentMap.get(p.id)||0;
+    const recentBonus=recentTs ? Math.max(0,36-rzDays(recentTs)*4) : 0;
+    const updateBonus=Math.max(0,24-rzDays(p.updatedAt)*0.8);
+    return Math.round((p.copyCount||0)*8 + recentBonus + updateBonus + (p.favorite?10:0) + (p.pinned?12:0));
+  }
+
+  function rzLabel(p,mode){
+    const path=(p.cn||'')+(p.sn?' › '+p.sn:'');
+    if(mode==='improve')return `${p.title} — ${(p.q?.score ?? promptQuality(p).score)}/100 — ${path}`;
+    if(mode==='top')return `${p.title} — ${p.copyCount||0} copie — ${path}`;
+    if(mode==='recent')return `${p.title} — ${path}`;
+    if(mode==='active')return `${p.title} — ${path}`;
+    return `${p.title} — ${path}`;
+  }
+
+  function rzBadge(p,mode){
+    if(!p)return '—';
+    if(mode==='active')return p.activityScore ? p.activityScore : '↗';
+    if(mode==='favorite')return p.pinned ? 'PIN' : '★';
+    if(mode==='recent')return p.ts ? fmtD(p.ts).split(',')[0] : 'oggi';
+    if(mode==='top')return (p.copyCount||0)+'×';
+    if(mode==='improve')return (p.q?.score ?? promptQuality(p).score)+'/100';
+    return '↗';
+  }
+
+  function rzMiniCard(p,mode,emptyLabel){
+    if(!p){
+      return '<article class="rz-mini-card is-empty"><div class="rz-mini-main"><b class="rz-mini-title">'+esc(emptyLabel||'Nessun elemento')+'</b><span class="rz-mini-meta">Aggiungi o usa prompt per popolare questa sezione.</span></div><span class="rz-mini-badge">—</span></article>';
+    }
+    const meta=(p.cn||'')+(p.sn?' › '+p.sn:'');
+    return '<article class="rz-mini-card" data-rz-open="'+esc(p.id)+'"><div class="rz-mini-main"><b class="rz-mini-title">'+esc(p.title||'Senza titolo')+'</b><span class="rz-mini-meta">'+esc(meta)+'</span></div><span class="rz-mini-badge">'+esc(rzBadge(p,mode))+'</span></article>';
+  }
+
+  function rzPreviewList(items,mode,emptyLabel){
+    const preview=items.slice(0,3);
+    while(preview.length<3) preview.push(null);
+    return '<div class="rz-mini-list">'+preview.map(p=>rzMiniCard(p,mode,emptyLabel)).join('')+'</div>';
+  }
+
+  function rzColumn(cfg,idx){
+    const pal=rbPalette[idx % rbPalette.length];
+    return ''+
+      '<section class="dash-dd-col" style="--col-bg:'+pal.bg+';--col-bg2:'+pal.bg2+';--col-border:'+pal.border+';--col-soft:#f8fbff;--col-icon:'+pal.icon+'">'+
+        '<div class="dash-dd-stat">'+
+          '<div class="dash-dd-number">'+cfg.count+'</div>'+ 
+          '<div class="dash-dd-label">'+cfg.label+'</div>'+ 
+        '</div>'+ 
+        rzPreviewList(cfg.preview,cfg.mode,cfg.emptyCard)+
+        '<div class="dash-dd-panel rz-select-panel">'+
+          '<div class="dash-dd-head">'+
+            '<div class="dash-dd-icon">'+cfg.icon+'</div>'+ 
+            '<div><h3>'+cfg.title+'</h3><p>'+cfg.desc+'</p></div>'+ 
+          '</div>'+ 
+          '<div class="dash-dd-select-wrap">'+
+            '<label for="'+cfg.id+'">'+cfg.selectLabel+'</label>'+ 
+            '<select id="'+cfg.id+'" class="dash-dd-select"><option value="">'+cfg.empty+'</option></select>'+ 
+          '</div>'+ 
+        '</div>'+ 
+      '</section>';
+  }
+
+  function rzPopulateSelect(id,items,mode){
+    const sel=$(id);
+    if(!sel)return;
+    const sorted=rzAlpha(items);
+    sorted.forEach(p=>{
+      const op=document.createElement('option');
+      op.value=p.id;
+      op.textContent=rzLabel(p,mode);
+      sel.appendChild(op);
+    });
+    sel.onchange=()=>{
+      const p=sorted.find(x=>x.id===sel.value);
+      if(p)rzOpenPrompt(p);
+    };
+  }
+
+  function rzBindPreviewCards(root,allItems){
+    root.querySelectorAll('[data-rz-open]').forEach(card=>{
+      card.onclick=()=>{
+        const p=allItems.find(x=>x.id===card.dataset.rzOpen);
+        if(p)rzOpenPrompt(p);
+      };
+    });
+  }
+
+  renderDashboard=function(){
+    const el=$('cDash');
+    if(!el)return;
+
+    const all=rzActivePrompts();
+    const recentMap=new Map((S.recents||[]).map(r=>[r.pid,r.ts]));
+    const activeRanked=[...all]
+      .map(p=>({...p,activityScore:rzActivityScore(p,recentMap)}))
+      .sort((a,b)=>(b.activityScore-a.activityScore)||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+
+    const favs=all
+      .filter(p=>p.favorite)
+      .sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+
+    const recent=(S.recents||[])
+      .map(r=>{
+        const f=FP(S.allData,r.pid);
+        if(!f||f.prompt.archived||/cestino|🗑️/i.test(String(f.cat.name||'')))return null;
+        return {...f.prompt,cn:f.cat.name,sn:f.sub.name,ci:f.cat.id,si:f.sub.id,ts:r.ts};
+      })
+      .filter(Boolean)
+      .sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+    const top=all
+      .filter(p=>(p.copyCount||0)>0)
+      .sort((a,b)=>((b.copyCount||0)-(a.copyCount||0))||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+
+    const improve=all
+      .map(p=>({...p,q:promptQuality(p)}))
+      .filter(p=>p.q.score<75)
+      .sort((a,b)=>(a.q.score-b.q.score)||String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base'}));
+
+    const cols=[
+      {id:'dashRZActive',  icon:'📚', count:all.length,     label:'Prompt attivi', title:'3 più attivi',     desc:'I prompt con più segnali d’uso e aggiornamento.', selectLabel:'Apri un prompt attivo', empty:'Scegli dall’elenco alfabetico...', emptyCard:'Nessun prompt attivo', items:all, preview:activeRanked.slice(0,3), mode:'active'},
+      {id:'dashRZFav',     icon:'⭐', count:favs.length,    label:'Preferiti',     title:'3 preferiti',       desc:'Preferiti e pinnati sempre pronti.', selectLabel:'Apri un preferito', empty:'Nessun preferito selezionabile...', emptyCard:'Nessun preferito', items:favs, preview:favs.slice(0,3), mode:'favorite'},
+      {id:'dashRZRecent',  icon:'🕒', count:recent.length,  label:'Recenti',       title:'3 più recenti',    desc:'Gli ultimi prompt aperti.', selectLabel:'Apri un prompt recente', empty:'Nessun recente disponibile...', emptyCard:'Nessun recente', items:recent, preview:recent.slice(0,3), mode:'recent'},
+      {id:'dashRZTop',     icon:'🔥', count:top.length,     label:'Più usati',     title:'3 più utilizzati', desc:'I prompt copiati più spesso.', selectLabel:'Apri un prompt molto usato', empty:'Nessun prompt copiato...', emptyCard:'Nessun prompt usato', items:top, preview:top.slice(0,3), mode:'top'},
+      {id:'dashRZImprove', icon:'🛠️', count:improve.length, label:'Da migliorare', title:'3 peggiori',       desc:'I prompt con qualità più bassa.', selectLabel:'Scegli un prompt da migliorare', empty:'Nessun prompt da migliorare...', emptyCard:'Nessun prompt critico', items:improve, preview:improve.slice(0,3), mode:'improve'}
+    ];
+
+    el.innerHTML=''+
+      '<div class="dashboard dash-dropdown-only dash-rz-v3">'+
+        '<div class="dash-hero dash-dd-hero">'+
+          '<div class="dash-hero-copy">'+
+            '<div class="dash-kicker">Dashboard prompt</div>'+ 
+            '<div class="dash-hero-chips">'+
+              '<span>📚 '+all.length+' attivi</span>'+ 
+              '<span>⭐ '+favs.length+' preferiti</span>'+ 
+              '<span>🕒 '+recent.length+' recenti</span>'+ 
+              '<span>🔥 '+top.length+' più usati</span>'+ 
+              '<span>🛠️ '+improve.length+' da migliorare</span>'+ 
+            '</div>'+ 
+          '</div>'+ 
+          '<div class="dash-actions">'+
+            '<button class="dash-btn" data-dash="new">+ Nuovo prompt</button>'+ 
+            '<button class="dash-btn secondary" data-dash="favorites">⭐ Preferiti</button>'+ 
+            '<button class="dash-btn secondary" data-dash="recents">🕒 Recenti</button>'+ 
+          '</div>'+ 
+        '</div>'+ 
+        '<div class="dash-dd-grid">'+cols.map(rzColumn).join('')+'</div>'+ 
+      '</div>';
+
+    cols.forEach(c=>rzPopulateSelect(c.id,c.items,c.mode));
+    rzBindPreviewCards(el,[...activeRanked,...favs,...recent,...top,...improve,...all]);
+
+    el.querySelector('[data-dash="new"]').onclick=()=>{
+      const c=S.allData.find(c=>!/cestino|🗑️/i.test(String(c.name||'')))||S.allData[0];
+      const sub=c?.subcategories?.[0];
+      if(c&&sub){
+        S.view='columns';
+        S.catId=c.id;
+        S.subId=sub.id;
+        render();
+        setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80);
+      }else{
+        Toast.show('Crea prima una categoria e una sottocategoria.','er');
+      }
+    };
+    el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
+    el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
+
+    document.title='Prompt Studio v28.3';
+    const badge=document.querySelector('.logo-badge');
+    if(badge)badge.textContent='v28.3';
   };
 })();
 
