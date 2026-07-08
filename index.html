@@ -1655,7 +1655,7 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 
 
 
-/* ── ROBERTO PATCH v28.3: CARD COMPATTE + 3 PREVIEW SOTTO OGNI BOX ── */
+/* ── ROBERTO PATCH v28.4: CARD PREVIEW CON DESCRIZIONE E FONT PIÙ GRANDI ── */
 .dashboard.dash-dropdown-only.dash-rz-v3{
   background:#050914!important;
   padding:18px!important;
@@ -1714,12 +1714,12 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
   gap:8px!important;
 }
 .dashboard.dash-rz-v3 .rz-mini-card{
-  min-height:74px!important;
+  min-height:128px!important;
   display:flex!important;
   align-items:flex-start!important;
   justify-content:space-between!important;
-  gap:10px!important;
-  padding:11px 12px!important;
+  gap:12px!important;
+  padding:15px 15px!important;
   border-radius:16px!important;
   background:#ffffff!important;
   color:#071426!important;
@@ -1754,37 +1754,54 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 }
 .dashboard.dash-rz-v3 .rz-mini-main{
   min-width:0!important;
+  flex:1 1 auto!important;
 }
 .dashboard.dash-rz-v3 .rz-mini-title{
-  display:block!important;
+  display:-webkit-box!important;
   color:#071426!important;
-  font-size:14px!important;
+  font-size:17px!important;
   font-weight:900!important;
-  line-height:1.2!important;
-  letter-spacing:-.015em!important;
-  white-space:nowrap!important;
+  line-height:1.18!important;
+  letter-spacing:-.02em!important;
+  white-space:normal!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   max-width:100%!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
 }
 .dashboard.dash-rz-v3 .rz-mini-card.is-empty .rz-mini-title{
   color:#ffffff!important;
 }
 .dashboard.dash-rz-v3 .rz-mini-meta{
-  display:block!important;
-  color:#334155!important;
-  font-size:12px!important;
-  font-weight:700!important;
-  line-height:1.25!important;
-  margin-top:5px!important;
   display:-webkit-box!important;
-  -webkit-line-clamp:2!important;
+  color:#334155!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  line-height:1.25!important;
+  margin-top:7px!important;
+  -webkit-line-clamp:1!important;
   -webkit-box-orient:vertical!important;
   overflow:hidden!important;
 }
 .dashboard.dash-rz-v3 .rz-mini-card.is-empty .rz-mini-meta{
   color:rgba(255,255,255,.86)!important;
 }
+.dashboard.dash-rz-v3 .rz-mini-desc{
+  display:-webkit-box!important;
+  color:#0f172a!important;
+  font-size:14.5px!important;
+  font-weight:750!important;
+  line-height:1.32!important;
+  margin-top:8px!important;
+  -webkit-line-clamp:3!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card.is-empty .rz-mini-desc{
+  color:rgba(255,255,255,.86)!important;
+}
+
 .dashboard.dash-rz-v3 .rz-mini-badge{
   flex:0 0 auto!important;
   min-width:38px!important;
@@ -1795,7 +1812,7 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
   background:var(--col-bg)!important;
   color:#ffffff!important;
   font-family:var(--font-mono)!important;
-  font-size:12px!important;
+  font-size:13px!important;
   font-weight:900!important;
   line-height:1!important;
   white-space:nowrap!important;
@@ -1844,6 +1861,124 @@ body.clean-read .dti{padding:26px 30px;background:transparent}body.clean-read .d
 @media(max-width:1500px){.dashboard.dash-rz-v3 .dash-dd-grid{grid-template-columns:repeat(3,minmax(220px,1fr))!important}}
 @media(max-width:1050px){.dashboard.dash-rz-v3 .dash-dd-grid{grid-template-columns:repeat(2,minmax(220px,1fr))!important}}
 @media(max-width:700px){.dashboard.dash-rz-v3{padding:14px!important}.dashboard.dash-rz-v3 .dash-dd-grid{grid-template-columns:1fr!important}.dashboard.dash-rz-v3 .dash-dd-number{font-size:36px!important}.dashboard.dash-rz-v3 .dash-dd-stat{min-height:76px!important}}
+
+
+
+/* ── ROBERTO PATCH v28.5: Helvetica globale, numeri puliti, box superiori compatti, pannelli secondari rimossi ── */
+:root{
+  --font-ui:Helvetica, Arial, sans-serif!important;
+  --font-head:Helvetica, Arial, sans-serif!important;
+  --font-mono:Helvetica, Arial, sans-serif!important;
+}
+html,
+body,
+button,
+input,
+select,
+textarea,
+.logo,
+.logo-badge,
+.dashboard,
+.dashboard *,
+.co,
+.co *,
+.det,
+.det *,
+.mc,
+.mc *,
+.to,
+.to *{
+  font-family:Helvetica, Arial, sans-serif!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-grid{
+  gap:12px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-col{
+  gap:8px!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-stat{
+  min-height:62px!important;
+  border-radius:14px!important;
+  padding:9px 13px!important;
+  box-shadow:0 10px 22px rgba(0,0,0,.22)!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-number{
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:34px!important;
+  line-height:.86!important;
+  letter-spacing:-.035em!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+}
+.dashboard.dash-rz-v3 .dash-dd-label{
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:13px!important;
+  line-height:1.05!important;
+  margin-top:5px!important;
+  font-weight:800!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-list{
+  gap:7px!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-card{
+  min-height:126px!important;
+  padding:15px!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-title{
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:18px!important;
+  line-height:1.17!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-desc{
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:15.5px!important;
+  line-height:1.34!important;
+  font-weight:700!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-meta{
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:13.5px!important;
+  line-height:1.25!important;
+}
+.dashboard.dash-rz-v3 .rz-mini-badge{
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:13px!important;
+  font-weight:900!important;
+}
+.dashboard.dash-rz-v3 .rz-select-panel{
+  display:none!important;
+}
+.dashboard.dash-rz-v3 .rz-flat-select{
+  display:block!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:2px 0 0!important;
+  margin:0!important;
+}
+.dashboard.dash-rz-v3 .rz-flat-select label{
+  display:block!important;
+  color:#ffffff!important;
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:12.5px!important;
+  line-height:1.15!important;
+  font-weight:800!important;
+  margin:0 0 6px!important;
+}
+.dashboard.dash-rz-v3 .rz-compact-select{
+  min-height:40px!important;
+  height:40px!important;
+  border-radius:12px!important;
+  font-family:Helvetica, Arial, sans-serif!important;
+  font-size:13.5px!important;
+  font-weight:800!important;
+  padding:7px 10px!important;
+  box-shadow:none!important;
+}
+@media(max-width:700px){
+  .dashboard.dash-rz-v3 .dash-dd-number{font-size:30px!important;}
+  .dashboard.dash-rz-v3 .dash-dd-stat{min-height:58px!important;}
+}
 
 </style>
 </head>
@@ -4463,7 +4598,7 @@ v28EnhanceDashboard2=function(){
 
 
 
-/* ── ROBERTO PATCH v28.3: DASHBOARD COMPATTA CON 3 CARD PREVIEW ── */
+/* ── ROBERTO PATCH v28.4: DASHBOARD COMPATTA CON 3 CARD PREVIEW E DESCRIZIONI ── */
 (function(){
   const rbPalette = [
     {name:'blue',   bg:'#1848a8', bg2:'#123a84', border:'#72a7ff', icon:'#dbeafe'},
@@ -4520,12 +4655,21 @@ v28EnhanceDashboard2=function(){
     return '↗';
   }
 
+  function rzTextPreview(html,max=185){
+    const box=document.createElement('div');
+    box.innerHTML=html||'';
+    const txt=(box.textContent||'').replace(/\s+/g,' ').trim();
+    if(!txt)return 'Descrizione non presente: apri il prompt per completarla.';
+    return txt.length>max ? txt.slice(0,max-1)+'…' : txt;
+  }
+
   function rzMiniCard(p,mode,emptyLabel){
     if(!p){
-      return '<article class="rz-mini-card is-empty"><div class="rz-mini-main"><b class="rz-mini-title">'+esc(emptyLabel||'Nessun elemento')+'</b><span class="rz-mini-meta">Aggiungi o usa prompt per popolare questa sezione.</span></div><span class="rz-mini-badge">—</span></article>';
+      return '<article class="rz-mini-card is-empty"><div class="rz-mini-main"><b class="rz-mini-title">'+esc(emptyLabel||'Nessun elemento')+'</b><span class="rz-mini-desc">Aggiungi, apri o copia prompt per popolare automaticamente questa sezione.</span><span class="rz-mini-meta">Dashboard aggiornata in base all’utilizzo reale.</span></div><span class="rz-mini-badge">—</span></article>';
     }
     const meta=(p.cn||'')+(p.sn?' › '+p.sn:'');
-    return '<article class="rz-mini-card" data-rz-open="'+esc(p.id)+'"><div class="rz-mini-main"><b class="rz-mini-title">'+esc(p.title||'Senza titolo')+'</b><span class="rz-mini-meta">'+esc(meta)+'</span></div><span class="rz-mini-badge">'+esc(rzBadge(p,mode))+'</span></article>';
+    const desc=rzTextPreview(p.description||'',185);
+    return '<article class="rz-mini-card" data-rz-open="'+esc(p.id)+'"><div class="rz-mini-main"><b class="rz-mini-title">'+esc(p.title||'Senza titolo')+'</b><span class="rz-mini-desc">'+esc(desc)+'</span><span class="rz-mini-meta">'+esc(meta)+'</span></div><span class="rz-mini-badge">'+esc(rzBadge(p,mode))+'</span></article>';
   }
 
   function rzPreviewList(items,mode,emptyLabel){
@@ -4543,15 +4687,9 @@ v28EnhanceDashboard2=function(){
           '<div class="dash-dd-label">'+cfg.label+'</div>'+ 
         '</div>'+ 
         rzPreviewList(cfg.preview,cfg.mode,cfg.emptyCard)+
-        '<div class="dash-dd-panel rz-select-panel">'+
-          '<div class="dash-dd-head">'+
-            '<div class="dash-dd-icon">'+cfg.icon+'</div>'+ 
-            '<div><h3>'+cfg.title+'</h3><p>'+cfg.desc+'</p></div>'+ 
-          '</div>'+ 
-          '<div class="dash-dd-select-wrap">'+
-            '<label for="'+cfg.id+'">'+cfg.selectLabel+'</label>'+ 
-            '<select id="'+cfg.id+'" class="dash-dd-select"><option value="">'+cfg.empty+'</option></select>'+ 
-          '</div>'+ 
+        '<div class="rz-flat-select">'+
+          '<label for="'+cfg.id+'">'+cfg.selectLabel+'</label>'+ 
+          '<select id="'+cfg.id+'" class="dash-dd-select rz-compact-select"><option value="">'+cfg.empty+'</option></select>'+ 
         '</div>'+ 
       '</section>';
   }
@@ -4662,9 +4800,9 @@ v28EnhanceDashboard2=function(){
     el.querySelector('[data-dash="favorites"]').onclick=()=>{S.view='favorites';S.pid=null;render()};
     el.querySelector('[data-dash="recents"]').onclick=()=>{S.view='recents';S.pid=null;render()};
 
-    document.title='Prompt Studio v28.3';
+    document.title='Prompt Studio v28.5';
     const badge=document.querySelector('.logo-badge');
-    if(badge)badge.textContent='v28.3';
+    if(badge)badge.textContent='v28.5';
   };
 })();
 
