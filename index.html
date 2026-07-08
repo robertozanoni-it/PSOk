@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28.2 - Dashboard Sidebar Colorate</title>
+<title>Prompt Studio v28.6 - Icone e Duplica Prompt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -1980,6 +1980,74 @@ textarea,
   .dashboard.dash-rz-v3 .dash-dd-stat{min-height:58px!important;}
 }
 
+
+
+/* ── ROBERTO PATCH v28.6: ICONE NATIVE + DUPLICAZIONE PROMPT ──
+   Sostituisce i quadratini dell'action bar dettaglio con icone native
+   e rende visibile/rapida la duplicazione da dettaglio e liste prompt.
+*/
+.da button,
+.item-actions button{
+  font-family:Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif!important;
+}
+.da button > i,
+.item-actions button > i{
+  display:none!important;
+}
+.da button::before,
+.item-actions button::before{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:1.15em!important;
+  height:1.15em!important;
+  font-family:Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif!important;
+  font-size:18px!important;
+  line-height:1!important;
+  font-weight:900!important;
+}
+.da button[data-a="edit"]::before{content:"✏️";}
+.da button[data-a="copy"]::before{content:"📋";}
+.da button[data-a="preview"]::before{content:"👁";}
+.da button[data-a="dup"]::before{content:"⧉";font-size:21px!important;}
+.da button[data-a="fav"]::before{content:"⭐";}
+.da button[data-a="restore"]::before{content:"↩";font-size:21px!important;}
+.da button[data-a="more"]::before{content:"⋯";font-size:24px!important;letter-spacing:1px;}
+.da button[data-a="pin"]::before{content:"📌";}
+.da button[data-a="ver"]::before{content:"🕘";}
+.da button[data-a="best"]::before{content:"🏆";}
+.da button[data-a="prova"]::before{content:"🧪";}
+.da button[data-a="move"]::before{content:"↔";font-size:21px!important;}
+.da button[data-a="link"]::before{content:"🔗";}
+.da button[data-a="share"]::before{content:"↗";font-size:21px!important;}
+.da button[data-a="srch"]::before{content:"🔍";}
+.da button[data-a="focus"]::before{content:"⛶";font-size:21px!important;}
+.da button[data-a="del"]::before{content:"🗑";}
+.more-menu button::before{
+  margin-right:8px!important;
+  flex:0 0 20px!important;
+}
+.da > button[data-a="dup"]{
+  color:#22d3ee!important;
+}
+.da > button[data-a="dup"]:hover{
+  color:#67e8f9!important;
+  background:rgba(34,211,238,.15)!important;
+  box-shadow:0 0 10px rgba(34,211,238,.25)!important;
+}
+.item-actions button[data-quick="copy"]::before,
+.item-actions button[data-v27-quick="copy"]::before{content:"📋";font-size:13px!important;}
+.item-actions button[data-quick="dup"]::before,
+.item-actions button[data-v27-quick="dup"]::before{content:"⧉";font-size:16px!important;}
+.item-actions button[data-quick="fav"]::before,
+.item-actions button[data-v27-quick="fav"]::before{content:"⭐";font-size:13px!important;}
+.item-actions button[data-quick="edit"]::before,
+.item-actions button[data-v27-quick="edit"]::before{content:"✏️";font-size:13px!important;}
+.item-actions button[data-quick="dup"],
+.item-actions button[data-v27-quick="dup"]{
+  color:#22d3ee!important;
+}
+
 </style>
 </head>
 <body>
@@ -2350,6 +2418,61 @@ const DB={
 };
 
 function FP(data,pid){if(!pid)return null;for(const c of data)for(const s of(c.subcategories||[]))for(const p of(s.prompts||[]))if(p.id===pid)return{cat:c,sub:s,prompt:p};return null}
+
+async function duplicatePromptById(pid){
+  const d=structuredClone(S.allData);
+  const f=FP(d,pid);
+
+  if(!f){
+    Toast.show('Prompt non trovato.','er');
+    return null;
+  }
+
+  const baseTitle=String(f.prompt.title||'Prompt');
+  const existing=new Set((f.sub.prompts||[]).map(x=>String(x.title||'').trim().toLowerCase()));
+  let title=baseTitle+' (Copia)';
+  let n=2;
+
+  while(existing.has(title.trim().toLowerCase())){
+    title=baseTitle+' (Copia '+n+')';
+    n++;
+  }
+
+  const np={
+    ...structuredClone(f.prompt),
+    id:uid(),
+    title,
+    createdAt:Date.now(),
+    updatedAt:Date.now(),
+    copyCount:0,
+    versions:[],
+    pinned:false,
+    duplicateOf:pid
+  };
+
+  delete np.deletedAt;
+  delete np.deletedFrom;
+  delete np.archived;
+  delete np.archivedAt;
+  delete np.reviewedAt;
+  delete np.ignoredAt;
+  delete np.ignoreSuggestion;
+  delete np._score;
+  delete np.m;
+  delete np.q;
+  delete np.ts;
+  delete np.ci;
+  delete np.si;
+  delete np.cn;
+  delete np.sn;
+
+  if(!Array.isArray(f.sub.prompts)) f.sub.prompts=[];
+  f.sub.prompts.push(np);
+
+  await save(d,{ids:{view:'columns',catId:f.cat.id,subId:f.sub.id,pid:np.id}});
+  Toast.show('Prompt duplicato!','ok');
+  return np.id;
+}
 function FC(data,cid){return data.find(c=>c.id===cid)||null}
 function FS(data,cid,sid){return FC(data,cid)?.subcategories?.find(s=>s.id===sid)||null}
 function allP(data){const r=[];data.forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>r.push({...p,cn:c.name,sn:s.name,ci:c.id,si:s.id}))));return r}
@@ -2593,6 +2716,7 @@ col.innerHTML='<div class="det"><div class="dh"><h3>Dettaglio</h3><div class="da
 '<button data-a="edit" title="Modifica (Ctrl+E)"><i class="fa-solid fa-pencil"></i></button>'+
 '<button data-a="copy" title="Copia prompt finale"><i class="fa-regular fa-copy"></i></button>'+
 '<button data-a="preview" title="Anteprima prompt finale"><i class="fa-regular fa-eye"></i></button>'+
+'<button data-a="dup" title="Duplica prompt (Ctrl+D)"><i class="fa-regular fa-clone"></i></button>'+
 '<button data-a="fav"  title="Preferito"><i class="'+(p.favorite?'fa-solid ys':'fa-regular')+' fa-star"></i></button>'+
 (inTrash?'<button data-a="restore" title="Ripristina dal cestino"><i class="fa-solid fa-trash-arrow-up"></i></button>':'')+
 '<div class="more-wrap"><button data-a="more" title="Altre azioni"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu">'+
@@ -2865,7 +2989,7 @@ col.querySelector('[data-a="preview"]').addEventListener('click',()=>showPromptP
 const restoreBtn=col.querySelector('[data-a="restore"]');
 if(restoreBtn)restoreBtn.addEventListener('click',()=>restorePrompt(p.id),{signal:sig});
 
-col.querySelector('[data-a="dup"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(!f2)return;const np={...structuredClone(f2.prompt),id:uid(),title:p.title+' (Copia)',createdAt:Date.now(),updatedAt:Date.now(),copyCount:0,versions:[]};f2.sub.prompts.push(np);await save(d,{ids:{pid:np.id}});Toast.show('Duplicato!','ok')},{signal:sig});
+col.querySelectorAll('[data-a="dup"]').forEach(btn=>{btn.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();await duplicatePromptById(p.id);},{signal:sig})});
 col.querySelector('[data-a="fav"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.favorite=!f2.prompt.favorite;await save(d,{hist:false})},{signal:sig});
 col.querySelector('[data-a="pin"]').addEventListener('click',async()=>{const d=structuredClone(S.allData),f2=FP(d,p.id);if(f2)f2.prompt.pinned=!f2.prompt.pinned;await save(d,{hist:false});Toast.show(p.pinned?'Sbloccato':'Pinnato!','ok',1500)},{signal:sig});
 col.querySelector('[data-a="ver"]').addEventListener('click',()=>{const panel=$('verP');panel.classList.toggle('show');if(!panel.classList.contains('show'))return;if(!p.versions.length){panel.innerHTML='<div style="padding:8px;color:var(--t3);font-size:12px">Nessuna versione salvata</div>';return}panel.innerHTML=p.versions.slice().reverse().map((v,i)=>'<div class="ver-item"><span style="color:var(--t3);font-family:var(--font-mono)">'+fmtD(v.ts)+'</span><span style="font-size:11px;color:var(--t3)">'+wc(v.content).w+' parole</span><button class="ver-restore" data-idx="'+(p.versions.length-1-i)+'">Ripristina</button></div>').join('');panel.querySelectorAll('.ver-restore').forEach(btn=>{btn.addEventListener('click',async()=>{const idx=+btn.dataset.idx,d=structuredClone(S.allData),f2=FP(d,p.id);if(!f2)return;f2.prompt.versions.push({ts:Date.now(),content:f2.prompt.description});f2.prompt.description=f2.prompt.versions[idx].content;f2.prompt.updatedAt=Date.now();await save(d);Toast.show('Versione ripristinata!','ok')},{signal:sig})})},{signal:sig});
@@ -3672,9 +3796,10 @@ items.forEach(p=>mkItem(list,p));renderDet()}
 
 function mkItem(container,p){const el=document.createElement('div');el.className='it'+(p.id===S.pid?' ac':'')+(p.pinned?' pinned':'')+(p.favorite?' is-fav':'');el.tabIndex=0;el.style.position='relative';
 let th='';if(p.tags?.length)th='<div class="tr">'+p.tags.slice(0,3).map(t=>'<span class="tg" style="background:'+tc(t)+'">'+esc(t)+'</span>').join('')+'</div>';
-el.innerHTML='<div class="in">'+esc(p.title)+'</div>'+(p.cn?'<div class="ip">'+esc(p.cn)+' › '+esc(p.sn)+'</div>':'')+th+'<div class="item-actions"><button data-quick="copy" title="Copia"><i class="fa-regular fa-copy"></i></button><button data-quick="fav" title="Preferito"><i class="fa-'+(p.favorite?'solid':'regular')+' fa-star"></i></button><button data-quick="edit" title="Apri e modifica"><i class="fa-solid fa-pencil"></i></button></div>';
+el.innerHTML='<div class="in">'+esc(p.title)+'</div>'+(p.cn?'<div class="ip">'+esc(p.cn)+' › '+esc(p.sn)+'</div>':'')+th+'<div class="item-actions"><button data-quick="copy" title="Copia"><i class="fa-regular fa-copy"></i></button><button data-quick="dup" title="Duplica prompt"><i class="fa-regular fa-clone"></i></button><button data-quick="fav" title="Preferito"><i class="fa-'+(p.favorite?'solid':'regular')+' fa-star"></i></button><button data-quick="edit" title="Apri e modifica"><i class="fa-solid fa-pencil"></i></button></div>';
 el.onclick=async()=>{if(!await dirtyCheck())return;S.catId=p.ci;S.subId=p.si;S.pid=p.id;trackR(p.id,p.si,p.ci);render()};
 el.querySelector('[data-quick="copy"]').onclick=async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(compilePromptText(p));const d=structuredClone(S.allData),f=FP(d,p.id);if(f)f.prompt.copyCount=(f.prompt.copyCount||0)+1;await save(d,{hist:false});Toast.show('Copiato!','ok',1400)}catch(err){Toast.show('Errore copia.','er')}};
+el.querySelector('[data-quick="dup"]').onclick=async e=>{e.stopPropagation();await duplicatePromptById(p.id)};
 el.querySelector('[data-quick="fav"]').onclick=async e=>{e.stopPropagation();const d=structuredClone(S.allData),f=FP(d,p.id);if(f)f.prompt.favorite=!f.prompt.favorite;await save(d,{hist:false})};
 el.querySelector('[data-quick="edit"]').onclick=async e=>{e.stopPropagation();if(!await dirtyCheck())return;S.catId=p.ci;S.subId=p.si;S.pid=p.id;trackR(p.id,p.si,p.ci);render();setTimeout(()=>document.querySelector('[data-a="edit"]')?.click(),80)};
 el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}};container.appendChild(el)}
@@ -3721,7 +3846,7 @@ function v27EnhancePromptCards(){
   list.querySelectorAll('.it[data-id]').forEach(el=>{if(el.classList.contains('v27-ready'))return;const f=FP(S.allData,el.dataset.id);if(!f)return;const p=f.prompt,typ=v27Type(p),st=v27Status(p),q=promptQuality(p).score,days=p.updatedAt?Math.max(0,Math.floor((Date.now()-p.updatedAt)/86400000)):0;el.classList.add('v27-prompt-card','v27-ready');el.style.borderLeftColor=typ.color;
     const title=el.querySelector('.in');if(title&&!el.querySelector('.v27-card-top')){const top=document.createElement('div');top.className='v27-card-top';top.innerHTML='<span class="v27-type-dot" style="background:'+typ.color+';color:'+typ.color+'"></span>';title.parentNode.insertBefore(top,title);top.appendChild(title)}
     const meta=document.createElement('div');meta.className='v27-card-meta';meta.innerHTML='<span class="v27-status '+st.key+'">'+st.label+'</span><span class="v27-meta-chip"><i class="fa-solid '+typ.icon+'"></i>'+typ.label+'</span><span class="v27-meta-chip">Q '+q+'/100</span><span class="v27-meta-chip"><i class="fa-regular fa-copy"></i>'+(p.copyCount||0)+'×</span><span class="v27-meta-chip">'+(days===0?'oggi':days+'g fa')+'</span>';el.appendChild(meta);
-    if(!el.querySelector('.item-actions')){const acts=document.createElement('div');acts.className='item-actions';acts.innerHTML='<button data-v27-quick="copy" title="Copia prompt finale"><i class="fa-regular fa-copy"></i></button><button data-v27-quick="fav" title="Aggiungi o rimuovi dai preferiti"><i class="fa-'+(p.favorite?'solid':'regular')+' fa-star"></i></button><button data-v27-quick="edit" title="Apri e modifica"><i class="fa-solid fa-pencil"></i></button>';el.appendChild(acts);acts.querySelector('[data-v27-quick="copy"]').onclick=e=>{e.stopPropagation();v27CopyPrompt(p.id)};acts.querySelector('[data-v27-quick="fav"]').onclick=async e=>{e.stopPropagation();const d=structuredClone(S.allData),ff=FP(d,p.id);if(ff)ff.prompt.favorite=!ff.prompt.favorite;await save(d,{hist:false})};acts.querySelector('[data-v27-quick="edit"]').onclick=e=>{e.stopPropagation();v27OpenPrompt(p.id,true)}}
+    if(!el.querySelector('.item-actions')){const acts=document.createElement('div');acts.className='item-actions';acts.innerHTML='<button data-v27-quick="copy" title="Copia prompt finale"><i class="fa-regular fa-copy"></i></button><button data-v27-quick="dup" title="Duplica prompt"><i class="fa-regular fa-clone"></i></button><button data-v27-quick="fav" title="Aggiungi o rimuovi dai preferiti"><i class="fa-'+(p.favorite?'solid':'regular')+' fa-star"></i></button><button data-v27-quick="edit" title="Apri e modifica"><i class="fa-solid fa-pencil"></i></button>';el.appendChild(acts);acts.querySelector('[data-v27-quick="copy"]').onclick=e=>{e.stopPropagation();v27CopyPrompt(p.id)};acts.querySelector('[data-v27-quick="dup"]').onclick=async e=>{e.stopPropagation();await duplicatePromptById(p.id)};acts.querySelector('[data-v27-quick="fav"]').onclick=async e=>{e.stopPropagation();const d=structuredClone(S.allData),ff=FP(d,p.id);if(ff)ff.prompt.favorite=!ff.prompt.favorite;await save(d,{hist:false})};acts.querySelector('[data-v27-quick="edit"]').onclick=e=>{e.stopPropagation();v27OpenPrompt(p.id,true)}}
   });
 }
 function v27EnhanceDetail(){
