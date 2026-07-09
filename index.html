@@ -5463,6 +5463,277 @@ v28EnhanceDashboard2=function(){
   };
 })();
 
+
+/* ── PATCH v28.8: import sicuro, mai più cancellazione categorie accidentale ── */
+(function(){
+  const PS_SAFE_VERSION='v28.8';
+  const ACT_APPEND='Aggiungi categorie senza eliminare nulla';
+  const ACT_REPLACE='Ripristina backup completo e sostituisci tutto';
+  const CAT_NEW='Importa come nuova categoria';
+  const CAT_MERGE='Unisci nella categoria selezionata';
+  const CAT_REPLACE='Sostituisci categoria selezionata';
+
+  function safeFileNameV288(name){
+    return String(name || 'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,72) || 'categoria';
+  }
+
+  function extractCatsV288(parsed){
+    if(Array.isArray(parsed)) return parsed;
+    if(parsed && Array.isArray(parsed.categories)) return parsed.categories;
+    if(parsed && Array.isArray(parsed.data)) return parsed.data;
+    if(parsed && parsed.category) return [parsed.category];
+    if(parsed && typeof parsed.name==='string' && Array.isArray(parsed.subcategories)) return [parsed];
+    return null;
+  }
+
+  function activeCatsV288(){
+    return (S.allData||[]).filter(c=>!/cestino|🗑️/i.test(String(c.name||'')));
+  }
+
+  function promptCountV288(cat){
+    return (cat?.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0);
+  }
+
+  function catLabelV288(cat,i){
+    return (i+1)+') '+(cat.icon?cat.icon+' ':'')+(cat.name||'Senza nome')+
+      ' · '+((cat.subcategories||[]).length)+' sotto · '+promptCountV288(cat)+' prompt';
+  }
+
+  function uniqueNameV288(base,items,excludeId){
+    base=String(base||'Categoria importata').trim()||'Categoria importata';
+    const used=new Set((items||[])
+      .filter(x=>!excludeId || x.id!==excludeId)
+      .map(x=>String(x.name||'').trim().toLowerCase()));
+    if(!used.has(base.toLowerCase())) return base;
+    let n=base+' (Importata)', i=2;
+    while(used.has(n.toLowerCase())) n=base+' (Importata '+(i++)+')';
+    return n;
+  }
+
+  function clonePromptV288(p,keepId){
+    const q={...(p||{})};
+    q.id=keepId && q.id ? q.id : uid();
+    q.title=String(q.title||'Prompt importato');
+    q.description=typeof q.description==='string'?q.description:String(q.description||q.text||'');
+    if(q.text && typeof q.text!=='string') q.text=String(q.text||'');
+    if(q.plainText && typeof q.plainText!=='string') q.plainText=String(q.plainText||'');
+    q.tags=Array.isArray(q.tags)?q.tags:(q.tags?[q.tags]:[]);
+    q.favorite=!!q.favorite;
+    q.pinned=!!q.pinned;
+    q.copyCount=typeof q.copyCount==='number'?q.copyCount:0;
+    q.versions=Array.isArray(q.versions)?q.versions:[];
+    q.related=Array.isArray(q.related)?q.related:[];
+    q.createdAt=typeof q.createdAt==='number'?q.createdAt:Date.now();
+    q.updatedAt=Date.now();
+    q.noAutoVars=!!q.noAutoVars;
+    return q;
+  }
+
+  function cloneSubV288(sub,keepId){
+    const s={...(sub||{})};
+    s.id=keepId && s.id ? s.id : uid();
+    s.name=String(s.name||'Sottocategoria importata');
+    s.icon=s.icon||'';
+    s.prompts=(Array.isArray(s.prompts)?s.prompts:[]).map(p=>clonePromptV288(p,keepId));
+    return s;
+  }
+
+  function cloneCatV288(cat,opts={}){
+    const c={...(cat||{})};
+    c.id=opts.keepId && c.id ? c.id : (opts.forceId || uid());
+    c.name=String(c.name||'Categoria importata');
+    c.icon=c.icon||'';
+    c.prompts=Array.isArray(c.prompts)?c.prompts:[];
+    c.subcategories=(Array.isArray(c.subcategories)?c.subcategories:[]).map(s=>cloneSubV288(s,!!opts.keepIdsDeep));
+    return c;
+  }
+
+  async function appendCatsV288(cats){
+    const data=structuredClone(S.allData||[]);
+    let first=null;
+    (cats||[]).forEach(cat=>{
+      const copy=cloneCatV288(cat);
+      copy.name=uniqueNameV288(copy.name,data);
+      data.push(copy);
+      if(!first) first=copy;
+    });
+    await save(data,{ids:{
+      view:'columns',
+      catId:first?.id||S.catId||null,
+      subId:first?.subcategories?.[0]?.id||null,
+      pid:first?.subcategories?.[0]?.prompts?.[0]?.id||null
+    }});
+    Toast.show('Import completato senza eliminare le altre categorie.','ok');
+  }
+
+  async function replaceAllV288(cats){
+    const ok=await Modal.confirm(
+      'Conferma sostituzione completa',
+      'Questa azione elimina/sostituisce tutte le categorie attuali con quelle del file. Usala solo per ripristinare un backup completo.'
+    );
+    if(!ok) return;
+    const data=(cats||[]).map(c=>cloneCatV288(c,{keepId:true,keepIdsDeep:true}));
+    await save(data,{ids:{
+      view:'columns',
+      catId:data[0]?.id||null,
+      subId:data[0]?.subcategories?.[0]?.id||null,
+      pid:data[0]?.subcategories?.[0]?.prompts?.[0]?.id||null
+    },hist:true});
+    Toast.show('Backup completo ripristinato.','ok');
+  }
+
+  async function safeImportFullJsonV288(parsed){
+    const cats=extractCatsV288(parsed);
+    if(!cats || !validate(cats)){
+      Toast.show('JSON non valido o formato non riconosciuto.','er');
+      return;
+    }
+
+    const isCategoryPackage=parsed && !Array.isArray(parsed) && (parsed.type==='prompt-studio-category-import' || parsed.safeImport || parsed.mode==='append');
+    if(isCategoryPackage || cats.length===1){
+      await appendCatsV288(cats);
+      return;
+    }
+
+    const res=await Modal.prompt('Importa JSON in sicurezza',[
+      {label:'Azione',type:'select',options:[ACT_APPEND,ACT_REPLACE],default:ACT_APPEND}
+    ]);
+    if(!res) return;
+
+    if(res.f0===ACT_REPLACE) await replaceAllV288(cats);
+    else await appendCatsV288(cats);
+  }
+
+  async function importSingleCategoryWithChoiceV288(parsed){
+    const cats=extractCatsV288(parsed);
+    if(!cats || !validate(cats)){
+      Toast.show('JSON categoria non valido.','er');
+      return;
+    }
+
+    const sourceLabels=cats.map(catLabelV288);
+    const existing=activeCatsV288();
+    const targetLabels=['Nuova categoria'].concat(existing.map(catLabelV288));
+    const currentIndex=Math.max(0,existing.findIndex(c=>c.id===S.catId));
+
+    const res=await Modal.prompt('Importa categoria senza cancellare le altre',[
+      {label:'Categoria nel file da importare',type:'select',options:sourceLabels,default:sourceLabels[0]},
+      {label:'Azione',type:'select',options:[CAT_NEW,CAT_MERGE,CAT_REPLACE],default:CAT_NEW},
+      {label:'Categoria di destinazione per unione/sostituzione',type:'select',options:targetLabels,default:targetLabels[currentIndex+1]||targetLabels[0]}
+    ]);
+    if(!res) return;
+
+    const srcIdx=Math.max(0,sourceLabels.indexOf(res.f0));
+    const source=cats[srcIdx];
+    const mode=res.f1||CAT_NEW;
+    const targetIdx=targetLabels.indexOf(res.f2)-1;
+    const target=targetIdx>=0?existing[targetIdx]:null;
+    const data=structuredClone(S.allData||[]);
+    let selectedCatId=null, selectedSubId=null, selectedPromptId=null;
+
+    if(mode===CAT_NEW){
+      const copy=cloneCatV288(source);
+      copy.name=uniqueNameV288(copy.name,data);
+      data.push(copy);
+      selectedCatId=copy.id;
+      selectedSubId=copy.subcategories?.[0]?.id||null;
+      selectedPromptId=copy.subcategories?.[0]?.prompts?.[0]?.id||null;
+    }else{
+      if(!target){
+        Toast.show('Scegli una categoria di destinazione.','er');
+        return;
+      }
+      const targetInData=data.find(c=>c.id===target.id);
+      if(!targetInData){
+        Toast.show('Categoria di destinazione non trovata.','er');
+        return;
+      }
+
+      if(mode===CAT_REPLACE){
+        const ok=await Modal.confirm(
+          'Sostituire solo questa categoria?',
+          'Solo “'+targetInData.name+'” sarà sostituita. Le altre categorie resteranno intatte.'
+        );
+        if(!ok) return;
+
+        const replacement=cloneCatV288(source,{forceId:targetInData.id,keepIdsDeep:true});
+        replacement.name=uniqueNameV288(replacement.name,data,targetInData.id);
+        const i=data.findIndex(c=>c.id===targetInData.id);
+        data[i]=replacement;
+        selectedCatId=replacement.id;
+        selectedSubId=replacement.subcategories?.[0]?.id||null;
+        selectedPromptId=replacement.subcategories?.[0]?.prompts?.[0]?.id||null;
+      }else{
+        if(!Array.isArray(targetInData.subcategories)) targetInData.subcategories=[];
+        const imported=cloneCatV288(source);
+        imported.subcategories.forEach(sub=>{
+          sub.name=uniqueNameV288(sub.name,targetInData.subcategories);
+          targetInData.subcategories.push(sub);
+        });
+        selectedCatId=targetInData.id;
+        const firstImported=targetInData.subcategories[targetInData.subcategories.length-imported.subcategories.length]||targetInData.subcategories[0];
+        selectedSubId=firstImported?.id||null;
+        selectedPromptId=firstImported?.prompts?.[0]?.id||null;
+      }
+    }
+
+    await save(data,{ids:{view:'columns',catId:selectedCatId,subId:selectedSubId,pid:selectedPromptId}});
+    Toast.show('Categoria importata senza eliminare le altre.','ok');
+  }
+
+  doImport=function(e){
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        await safeImportFullJsonV288(parsed);
+      }catch(err){
+        console.error(err);
+        Toast.show('Errore nel parsing JSON.','er');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  };
+
+  doImportCat=function(e){
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        await importSingleCategoryWithChoiceV288(parsed);
+      }catch(err){
+        console.error(err);
+        Toast.show('Errore importazione categoria.','er');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  };
+
+  const oldDoExportCatV288=doExportCat;
+  doExportCat=function(){
+    if(typeof oldDoExportCatV288==='function') return oldDoExportCatV288();
+  };
+
+  const oldRenderDashboardV288=renderDashboard;
+  renderDashboard=function(){
+    oldRenderDashboardV288();
+    document.title='Prompt Studio '+PS_SAFE_VERSION;
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_SAFE_VERSION;
+  };
+})();
+
+
 async function init(){
     Loader.show();try{
         await DB.init();Modal.init();
