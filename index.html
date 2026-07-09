@@ -2398,7 +2398,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v29.3</span>
+    <span class="logo-badge">v29.6</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -8286,6 +8286,588 @@ S.view = 'dashboard';
   }
 
   window.PS_ZIP_CATEGORIES_PATCH='v29.5';
+})();
+
+
+/* ── V29.6 ELIMINAZIONE CATEGORIE MULTIPLA CON FLAG ───────────────────────── */
+(function(){
+  const PS_V296_VERSION='v29.6';
+
+  const V296_RECOMMENDED_DELETE_NAMES=[
+    'AI - Ottimizzata',
+    'Analisi',
+    'App',
+    'Apple',
+    'Articoli',
+    'Best',
+    '🗑️ Cestino',
+    'Claude',
+    'Claude CoWork',
+    'Clienti'
+  ];
+
+  function v296NormName(name){
+    return String(name||'')
+      .replace(/^[^\p{L}\p{N}]+/u,'')
+      .trim()
+      .replace(/\s+/g,' ')
+      .toLowerCase();
+  }
+
+  function v296SortKey(name){
+    return String(name||'')
+      .replace(/^[^\p{L}\p{N}]+/u,'')
+      .trim()
+      .replace(/\s+/g,' ');
+  }
+
+  function v296Esc(s){
+    const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(s??'').replace(/[&<>"']/g,c=>m[c]);
+  }
+
+  function v296Clone(obj){
+    try{return structuredClone(obj)}
+    catch(_){return JSON.parse(JSON.stringify(obj))}
+  }
+
+  function v296CountPrompts(cat){
+    let n=0;
+    if(Array.isArray(cat?.prompts)) n+=cat.prompts.length;
+    (cat?.subcategories||[]).forEach(s=>{n+=(s?.prompts||[]).length});
+    return n;
+  }
+
+  function v296CountSub(cat){
+    return (cat?.subcategories||[]).length;
+  }
+
+  function v296CollectPromptIds(cat){
+    const ids=new Set();
+    (cat?.prompts||[]).forEach(p=>{if(p?.id) ids.add(p.id)});
+    (cat?.subcategories||[]).forEach(s=>(s?.prompts||[]).forEach(p=>{if(p?.id) ids.add(p.id)}));
+    return ids;
+  }
+
+  function v296Rows(){
+    return (S.allData||[])
+      .filter(c=>c&&c.id)
+      .map((cat,index)=>({
+        cat,
+        id:cat.id,
+        name:cat.name||'Categoria senza nome',
+        index,
+        promptCount:v296CountPrompts(cat),
+        subCount:v296CountSub(cat),
+        suggested:V296_RECOMMENDED_DELETE_NAMES.map(v296NormName).includes(v296NormName(cat.name))
+      }))
+      .sort((a,b)=>v296SortKey(a.name).localeCompare(v296SortKey(b.name),'it',{sensitivity:'base',numeric:true}));
+  }
+
+  function v296RecommendedExisting(rows){
+    return rows.filter(r=>r.suggested).sort((a,b)=>v296SortKey(a.name).localeCompare(v296SortKey(b.name),'it',{sensitivity:'base',numeric:true}));
+  }
+
+  function v296NextSelection(data){
+    if(!data.length) return {view:'dashboard',catId:null,subId:null,pid:null};
+    const next=data.find(c=>c&&c.id) || data[0];
+    const sub=(next?.subcategories||[])[0] || null;
+    const prompt=(sub?.prompts||[])[0] || null;
+    return {
+      view:'columns',
+      catId:next?.id||null,
+      subId:sub?.id||null,
+      pid:prompt?.id||null
+    };
+  }
+
+  function v296Style(){
+    if($('v296BulkDeleteStyle')) return;
+    const st=document.createElement('style');
+    st.id='v296BulkDeleteStyle';
+    st.textContent=`
+      .v296-bulk-overlay{
+        position:fixed;
+        inset:0;
+        z-index:99999;
+        background:rgba(0,0,0,.62);
+        backdrop-filter:blur(10px);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:18px;
+      }
+      .v296-bulk-modal{
+        width:min(940px,96vw);
+        max-height:92vh;
+        overflow:hidden;
+        border:1px solid var(--bd);
+        border-radius:22px;
+        background:linear-gradient(180deg,var(--bg2),var(--bg));
+        box-shadow:0 30px 90px rgba(0,0,0,.55);
+        color:var(--t1);
+        display:grid;
+        grid-template-rows:auto auto 1fr auto;
+      }
+      .v296-bulk-head{
+        display:flex;
+        gap:14px;
+        align-items:flex-start;
+        justify-content:space-between;
+        padding:18px 20px 14px;
+        border-bottom:1px solid var(--bd);
+      }
+      .v296-bulk-title{
+        display:grid;
+        gap:4px;
+      }
+      .v296-bulk-title b{
+        font-family:var(--font-head);
+        font-size:20px;
+        letter-spacing:-.02em;
+      }
+      .v296-bulk-title small{
+        color:var(--t2);
+        line-height:1.35;
+      }
+      .v296-x{
+        border:1px solid var(--bd);
+        background:var(--el);
+        color:var(--t1);
+        width:38px;
+        height:38px;
+        border-radius:999px;
+        cursor:pointer;
+      }
+      .v296-bulk-actions-top{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        padding:12px 20px;
+        border-bottom:1px solid var(--bd);
+        background:rgba(255,255,255,.03);
+      }
+      .v296-mini-btn{
+        border:1px solid var(--bd);
+        border-radius:999px;
+        padding:8px 11px;
+        background:var(--el);
+        color:var(--t1);
+        cursor:pointer;
+        font-size:12px;
+        font-weight:700;
+        display:inline-flex;
+        align-items:center;
+        gap:7px;
+      }
+      .v296-mini-btn:hover{filter:brightness(1.08)}
+      .v296-mini-btn.danger{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+      .v296-mini-btn.ok{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.45)}
+      .v296-bulk-body{
+        overflow:auto;
+        padding:16px 20px 18px;
+        display:grid;
+        gap:14px;
+      }
+      .v296-suggest-box{
+        border:1px solid rgba(245,158,11,.38);
+        background:rgba(245,158,11,.10);
+        border-radius:16px;
+        padding:12px 14px;
+        display:grid;
+        gap:8px;
+      }
+      .v296-suggest-box b{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        color:var(--t1);
+      }
+      .v296-suggest-list{
+        margin:0;
+        padding-left:22px;
+        color:var(--t2);
+        columns:2;
+      }
+      .v296-suggest-list li{break-inside:avoid;margin:2px 0}
+      .v296-cat-list{
+        display:grid;
+        gap:8px;
+      }
+      .v296-cat-row{
+        display:grid;
+        grid-template-columns:auto 1fr auto;
+        align-items:center;
+        gap:12px;
+        padding:11px 12px;
+        border:1px solid var(--bd);
+        border-radius:15px;
+        background:var(--el);
+      }
+      .v296-cat-row.suggested{
+        border-color:rgba(245,158,11,.50);
+        background:linear-gradient(90deg,rgba(245,158,11,.14),var(--el));
+      }
+      .v296-cat-row input{
+        width:18px;
+        height:18px;
+        accent-color:#ef4444;
+      }
+      .v296-cat-main{
+        display:grid;
+        gap:3px;
+        min-width:0;
+      }
+      .v296-cat-name{
+        font-weight:800;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .v296-cat-meta{
+        color:var(--t2);
+        font-size:12px;
+      }
+      .v296-pill{
+        border:1px solid var(--bd);
+        border-radius:999px;
+        padding:4px 8px;
+        font-size:11px;
+        color:var(--t2);
+        white-space:nowrap;
+      }
+      .v296-pill.warn{
+        color:#f59e0b;
+        border-color:rgba(245,158,11,.45);
+        background:rgba(245,158,11,.12);
+      }
+      .v296-bulk-foot{
+        border-top:1px solid var(--bd);
+        padding:14px 20px 18px;
+        display:grid;
+        gap:12px;
+        background:rgba(255,255,255,.03);
+      }
+      .v296-summary{
+        color:var(--t2);
+        font-size:13px;
+        line-height:1.4;
+      }
+      .v296-confirm-line{
+        display:grid;
+        grid-template-columns:1fr auto auto;
+        gap:10px;
+        align-items:center;
+      }
+      .v296-confirm-line input{
+        width:100%;
+        padding:11px 13px;
+        border:1px solid var(--bd);
+        border-radius:12px;
+        background:var(--el);
+        color:var(--t1);
+        outline:none;
+      }
+      .v296-main-btn{
+        border:0;
+        border-radius:12px;
+        padding:12px 16px;
+        font-weight:900;
+        cursor:pointer;
+        color:white;
+        background:var(--rd);
+        min-width:160px;
+      }
+      .v296-main-btn:disabled{
+        opacity:.45;
+        cursor:not-allowed;
+        filter:grayscale(.3);
+      }
+      .v296-cancel-btn{
+        border:1px solid var(--bd);
+        border-radius:12px;
+        padding:11px 14px;
+        cursor:pointer;
+        color:var(--t1);
+        background:var(--el);
+      }
+      @media(max-width:720px){
+        .v296-suggest-list{columns:1}
+        .v296-confirm-line{grid-template-columns:1fr}
+        .v296-main-btn,.v296-cancel-btn{width:100%}
+        .v296-cat-row{grid-template-columns:auto 1fr}
+        .v296-cat-row .v296-pill{grid-column:2}
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  async function v296DeleteSelected(ids){
+    const selectedIds=new Set(ids);
+    const original=S.allData||[];
+    const removed=original.filter(c=>selectedIds.has(c.id));
+    if(!removed.length){
+      Toast.show('Nessuna categoria selezionata.','er');
+      return false;
+    }
+
+    const data=v296Clone(original).filter(c=>!selectedIds.has(c.id));
+    const promptIds=new Set();
+    removed.forEach(cat=>v296CollectPromptIds(cat).forEach(id=>promptIds.add(id)));
+
+    if(typeof validate==='function' && !validate(data)){
+      Toast.show('Dati non validi dopo l’eliminazione. Operazione annullata.','er',6500);
+      return false;
+    }
+
+    S.recents=(S.recents||[]).filter(r=>!selectedIds.has(r.catId)&&!selectedIds.has(r.cid)&&!promptIds.has(r.pid));
+    if(typeof DB!=='undefined' && DB?.saveR) await DB.saveR(S.recents);
+
+    await save(data,{ids:v296NextSelection(data)});
+    Toast.show('Eliminate '+removed.length+' categorie.','ok',5200);
+    return true;
+  }
+
+  function v296BuildConfirmMessage(rows){
+    const names=rows.map(r=>'• '+r.name).join('\n');
+    const promptCount=rows.reduce((n,r)=>n+r.promptCount,0);
+    const subCount=rows.reduce((n,r)=>n+r.subCount,0);
+    return 'Categorie selezionate: '+rows.length+
+      '\nSottocategorie: '+subCount+
+      '\nPrompt contenuti: '+promptCount+
+      '\n\nElenco categorie da eliminare:\n'+names+
+      '\n\nL’operazione è definitiva. Le categorie non selezionate resteranno intatte.';
+  }
+
+  async function v296OpenBulkDeleteFlow(preselectId){
+    if(!await dirtyCheck()) return false;
+
+    const rows=v296Rows();
+    if(!rows.length){
+      Toast.show('Nessuna categoria da eliminare.','er');
+      return false;
+    }
+
+    v296Style();
+
+    return await new Promise(resolve=>{
+      const overlay=document.createElement('div');
+      overlay.className='v296-bulk-overlay';
+      overlay.setAttribute('role','dialog');
+      overlay.setAttribute('aria-modal','true');
+
+      const suggested=v296RecommendedExisting(rows);
+      const suggestedHtml=suggested.length
+        ? '<div class="v296-suggest-box"><b><i class="fa-solid fa-triangle-exclamation"></i>Categorie consigliate da eliminare dopo il riordino</b><ol class="v296-suggest-list">'+suggested.map(r=>'<li>'+v296Esc(r.name)+'</li>').join('')+'</ol></div>'
+        : '<div class="v296-suggest-box"><b><i class="fa-solid fa-circle-info"></i>Nessuna delle categorie consigliate da eliminare è presente.</b><small>Puoi comunque selezionare manualmente le categorie da rimuovere.</small></div>';
+
+      overlay.innerHTML=`
+        <div class="v296-bulk-modal">
+          <div class="v296-bulk-head">
+            <div class="v296-bulk-title">
+              <b><i class="fa-regular fa-trash-can"></i> Elimina categorie multiple</b>
+              <small>Seleziona con il flag le categorie da eliminare. L’elenco è ordinato alfabeticamente.</small>
+            </div>
+            <button class="v296-x" type="button" aria-label="Chiudi"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="v296-bulk-actions-top">
+            <button class="v296-mini-btn ok" type="button" data-act="suggest"><i class="fa-solid fa-check-double"></i>Seleziona consigliate</button>
+            <button class="v296-mini-btn" type="button" data-act="all"><i class="fa-regular fa-square-check"></i>Seleziona tutte</button>
+            <button class="v296-mini-btn" type="button" data-act="none"><i class="fa-regular fa-square"></i>Deseleziona tutte</button>
+            <button class="v296-mini-btn danger" type="button" data-act="trash"><i class="fa-solid fa-trash-can"></i>Solo cestino</button>
+          </div>
+          <div class="v296-bulk-body">
+            ${suggestedHtml}
+            <div class="v296-cat-list">
+              ${rows.map(r=>`
+                <label class="v296-cat-row ${r.suggested?'suggested':''}" data-id="${v296Esc(r.id)}">
+                  <input type="checkbox" value="${v296Esc(r.id)}" ${preselectId===r.id?'checked':''}>
+                  <span class="v296-cat-main">
+                    <span class="v296-cat-name">${v296Esc(r.name)}</span>
+                    <span class="v296-cat-meta">${r.subCount} sottocategorie · ${r.promptCount} prompt</span>
+                  </span>
+                  ${r.suggested?'<span class="v296-pill warn">consigliata</span>':'<span class="v296-pill">categoria</span>'}
+                </label>
+              `).join('')}
+            </div>
+          </div>
+          <div class="v296-bulk-foot">
+            <div class="v296-summary">Nessuna categoria selezionata.</div>
+            <div class="v296-confirm-line">
+              <input type="text" placeholder="Scrivi ELIMINA per confermare">
+              <button class="v296-cancel-btn" type="button">Annulla</button>
+              <button class="v296-main-btn" type="button" disabled>Elimina selezionate</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const dispose=()=>{
+        overlay.remove();
+      };
+      const close=(value=false)=>{
+        dispose();
+        resolve(value);
+      };
+
+      const checks=[...overlay.querySelectorAll('input[type="checkbox"]')];
+      const confirmInput=overlay.querySelector('.v296-confirm-line input');
+      const summary=overlay.querySelector('.v296-summary');
+      const delBtn=overlay.querySelector('.v296-main-btn');
+
+      const selectedRows=()=>checks
+        .filter(ch=>ch.checked)
+        .map(ch=>rows.find(r=>r.id===ch.value))
+        .filter(Boolean)
+        .sort((a,b)=>v296SortKey(a.name).localeCompare(v296SortKey(b.name),'it',{sensitivity:'base',numeric:true}));
+
+      const update=()=>{
+        const sel=selectedRows();
+        const prompts=sel.reduce((n,r)=>n+r.promptCount,0);
+        const subs=sel.reduce((n,r)=>n+r.subCount,0);
+        summary.textContent=sel.length
+          ? 'Selezionate '+sel.length+' categorie · '+subs+' sottocategorie · '+prompts+' prompt. Categorie: '+sel.map(r=>r.name).join(', ')
+          : 'Nessuna categoria selezionata.';
+        delBtn.disabled=!(sel.length && String(confirmInput.value||'').trim().toUpperCase()==='ELIMINA');
+      };
+
+      overlay.querySelector('.v296-x').onclick=()=>close(false);
+      overlay.querySelector('.v296-cancel-btn').onclick=()=>close(false);
+      overlay.addEventListener('keydown',e=>{if(e.key==='Escape')close(false)});
+      overlay.addEventListener('click',e=>{if(e.target===overlay)close(false)});
+
+      checks.forEach(ch=>ch.addEventListener('change',update));
+      confirmInput.addEventListener('input',update);
+
+      overlay.querySelector('[data-act="suggest"]').onclick=()=>{
+        checks.forEach(ch=>{
+          const r=rows.find(x=>x.id===ch.value);
+          ch.checked=!!r?.suggested;
+        });
+        update();
+      };
+      overlay.querySelector('[data-act="all"]').onclick=()=>{
+        checks.forEach(ch=>ch.checked=true);
+        update();
+      };
+      overlay.querySelector('[data-act="none"]').onclick=()=>{
+        checks.forEach(ch=>ch.checked=false);
+        update();
+      };
+      overlay.querySelector('[data-act="trash"]').onclick=()=>{
+        checks.forEach(ch=>{
+          const r=rows.find(x=>x.id===ch.value);
+          ch.checked=/cestino/i.test(v296SortKey(r?.name||''));
+        });
+        update();
+      };
+
+      delBtn.onclick=async()=>{
+        const sel=selectedRows();
+        if(!sel.length) return;
+        if(String(confirmInput.value||'').trim().toUpperCase()!=='ELIMINA'){
+          Toast.show('Scrivi ELIMINA per confermare.','er');
+          return;
+        }
+
+        const msg=v296BuildConfirmMessage(sel);
+        dispose();
+        const ok=await Modal.confirm('Conferma eliminazione multipla',msg);
+        if(!ok){
+          resolve(false);
+          return;
+        }
+        const done=await v296DeleteSelected(sel.map(r=>r.id));
+        resolve(done);
+      };
+
+      setTimeout(()=>overlay.querySelector('input[type="checkbox"]')?.focus(),80);
+      update();
+    });
+  }
+
+  function v296BindButtons(){
+    const btn=$('bDelCat');
+    if(btn){
+      btn.innerHTML='<i class="fa-regular fa-trash-can"></i>Elimina Categorie';
+      btn.title='Elimina categorie multiple';
+      btn.onclick=async()=>{
+        $('toM')?.classList.remove('show');
+        $('v294BackupMenu')?.classList.remove('show');
+        await v296OpenBulkDeleteFlow(null);
+      };
+    }
+
+    const menu=$('v294BackupMenu');
+    if(menu&&!$('v296BulkDeleteFromBackup')){
+      const sec=document.createElement('div');
+      sec.className='v294-menu-section';
+      sec.textContent='Pulizia categorie';
+      const b=document.createElement('button');
+      b.id='v296BulkDeleteFromBackup';
+      b.type='button';
+      b.innerHTML='<i class="fa-regular fa-trash-can"></i>Elimina categorie multiple';
+      b.onclick=async e=>{
+        e.stopPropagation();
+        $('v294BackupMenu')?.classList.remove('show');
+        $('bkCenterBtn')?.classList.remove('active');
+        await v296OpenBulkDeleteFlow(null);
+      };
+      menu.appendChild(sec);
+      menu.appendChild(b);
+    }
+
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_V296_VERSION;
+    document.title='Prompt Studio '+PS_V296_VERSION;
+  }
+
+  const __v296Setup=typeof setup==='function'?setup:null;
+  if(__v296Setup){
+    setup=function(){
+      __v296Setup();
+      v296BindButtons();
+    };
+  }
+
+  const __v296RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v296RenderDD){
+    renderDD=function(){
+      __v296RenderDD();
+      v296BindButtons();
+    };
+  }
+
+  const __v296RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v296RenderDashboard){
+    renderDashboard=function(){
+      __v296RenderDashboard();
+      v296BindButtons();
+    };
+  }
+
+  const __v296RenderC1=typeof renderC1==='function'?renderC1:null;
+  if(__v296RenderC1){
+    renderC1=function(){
+      __v296RenderC1();
+      v296BindButtons();
+      const col=$('c1');
+      const cat=FC(S.allData,S.catId);
+      const del=col?.querySelector('[data-a="dc"]');
+      if(del&&cat){
+        del.title='Elimina categorie multiple';
+        del.onclick=async e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          await v296OpenBulkDeleteFlow(cat.id);
+        };
+      }
+    };
+  }
+
+  window.PS_BULK_DELETE_CATEGORIES_PATCH='v29.6';
 })();
 
 
