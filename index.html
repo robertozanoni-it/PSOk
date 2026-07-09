@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28.6 - Icone e Duplica Prompt</title>
+<title>Prompt Studio v28.7 - Backup categorie con scelta import/export</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2202,7 +2202,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v27</span>
+    <span class="logo-badge">v28.7</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -5197,6 +5197,271 @@ v28EnhanceDashboard2=function(){
   };
 })();
 
+
+
+/* ── PATCH v28.7: scelta categoria esplicita per import/export ── */
+(function(){
+  const PS_CAT_VERSION='v28.7';
+  const MODE_NEW='Importa come nuova categoria';
+  const MODE_MERGE='Unisci nella categoria selezionata';
+  const MODE_REPLACE='Sostituisci categoria selezionata';
+
+  function psFileNameV27(name){
+    return String(name || 'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,72) || 'categoria';
+  }
+
+  function psDownloadJsonV27(payload,filename){
+    const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const u=URL.createObjectURL(b);
+    const a=document.createElement('a');
+    a.href=u;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(u);
+  }
+
+  function psActiveCategoriesV27(){
+    return (S.allData||[]).filter(c=>!/cestino|🗑️/i.test(String(c.name||'')));
+  }
+
+  function psPromptCountV27(cat){
+    return (cat?.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0);
+  }
+
+  function psCatLabelV27(cat,i){
+    return (i+1)+') '+(cat.icon?cat.icon+' ':'')+(cat.name||'Senza nome')+
+      ' · '+((cat.subcategories||[]).length)+' sotto · '+psPromptCountV27(cat)+' prompt';
+  }
+
+  function psUniqueNameV27(base,items,excludeId){
+    base=String(base||'Categoria importata').trim()||'Categoria importata';
+    const used=new Set((items||[])
+      .filter(x=>!excludeId || x.id!==excludeId)
+      .map(x=>String(x.name||'').trim().toLowerCase()));
+    if(!used.has(base.toLowerCase()))return base;
+    let n=base+' (Importata)',i=2;
+    while(used.has(n.toLowerCase()))n=base+' (Importata '+(i++)+')';
+    return n;
+  }
+
+  function psNormalizePromptV27(p,keepId){
+    const copy={...p};
+    copy.id=keepId && copy.id ? copy.id : uid();
+    copy.title=String(copy.title||'Prompt importato');
+    copy.description=typeof copy.description==='string'?copy.description:String(copy.description||'');
+    copy.tags=Array.isArray(copy.tags)?copy.tags:(copy.tags?[copy.tags]:[]);
+    copy.favorite=!!copy.favorite;
+    copy.pinned=!!copy.pinned;
+    copy.copyCount=typeof copy.copyCount==='number'?copy.copyCount:0;
+    copy.versions=Array.isArray(copy.versions)?copy.versions:[];
+    copy.related=Array.isArray(copy.related)?copy.related:[];
+    copy.createdAt=typeof copy.createdAt==='number'?copy.createdAt:Date.now();
+    copy.updatedAt=Date.now();
+    copy.noAutoVars=!!copy.noAutoVars;
+    return copy;
+  }
+
+  function psCloneSubV27(sub,keepId){
+    const copy=structuredClone(sub||{});
+    copy.id=keepId && copy.id ? copy.id : uid();
+    copy.name=String(copy.name||'Sottocategoria importata');
+    copy.icon=copy.icon||'';
+    copy.prompts=(copy.prompts||[]).map(p=>psNormalizePromptV27(p,keepId));
+    return copy;
+  }
+
+  function psCloneCategoryV27(cat,opts={}){
+    const copy=structuredClone(cat||{});
+    copy.id=opts.keepId && copy.id ? copy.id : (opts.forceId || uid());
+    copy.name=String(copy.name||'Categoria importata');
+    copy.icon=copy.icon||'';
+    copy.subcategories=(copy.subcategories||[]).map(s=>psCloneSubV27(s,!!opts.keepIdsDeep));
+    return copy;
+  }
+
+  function psSelectedPanelCatIdV27(){
+    return $('bkCatSelect')?.value || S.catId || psActiveCategoriesV27()[0]?.id || '';
+  }
+
+  async function psChooseExportCategoryV27(){
+    const cats=psActiveCategoriesV27();
+    if(!cats.length){
+      Toast.show('Nessuna categoria da esportare.','er');
+      return;
+    }
+
+    const labels=cats.map(psCatLabelV27);
+    const currentId=psSelectedPanelCatIdV27();
+    const currentIndex=Math.max(0,cats.findIndex(c=>c.id===currentId));
+    const res=await Modal.prompt('Esporta categoria',[
+      {label:'Scegli la categoria da esportare',type:'select',options:labels,default:labels[currentIndex]||labels[0]}
+    ]);
+    if(!res)return;
+
+    const label=res.f0;
+    const idx=labels.indexOf(label);
+    const cat=cats[idx>=0?idx:0];
+    const date=new Date().toISOString().slice(0,10);
+    psDownloadJsonV27([cat],'prompt_categoria_'+psFileNameV27(cat.name)+'_'+date+'.json');
+    Toast.show('Categoria esportata: '+cat.name,'ok');
+  }
+
+  async function psImportChosenCategoryV27(rawCats){
+    const importCats=(Array.isArray(rawCats)?rawCats:[rawCats]).filter(Boolean);
+    if(!validate(importCats)){
+      Toast.show('JSON categoria non valido.','er');
+      return;
+    }
+
+    const sourceLabels=importCats.map(psCatLabelV27);
+    const existing=psActiveCategoriesV27();
+    const targetLabels=['Nuova categoria'] .concat(existing.map(psCatLabelV27));
+    const targetIndex=Math.max(0,existing.findIndex(c=>c.id===S.catId));
+    const res=await Modal.prompt('Importa categoria',[
+      {label:'Categoria nel file da importare',type:'select',options:sourceLabels,default:sourceLabels[0]},
+      {label:'Azione',type:'select',options:[MODE_NEW,MODE_MERGE,MODE_REPLACE],default:MODE_NEW},
+      {label:'Categoria di destinazione per unione/sostituzione',type:'select',options:targetLabels,default:targetLabels[targetIndex+1]||targetLabels[0]}
+    ]);
+    if(!res)return;
+
+    const srcIdx=Math.max(0,sourceLabels.indexOf(res.f0));
+    const source=importCats[srcIdx];
+    const mode=res.f1||MODE_NEW;
+    const targetIdx=targetLabels.indexOf(res.f2)-1;
+    const target=targetIdx>=0?existing[targetIdx]:null;
+
+    const data=structuredClone(S.allData||[]);
+    let selectedCatId=null,selectedSubId=null,selectedPromptId=null;
+
+    if(mode===MODE_NEW){
+      const copy=psCloneCategoryV27(source);
+      copy.name=psUniqueNameV27(copy.name,data);
+      data.push(copy);
+      selectedCatId=copy.id;
+      selectedSubId=copy.subcategories?.[0]?.id||null;
+      selectedPromptId=copy.subcategories?.[0]?.prompts?.[0]?.id||null;
+    }else{
+      if(!target){
+        Toast.show('Scegli una categoria di destinazione.','er');
+        return;
+      }
+
+      const targetInData=data.find(c=>c.id===target.id);
+      if(!targetInData){
+        Toast.show('Categoria di destinazione non trovata.','er');
+        return;
+      }
+
+      if(mode===MODE_REPLACE){
+        const ok=await Modal.confirm(
+          'Sostituire categoria?',
+          'La categoria “'+targetInData.name+'” sarà sostituita con “'+(source.name||'Categoria importata')+'”.'
+        );
+        if(!ok)return;
+
+        const replacement=psCloneCategoryV27(source,{forceId:targetInData.id,keepIdsDeep:true});
+        replacement.name=psUniqueNameV27(replacement.name,data,targetInData.id);
+        const i=data.findIndex(c=>c.id===targetInData.id);
+        data[i]=replacement;
+        selectedCatId=replacement.id;
+        selectedSubId=replacement.subcategories?.[0]?.id||null;
+        selectedPromptId=replacement.subcategories?.[0]?.prompts?.[0]?.id||null;
+      }else{
+        if(!Array.isArray(targetInData.subcategories))targetInData.subcategories=[];
+        const imported=psCloneCategoryV27(source);
+        (imported.subcategories||[]).forEach(sub=>{
+          sub.name=psUniqueNameV27(sub.name,targetInData.subcategories);
+          targetInData.subcategories.push(sub);
+        });
+        selectedCatId=targetInData.id;
+        const firstImported=(targetInData.subcategories||[]).slice(-((imported.subcategories||[]).length))[0] || targetInData.subcategories?.[0];
+        selectedSubId=firstImported?.id||null;
+        selectedPromptId=firstImported?.prompts?.[0]?.id||null;
+      }
+    }
+
+    await save(data,{ids:{view:'columns',catId:selectedCatId,subId:selectedSubId,pid:selectedPromptId}});
+    Toast.show('Categoria importata!','ok');
+  }
+
+  // Export: ora apre sempre una finestra di scelta, anche dal menu strumenti.
+  doExportCat=function(){
+    psChooseExportCategoryV27();
+  };
+
+  // Import: scegli il file, poi scegli la categoria contenuta nel file e la destinazione.
+  doImportCat=function(e){
+    const file=e.target.files[0];
+    if(!file)return;
+
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        const cats=Array.isArray(parsed)?parsed:[parsed];
+        if(!Array.isArray(cats)||!cats.length){
+          Toast.show('JSON categoria non valido.','er');
+          return;
+        }
+        await psImportChosenCategoryV27(cats);
+      }catch(err){
+        console.error(err);
+        Toast.show('Errore importazione categoria.','er');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  };
+
+  const oldShowBackupCenterV27=showBackupCenter;
+  showBackupCenter=async function(){
+    await oldShowBackupCenterV27();
+
+    const panel=$('bkCatPanel');
+    if(panel){
+      const small=panel.querySelector('.bk-cat-head small');
+      if(small){
+        small.textContent='Export: scegli qui la categoria da scaricare. Import: seleziona un JSON e poi scegli quale categoria del file importare e se crearla nuova, unirla o sostituirla.';
+      }
+    }
+
+    const exportBtn=$('bkCatNow');
+    if(exportBtn){
+      exportBtn.innerHTML='💾 Esporta categoria scelta';
+      exportBtn.onclick=()=>{
+        const id=$('bkCatSelect')?.value;
+        const cat=FC(S.allData,id);
+        if(!cat){
+          Toast.show('Seleziona una categoria da esportare.','er');
+          return;
+        }
+        const date=new Date().toISOString().slice(0,10);
+        psDownloadJsonV27([cat],'prompt_categoria_'+psFileNameV27(cat.name)+'_'+date+'.json');
+        Toast.show('Categoria esportata: '+cat.name,'ok');
+      };
+    }
+
+    const importBtn=$('bkCatImport');
+    if(importBtn){
+      importBtn.innerHTML='📥 Scegli categoria da importare';
+      importBtn.onclick=()=>$('fIC').click();
+    }
+  };
+
+  const oldRenderDashboardV27=renderDashboard;
+  renderDashboard=function(){
+    oldRenderDashboardV27();
+    document.title='Prompt Studio '+PS_CAT_VERSION;
+    const badge=document.querySelector('.logo-badge');
+    if(badge)badge.textContent=PS_CAT_VERSION;
+  };
+})();
 
 async function init(){
     Loader.show();try{
