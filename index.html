@@ -2154,6 +2154,127 @@ textarea,
   margin-right:2px;
 }
 
+
+/* ── PATCH v28.9: accessi rapidi in dropdown + conteggio prompt categoria ── */
+.v27-sidebar-nav.v289-dd{
+  padding:10px 12px!important;
+  border-bottom:1px solid var(--bd)!important;
+  background:#050505!important;
+}
+.v27-sidebar-nav.v289-dd .v27-nav-title{
+  display:none!important;
+}
+.v289-quick-dd{
+  position:relative;
+  width:100%;
+}
+.v289-quick-dd > summary{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  cursor:pointer;
+  user-select:none;
+  border:1px solid rgba(255,255,255,.16);
+  background:#0b0f19;
+  color:#fff;
+  border-radius:18px;
+  padding:13px 15px;
+  font-size:18px;
+  font-weight:900;
+  box-shadow:0 10px 24px rgba(0,0,0,.32);
+}
+.v289-quick-dd > summary::-webkit-details-marker{
+  display:none;
+}
+.v289-quick-dd > summary::after{
+  content:"▾";
+  color:var(--ac);
+  font-size:18px;
+  transition:transform var(--tr);
+}
+.v289-quick-dd[open] > summary::after{
+  transform:rotate(180deg);
+}
+.v289-quick-label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.v289-quick-label span:last-child{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.v289-quick-total{
+  flex:0 0 auto;
+  font-family:var(--font-mono);
+  font-size:13px;
+  color:#fff;
+  background:var(--ac);
+  border-radius:999px;
+  padding:4px 9px;
+}
+.v27-sidebar-nav.v289-dd .v27-nav-grid{
+  display:none!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  margin-top:10px!important;
+  padding:4px 0 0!important;
+}
+.v27-sidebar-nav.v289-dd .v289-quick-dd[open] .v27-nav-grid{
+  display:grid!important;
+}
+.v27-sidebar-nav.v289-dd .v27-nav-btn{
+  min-height:56px!important;
+  padding:10px 12px!important;
+  border-radius:16px!important;
+  background:#171a2a!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  font-size:15px!important;
+}
+.v27-sidebar-nav.v289-dd .v27-nav-btn.ac{
+  outline:2px solid var(--ac)!important;
+  background:var(--ac)!important;
+  color:#fff!important;
+}
+.v27-sidebar-nav.v289-dd .v27-nav-btn small{
+  background:rgba(255,255,255,.16)!important;
+  color:#fff!important;
+  border-radius:999px!important;
+  padding:2px 7px!important;
+}
+.ps-v289-prompt-count{
+  background:rgba(52,211,153,.16)!important;
+  color:#34d399!important;
+  border:1px solid rgba(52,211,153,.28)!important;
+  white-space:nowrap!important;
+}
+.ps-v289-cat-total{
+  padding:8px 12px;
+  margin:0 12px 10px;
+  border:1px solid rgba(52,211,153,.24);
+  border-radius:16px;
+  background:rgba(52,211,153,.10);
+  color:#d1fae5;
+  font-size:14px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.ps-v289-cat-total b{
+  color:#34d399;
+  font-family:var(--font-mono);
+}
+@media(max-width:900px){
+  .v27-sidebar-nav.v289-dd .v27-nav-grid{grid-template-columns:1fr!important}
+}
+
 </style>
 </head>
 <body>
@@ -5731,6 +5852,175 @@ v28EnhanceDashboard2=function(){
     const badge=document.querySelector('.logo-badge');
     if(badge) badge.textContent=PS_SAFE_VERSION;
   };
+})();
+
+
+
+/* ── PATCH v28.9: dropdown accessi rapidi + conteggio totale prompt per categoria ── */
+(function(){
+  const PS_V289_VERSION='v28.9';
+
+  function v289CatPromptCount(cat){
+    let n=0;
+    try{(cat?.subcategories||[]).forEach(s=>n+=(s.prompts||[]).length);}catch(e){}
+    return n;
+  }
+
+  function v289AllPromptCount(){
+    let n=0;
+    try{(S.allData||[]).forEach(c=>n+=v289CatPromptCount(c));}catch(e){}
+    return n;
+  }
+
+  function v289TrashCount(){
+    try{
+      const all=allP(S.allData||[]);
+      const trashCat=(S.allData||[]).find(c=>/cestino|🗑️/i.test(String(c.name||'')));
+      return trashCat?allP([trashCat]).length:0;
+    }catch(e){return 0}
+  }
+
+  function v289QuickItems(){
+    const all=allP(S.allData||[]);
+    return [
+      ['all','🌐','Tutti',all.length],
+      ['favorites','⭐','Preferiti',all.filter(p=>p.favorite).length],
+      ['recents','🕒','Recenti',(S.recents||[]).length],
+      ['trash','🗑️','Cestino',v289TrashCount()],
+      ['best','🏆','Migliori',typeof v28Best==='function'?v28Best().length:0],
+      ['least','📉','Meno usati',typeof v28Least==='function'?v28Least().length:0],
+      ['useless','🧹','Inutili?',typeof v28Useless==='function'?v28Useless().length:0],
+      ['duplicates','🧬','Duplicati',typeof v28DuplicatePairs==='function'?v28DuplicatePairs().length:0],
+      ['archived','📦','Archivio',typeof v28Archived==='function'?v28Archived().length:0],
+      ['review','🔎','Revisione',typeof v28Review==='function'?v28Review().length:0]
+    ];
+  }
+
+  function v289CurrentQuickLabel(items){
+    const found=items.find(x=>x[0]===S.view);
+    if(found) return found;
+    return ['quick','⚡','Accessi rapidi',items.length];
+  }
+
+  function v289RenderQuickDropdown(col){
+    const old=col.querySelector('.v27-sidebar-nav');
+    if(old) old.remove();
+
+    const items=v289QuickItems();
+    const cur=v289CurrentQuickLabel(items);
+    const nav=document.createElement('div');
+    nav.className='v27-sidebar-nav v289-dd';
+    nav.innerHTML=
+      '<details class="v289-quick-dd">'+
+        '<summary><span class="v289-quick-label"><span>'+cur[1]+'</span><span>'+cur[2]+'</span></span><span class="v289-quick-total">'+items.length+'</span></summary>'+
+        '<div class="v27-nav-grid"></div>'+
+      '</details>';
+
+    const grid=nav.querySelector('.v27-nav-grid');
+    items.forEach(x=>{
+      const b=document.createElement('button');
+      b.className='v27-nav-btn '+(S.view===x[0]?'ac':'');
+      b.dataset.v27View=x[0];
+      b.dataset.v28View=x[0];
+      b.innerHTML='<span>'+x[1]+'</span><span>'+x[2]+'</span><small>'+x[3]+'</small>';
+      b.onclick=async()=>{
+        if(!await dirtyCheck()) return;
+        S.view=x[0];
+        S.pid=null;
+        render();
+      };
+      grid.appendChild(b);
+    });
+
+    col.querySelector('.ch')?.after(nav);
+  }
+
+  const __v289RenderC1 = renderC1;
+  renderC1=function(){
+    __v289RenderC1();
+
+    const col=$('c1'), cat=FC(S.allData,S.catId);
+    if(!col||!cat) return;
+
+    const total=v289CatPromptCount(cat);
+    const subs=(cat.subcategories||[]).length;
+
+    const chl=col.querySelector('.ch .chl');
+    if(chl && !chl.querySelector('.ps-v289-prompt-count')){
+      const badge=document.createElement('span');
+      badge.className='cnt ps-v289-prompt-count';
+      badge.title='Totale prompt contenuti in questa categoria';
+      badge.textContent=total+' prompt';
+      chl.appendChild(badge);
+    }else{
+      const badge=chl?.querySelector('.ps-v289-prompt-count');
+      if(badge) badge.textContent=total+' prompt';
+    }
+
+    const firstCnt=col.querySelector('.ch .cnt:not(.ps-v289-prompt-count)');
+    if(firstCnt){
+      firstCnt.title='Sottocategorie';
+      firstCnt.textContent=subs+' sotto';
+    }
+
+    let info=col.querySelector('.ps-v289-cat-total');
+    if(!info){
+      info=document.createElement('div');
+      info.className='ps-v289-cat-total';
+      const after=col.querySelector('.v27-sidebar-nav') || col.querySelector('.ch');
+      after?.after(info);
+    }
+    info.innerHTML='<span>Totale nella categoria</span><b>'+total+' prompt</b>';
+
+    v289RenderQuickDropdown(col);
+  };
+
+  v27EnhanceSidebar=function(){
+    const col=$('c1'), list=$('subList');
+    if(!col||!list) return;
+    v289RenderQuickDropdown(col);
+    list.querySelectorAll('.it').forEach(x=>x.classList.add('v27-side-card'));
+  };
+
+  v28EnhanceSidebar2=function(){
+    const col=$('c1');
+    if(!col) return;
+    v289RenderQuickDropdown(col);
+  };
+
+  const __v289RenderDD = renderDD;
+  renderDD=function(){
+    __v289RenderDD();
+    try{
+      (S.allData||[]).forEach(c=>{
+        const opt=[...cS.options].find(o=>o.value===c.id);
+        if(opt){
+          const icon=c.icon?c.icon+' ':'';
+          opt.textContent=icon+String(c.name||'Senza nome')+' · '+v289CatPromptCount(c)+' prompt';
+        }
+      });
+    }catch(e){}
+  };
+
+  const __v289EnhanceHeader = typeof v28EnhanceHeader==='function'?v28EnhanceHeader:null;
+  if(__v289EnhanceHeader){
+    v28EnhanceHeader=function(){
+      __v289EnhanceHeader();
+      document.title='Prompt Studio '+PS_V289_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V289_VERSION;
+    };
+  }
+
+  const __v289RenderDashboard = typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v289RenderDashboard){
+    renderDashboard=function(){
+      __v289RenderDashboard();
+      document.title='Prompt Studio '+PS_V289_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V289_VERSION;
+    };
+  }
 })();
 
 
