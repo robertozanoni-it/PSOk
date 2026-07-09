@@ -8293,18 +8293,174 @@ S.view = 'dashboard';
 (function(){
   const PS_V297_VERSION='v29.7';
 
-  const V297_RECOMMENDED_DELETE_NAMES=[
-    'AI - Ottimizzata',
-    'Analisi',
-    'App',
-    'Apple',
-    'Articoli',
-    'Best',
-    '🗑️ Cestino',
-    'Claude',
-    'Claude CoWork',
-    'Clienti'
-  ];
+  let V297_RECOMMENDED_DELETE_NAMES=[
+    "AI - Ottimizzata",
+    "AI e Prompt Engineering - Riordinata",
+    "AI e Prompt Engineering - Riordinata (2)",
+    "AI e Prompt Engineering - Scremata",
+    "Analisi",
+    "App",
+    "Apple",
+    "Articoli",
+    "Best",
+    "🗑️ Cestino",
+    "Claude",
+    "Claude CoWork",
+    "Claude CoWork e Automazioni WordPress - Riordinata",
+    "Claude CoWork e Automazioni WordPress - Riordinata (2)",
+    "Clienti",
+    "Clienti - Riordinata",
+    "Clienti - Riordinata (2)",
+    "Clienti e Progetti Specifici - Scremata",
+    "Codex",
+    "Codice",
+    "Codice, Web App e WordPress - Scremata",
+    "Contenuti, Scrittura e Creatività - Riordinata",
+    "Contenuti, Scrittura e Creatività - Riordinata (2)",
+    "GPT",
+    "Grafica",
+    "Grafica, Immagini AI e Branding - Scremata",
+    "Influencer",
+    "Instagram",
+    "Marketing",
+    "Marketing, Business e Strategie - Scremata",
+    "Mattia",
+    "Meeting",
+    "Pagine",
+    "Produttività, Meeting e Apprendimento - Scremata",
+    "Prompt",
+    "Prova",
+    "Ricerca, Business e Strategie - Riordinata",
+    "Ricerca, Business e Strategie - Riordinata (2)",
+    "Ricette",
+    "RZ",
+    "Sano in tavola",
+    "Scrittura",
+    "SEO",
+    "SEO e Marketing - Riordinata",
+    "SEO e Marketing - Riordinata (2)",
+    "Siti",
+    "Social",
+    "Social da App",
+    "Social, Instagram e Influencer - Scremata",
+    "Software",
+    "Tampermonky",
+    "Trova Esperti Digitali",
+    "Video",
+    "Web App, Codice e WordPress - Riordinata",
+    "Web App, Codice e WordPress - Riordinata (2)",
+    "Wordpress",
+    "Workflow",
+    "Yoga",
+    "Zirafa"
+];
+
+  const V297_DELETE_PLAN_STORAGE='PS_DELETE_PLAN_CATEGORIES_V299';
+  const V297_DELETE_PLAN_META_STORAGE='PS_DELETE_PLAN_META_V299';
+
+  function v297DeletePlanMeta(){
+    try{return JSON.parse(localStorage.getItem(V297_DELETE_PLAN_META_STORAGE)||'{}')||{}}
+    catch(_){return {}}
+  }
+
+  function v297ActiveDeletePlanNames(){
+    try{
+      const raw=localStorage.getItem(V297_DELETE_PLAN_STORAGE);
+      const arr=raw?JSON.parse(raw):null;
+      if(Array.isArray(arr)&&arr.length) return arr.map(x=>String(x||'').trim()).filter(Boolean);
+    }catch(_){}
+    return V297_RECOMMENDED_DELETE_NAMES;
+  }
+
+  function v297SetDeletePlanNames(names,meta) {
+    const clean=[...new Set((names||[]).map(x=>String(x||'').trim()).filter(Boolean))]
+      .sort((a,b)=>v297SortKey(a).localeCompare(v297SortKey(b),'it',{sensitivity:'base',numeric:true}));
+    if(!clean.length) throw new Error('Lista categorie vuota');
+    V297_RECOMMENDED_DELETE_NAMES=clean;
+    try{
+      localStorage.setItem(V297_DELETE_PLAN_STORAGE,JSON.stringify(clean));
+      localStorage.setItem(V297_DELETE_PLAN_META_STORAGE,JSON.stringify(meta||{}));
+    }catch(_){}
+    return clean;
+  }
+
+  function v297ExtractDeleteNames(data) {
+    let raw=[];
+    if(Array.isArray(data)) raw=data;
+    else if(Array.isArray(data?.deleteCategories)) raw=data.deleteCategories;
+    else if(Array.isArray(data?.categoriesToDelete)) raw=data.categoriesToDelete;
+    else if(Array.isArray(data?.deleteItems)) raw=data.deleteItems;
+    else if(Array.isArray(data?.items)) raw=data.items;
+    else if(Array.isArray(data?.categorie_da_eliminare)) raw=data.categorie_da_eliminare;
+    else if(data&&typeof data==='object'&&typeof data.name==='string') raw=[data.name];
+
+    return raw.map(x=>{
+      if(typeof x==='string') return x;
+      if(x&&typeof x==='object') return x.name||x.category||x.categoria||x.categoria_da_eliminare||x.title||'';
+      return '';
+    }).map(x=>String(x||'').trim()).filter(Boolean);
+  }
+
+  function v297ParseCsvDeletePlan(text) {
+    const lines=String(text||'').split(/
+?
+/).filter(Boolean);
+    if(!lines.length) return [];
+    const sep=(lines[0].includes(';')&&!lines[0].includes(','))?';':',';
+    const headers=lines[0].split(sep).map(x=>x.replace(/^"|"$/g,'').trim().toLowerCase());
+    let idx=headers.findIndex(h=>['categoria_da_eliminare','categoria','category','name','nome'].includes(h));
+    if(idx<0) idx=0;
+    const out=[];
+    for(let i=1;i<lines.length;i++){
+      const cols=lines[i].split(sep);
+      let v=(cols[idx]||'').replace(/^"|"$/g,'').trim();
+      if(v) out.push(v);
+    }
+    return out;
+  }
+
+  async function v297ImportDeletePlanFile() {
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='.json,.csv,application/json,text/csv';
+    input.style.display='none';
+    document.body.appendChild(input);
+
+    const cleanup=()=>{try{input.remove()}catch(_){}};
+
+    input.onchange=async()=>{
+      const file=input.files&&input.files[0];
+      if(!file){cleanup();return;}
+      try{
+        const text=await file.text();
+        let names=[];
+        let meta={sourceFile:file.name,importedAtISO:new Date().toISOString()};
+
+        if(/\.csv$/i.test(file.name)){
+          names=v297ParseCsvDeletePlan(text);
+          meta.type='csv-delete-plan';
+        }else{
+          const data=JSON.parse(text);
+          names=v297ExtractDeleteNames(data);
+          meta={...meta,type:data?.type||'json-delete-plan',name:data?.name||file.name,version:data?.version||''};
+        }
+
+        const clean=v297SetDeletePlanNames(names,meta);
+        Toast.show('Lista eliminazione importata: '+clean.length+' categorie. Apro il popup con i flag selezionati.','ok',6500);
+        $('toM')?.classList.remove('show');
+        $('v294BackupMenu')?.classList.remove('show');
+        $('bkCenterBtn')?.classList.remove('active');
+        await v297OpenBulkDeleteFlow('__SUGGESTED__');
+      }catch(err){
+        console.error(err);
+        Toast.show('File lista eliminazione non valido. Usa il JSON/CSV creato per Prompt Studio.','er',7000);
+      }finally{
+        cleanup();
+      }
+    };
+
+    input.click();
+  }
 
   function v297NormName(name){
     return String(name||'')
@@ -8350,7 +8506,7 @@ S.view = 'dashboard';
   }
 
   function v297Rows(){
-    const recommendedNorm=V297_RECOMMENDED_DELETE_NAMES.map(v297NormName);
+    const recommendedNorm=v297ActiveDeletePlanNames().map(v297NormName);
     return (S.allData||[])
       .filter(c=>c&&c.id)
       .map((cat,index)=>({
@@ -8691,7 +8847,7 @@ S.view = 'dashboard';
             <button class="v297-x" type="button" aria-label="Chiudi"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="v297-bulk-actions-top">
-            <button class="v297-mini-btn ok" type="button" data-act="suggest"><i class="fa-solid fa-check-double"></i>Seleziona consigliate</button>
+            <button class="v297-mini-btn ok" type="button" data-act="suggest"><i class="fa-solid fa-check-double"></i>Seleziona piano/consigliate</button>
             <button class="v297-mini-btn" type="button" data-act="all"><i class="fa-regular fa-square-check"></i>Seleziona tutte</button>
             <button class="v297-mini-btn" type="button" data-act="none"><i class="fa-regular fa-square"></i>Deseleziona tutte</button>
             <button class="v297-mini-btn danger" type="button" data-act="trash"><i class="fa-solid fa-trash-can"></i>Solo cestino</button>
@@ -8701,7 +8857,7 @@ S.view = 'dashboard';
             <div class="v297-cat-list">
               ${rows.map(r=>`
                 <label class="v297-cat-row ${r.suggested?'suggested':''}" data-id="${v297Esc(r.id)}">
-                  <input class="v297-cat-check" type="checkbox" value="${v297Esc(r.id)}" ${preselectId===r.id?'checked':''}>
+                  <input class="v297-cat-check" type="checkbox" value="${v297Esc(r.id)}" ${(preselectId===r.id || (preselectId==='__SUGGESTED__' && r.suggested))?'checked':''}>
                   <span class="v297-cat-main">
                     <span class="v297-cat-name">${v297Esc(r.name)}</span>
                     <span class="v297-cat-meta">${r.subCount} sottocategorie · ${r.promptCount} prompt</span>
@@ -8852,6 +9008,22 @@ S.view = 'dashboard';
       };
     }
 
+    const toolsGrid=document.querySelector('#toM .tm-grid');
+    if(toolsGrid && !$('v299ImportDeletePlanTools')){
+      const p=document.createElement('button');
+      p.className='tb';
+      p.id='v299ImportDeletePlanTools';
+      p.style.background='#f59e0b';
+      p.innerHTML='<i class="fa-solid fa-list-check"></i>Importa lista eliminazione';
+      p.title='Importa un file JSON/CSV con le categorie da eliminare e apre il popup con i flag selezionati';
+      p.onclick=async()=>{
+        $('toM')?.classList.remove('show');
+        $('v294BackupMenu')?.classList.remove('show');
+        await v297ImportDeletePlanFile();
+      };
+      toolsGrid.insertBefore(p,toolsGrid.children[3]||null);
+    }
+
     const menu=$('v294BackupMenu');
     if(menu&&!$('v297BulkDeleteFromBackup')){
       const sec=document.createElement('div');
@@ -8869,6 +9041,22 @@ S.view = 'dashboard';
       };
       menu.appendChild(sec);
       menu.appendChild(b);
+    }
+
+    if(menu && !$('v299ImportDeletePlanFromBackup')){
+      const p=document.createElement('button');
+      p.id='v299ImportDeletePlanFromBackup';
+      p.type='button';
+      p.innerHTML='<i class="fa-solid fa-list-check"></i>Importa lista eliminazione/flag';
+      p.onclick=async e=>{
+        e.stopPropagation();
+        $('v294BackupMenu')?.classList.remove('show');
+        $('bkCenterBtn')?.classList.remove('active');
+        await v297ImportDeletePlanFile();
+      };
+      const ref=$('v297BulkDeleteFromBackup');
+      if(ref&&ref.parentNode) ref.parentNode.insertBefore(p,ref);
+      else menu.appendChild(p);
     }
 
     const oldBackupBtn=$('v296BulkDeleteFromBackup');
@@ -9376,6 +9564,53 @@ S.view = 'dashboard';
   window.PS_DEDUP_CATEGORIES_PATCH='v29.8';
 })();
 
+
+
+/* ── PATCH v29.9: import lista eliminazione categorie con flag ── */
+(function(){
+  const PS_V299_VERSION='v29.9';
+
+  function v299BindButtons(){
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_V299_VERSION;
+    document.title='Prompt Studio '+PS_V299_VERSION;
+
+    const importBtn=document.getElementById('v299ImportDeletePlanFromBackup');
+    if(importBtn){
+      importBtn.title='Importa il JSON/CSV con l’elenco categorie da eliminare e apre i flag già selezionati';
+    }
+    const toolsBtn=document.getElementById('v299ImportDeletePlanTools');
+    if(toolsBtn){
+      toolsBtn.title='Importa il JSON/CSV con l’elenco categorie da eliminare e apre i flag già selezionati';
+    }
+  }
+
+  const __v299Setup=typeof setup==='function'?setup:null;
+  if(__v299Setup){
+    setup=function(){
+      __v299Setup();
+      v299BindButtons();
+    };
+  }
+
+  const __v299RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v299RenderDD){
+    renderDD=function(){
+      __v299RenderDD();
+      v299BindButtons();
+    };
+  }
+
+  const __v299RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v299RenderDashboard){
+    renderDashboard=function(){
+      __v299RenderDashboard();
+      v299BindButtons();
+    };
+  }
+
+  window.PS_DELETE_PLAN_IMPORT_PATCH='v29.9';
+})();
 
 init();
 })();
