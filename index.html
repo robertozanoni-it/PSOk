@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v29.3 - menu categorie visibile</title>
+<title>Prompt Studio v29.5 - backup categorie ZIP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root {
   --bg:#0a0b0f;--sf:#111318;--sf2:#16181f;--el:#1e2130;--elh:#252840;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);--ac:#7c6fff;--ach:#6257e8;--acg:rgba(124,111,255,.15);--ac-glow:0 0 20px rgba(124,111,255,.35);--t1:#f4f6ff;--t2:#c0c8e4;--t3:#7b84a8;--gn:#34d399;--rd:#f87171;--yl:#fbbf24;--pk:#f472b6;--cy:#22d3ee;--or:#fb923c;--gd:#fbbf24;--r-sm:5px;--r-md:10px;--r-lg:14px;--r-xl:20px;--ease:cubic-bezier(.4,0,.2,1);--tr-fast:.12s var(--ease);--tr:.2s var(--ease);--tr-slow:.35s var(--ease);--font-ui:'Inter',system-ui,sans-serif;--font-head:'Syne',sans-serif;--font-mono:'JetBrains Mono',monospace;--font-size:20px;--item-pad:10px 14px;--gap:6px;--hpad:14px 18px;--w-cat:260px;--w-sub:260px;
@@ -7878,6 +7879,415 @@ S.view = 'dashboard';
 
   document.addEventListener('click',()=>{$('v294BackupMenu')?.classList.remove('show');$('bkCenterBtn')?.classList.remove('active');});
 })();
+
+
+
+/* ── PATCH v29.5: export/import di tutte le categorie in un unico file ZIP ── */
+(function(){
+  const PS_V295_VERSION='v29.5';
+
+  function v295Style(){
+    if(document.getElementById('v295ZipStyle')) return;
+    const st=document.createElement('style');
+    st.id='v295ZipStyle';
+    st.textContent=`
+      .v295-zip-tag{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:32px;
+        height:18px;
+        padding:0 7px;
+        margin-left:auto;
+        border-radius:999px;
+        background:rgba(251,191,36,.15);
+        color:#fbbf24;
+        border:1px solid rgba(251,191,36,.28);
+        font-family:var(--font-mono);
+        font-size:10px;
+        font-weight:900;
+        letter-spacing:.04em;
+      }
+      .v294-backup-menu .v295-hidden{display:none!important}
+      .v295-zip-note{
+        display:block;
+        margin:6px 8px 2px;
+        padding:8px 10px;
+        border-radius:var(--r-md);
+        background:rgba(251,191,36,.08);
+        border:1px solid rgba(251,191,36,.18);
+        color:var(--t2);
+        font-size:11px;
+        line-height:1.45;
+      }`;
+    document.head.appendChild(st);
+  }
+
+  function v295Clone(obj){
+    try{return structuredClone(obj)}
+    catch(e){return JSON.parse(JSON.stringify(obj||null))}
+  }
+
+  function v295SafeName(name){
+    return String(name||'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,78)||'categoria';
+  }
+
+  function v295CountPrompts(cat){
+    let n=0;
+    if(Array.isArray(cat?.prompts)) n+=cat.prompts.length;
+    (cat?.subcategories||[]).forEach(s=>n+=(s?.prompts||[]).length);
+    return n;
+  }
+
+  function v295DownloadBlob(filename,blob){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1200);
+  }
+
+  function v295ActiveCats(){
+    return (S.allData||[]).filter(c=>c&&c.id);
+  }
+
+  function v295RawCats(parsed){
+    if(!parsed) return [];
+    if(Array.isArray(parsed)) return parsed.filter(v295LooksLikeCat);
+    if(parsed.type==='prompt-studio-categories-zip-manifest') return [];
+    if(parsed.type==='prompt-studio-category-import' && Array.isArray(parsed.categories)) return parsed.categories.filter(v295LooksLikeCat);
+    if(parsed.type==='prompt-studio-safe-category-import' && Array.isArray(parsed.categories)) return parsed.categories.filter(v295LooksLikeCat);
+    if(Array.isArray(parsed.categories)) return parsed.categories.filter(v295LooksLikeCat);
+    if(Array.isArray(parsed.data)) return parsed.data.filter(v295LooksLikeCat);
+    if(parsed.category && v295LooksLikeCat(parsed.category)) return [parsed.category];
+    if(v295LooksLikeCat(parsed)) return [parsed];
+    return [];
+  }
+
+  function v295LooksLikeCat(x){
+    return !!(x && typeof x==='object' && (Array.isArray(x.subcategories) || Array.isArray(x.prompts)));
+  }
+
+  function v295UniqueName(base,existing){
+    base=String(base||'Categoria importata').trim()||'Categoria importata';
+    const used=new Set((existing||[]).map(c=>String(c.name||'').trim().toLowerCase()));
+    if(!used.has(base.toLowerCase())) return base;
+    let i=2;
+    while(used.has((base+' ('+i+')').toLowerCase())) i++;
+    return base+' ('+i+')';
+  }
+
+  function v295NormalizeCat(cat,existing){
+    const c=v295Clone(cat||{});
+    const rootPrompts=Array.isArray(c.prompts)?c.prompts:[];
+    let subs=Array.isArray(c.subcategories)?c.subcategories:[];
+    if(rootPrompts.length){
+      subs=[{id:uid(),name:'Importati',icon:'',prompts:rootPrompts},...subs];
+    }
+    if(!subs.length){
+      subs=[{id:uid(),name:'Generale',icon:'',prompts:[]}];
+    }
+
+    const nc={
+      ...c,
+      id:uid(),
+      name:v295UniqueName(c.name,existing),
+      icon:c.icon||'',
+      subcategories:subs.map(s=>({
+        ...s,
+        id:uid(),
+        name:String(s?.name||'Generale'),
+        icon:s?.icon||'',
+        prompts:(Array.isArray(s?.prompts)?s.prompts:[]).map(p=>({
+          ...p,
+          id:uid(),
+          title:String(p?.title||'Prompt importato'),
+          purpose:p?.purpose||'',
+          description:p?.description||p?.text||p?.plainText||'',
+          tags:Array.isArray(p?.tags)?p.tags:[],
+          favorite:!!p?.favorite,
+          versions:Array.isArray(p?.versions)?p.versions:[],
+          copyCount:typeof p?.copyCount==='number'?p.copyCount:0,
+          pinned:!!p?.pinned,
+          createdAt:typeof p?.createdAt==='number'?p.createdAt:Date.now(),
+          updatedAt:Date.now(),
+          related:Array.isArray(p?.related)?p.related:[],
+          noAutoVars:!!p?.noAutoVars
+        }))
+      }))
+    };
+    delete nc.prompts;
+    return nc;
+  }
+
+  function v295EnsureZipInput(){
+    if(!$('v295ZipCats')){
+      const inp=document.createElement('input');
+      inp.type='file';
+      inp.id='v295ZipCats';
+      inp.accept='.zip,application/zip,application/x-zip-compressed';
+      inp.style.display='none';
+      document.body.appendChild(inp);
+    }
+  }
+
+  function v295NeedZipLib(){
+    if(window.JSZip) return true;
+    Toast.show('Libreria ZIP non caricata. Controlla la connessione e ricarica la pagina.','er',6500);
+    return false;
+  }
+
+  async function v295ExportAllCategoriesZip(){
+    if(!v295NeedZipLib()) return;
+
+    const cats=v295ActiveCats();
+    if(!cats.length){
+      Toast.show('Nessuna categoria da esportare.','er');
+      return;
+    }
+
+    const total=cats.reduce((n,c)=>n+v295CountPrompts(c),0);
+    const ok=await Modal.confirm(
+      'Scaricare tutte le categorie in un unico ZIP?',
+      'Verrà creato un solo file .zip contenente '+cats.length+' file JSON, uno per categoria, più un manifest. Totale prompt: '+total+'. Nessun dato verrà modificato.'
+    );
+    if(!ok) return;
+
+    try{
+      Toast.show('Creo il file ZIP categorie…','ok',2500);
+      const zip=new JSZip();
+      const date=new Date().toISOString().slice(0,10);
+      const folder=zip.folder('categorie') || zip;
+      const manifest={
+        type:'prompt-studio-categories-zip-manifest',
+        version:PS_V295_VERSION,
+        exportedAt:new Date().toISOString(),
+        categoryCount:cats.length,
+        promptCount:total,
+        files:[]
+      };
+
+      cats.forEach((cat,idx)=>{
+        const filename=String(idx+1).padStart(2,'0')+'_prompt_categoria_'+v295SafeName(cat.name)+'.json';
+        folder.file(filename,JSON.stringify(v295Clone(cat),null,2));
+        manifest.files.push({
+          file:'categorie/'+filename,
+          categoryName:cat.name||'Categoria',
+          promptCount:v295CountPrompts(cat)
+        });
+      });
+
+      zip.file('manifest.json',JSON.stringify(manifest,null,2));
+      const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+      v295DownloadBlob('prompt_studio_categorie_separate_'+date+'.zip',blob);
+      Toast.show('ZIP creato: '+cats.length+' categorie in un unico file.','ok',5000);
+    }catch(err){
+      console.error(err);
+      Toast.show('Errore durante la creazione dello ZIP.','er',6500);
+    }
+  }
+
+  async function v295ImportCategoriesZip(file){
+    if(!v295NeedZipLib()) return false;
+    if(!file){
+      Toast.show('Seleziona un file ZIP.','er');
+      return false;
+    }
+
+    try{
+      Toast.show('Leggo lo ZIP categorie…','ok',2500);
+      const zip=await JSZip.loadAsync(file);
+      const entries=[];
+      zip.forEach((path,entry)=>{
+        if(!entry.dir && /\.json$/i.test(path)) entries.push(entry);
+      });
+
+      if(!entries.length){
+        Toast.show('Lo ZIP non contiene file JSON di categoria.','er',5200);
+        return false;
+      }
+
+      const found=[];
+      const errors=[];
+      for(const entry of entries){
+        try{
+          const txt=await entry.async('string');
+          const parsed=JSON.parse(txt);
+          const cats=v295RawCats(parsed);
+          if(cats.length) found.push(...cats);
+        }catch(err){
+          console.warn('File ZIP ignorato:',entry.name,err);
+          errors.push(entry.name);
+        }
+      }
+
+      if(!found.length){
+        Toast.show('Nessuna categoria valida trovata nello ZIP.','er',6000);
+        return false;
+      }
+
+      const promptTotal=found.reduce((n,c)=>n+v295CountPrompts(c),0);
+      const msg='Lo ZIP contiene '+found.length+' categorie valide e circa '+promptTotal+' prompt. Verranno aggiunte come nuove categorie senza eliminare né sostituire quelle esistenti.'+
+        (errors.length?'<br><br>File JSON ignorati: '+errors.slice(0,7).join(', ')+(errors.length>7?'…':''):'');
+      const ok=await Modal.confirm('Importare categorie da ZIP?',msg);
+      if(!ok) return false;
+
+      const existing=v295Clone(S.allData||[]);
+      const imported=[];
+      let rolling=existing;
+      found.forEach(cat=>{
+        const clean=v295NormalizeCat(cat,rolling);
+        imported.push(clean);
+        rolling=[...rolling,clean];
+      });
+
+      const merged=[...existing,...imported];
+      if(typeof validate==='function' && !validate(merged)){
+        Toast.show('Lo ZIP contiene categorie non valide. Import annullato.','er',6500);
+        return false;
+      }
+
+      const first=imported[0];
+      const firstSub=first?.subcategories?.[0];
+      const firstPrompt=firstSub?.prompts?.[0];
+
+      await save(merged,{ids:{
+        view:'columns',
+        catId:first?.id||S.catId,
+        subId:firstSub?.id||S.subId,
+        pid:firstPrompt?.id||null
+      },hist:true});
+
+      Toast.show('Importate '+imported.length+' categorie dallo ZIP senza cancellare le altre.','ok',6500);
+      return true;
+    }catch(err){
+      console.error(err);
+      Toast.show('Errore durante l’importazione dello ZIP.','er',6500);
+      return false;
+    }
+  }
+
+  function v295OpenZipImport(){
+    v295EnsureZipInput();
+    const f=$('v295ZipCats');
+    if(!f) return;
+    f.onchange=async e=>{
+      const file=e.target.files && e.target.files[0];
+      await v295ImportCategoriesZip(file);
+      e.target.value='';
+    };
+    f.click();
+  }
+
+  function v295CloseMenus(){
+    $('v294BackupMenu')?.classList.remove('show');
+    $('bkCenterBtn')?.classList.remove('active');
+    $('toM')?.classList.remove('show');
+    $('catToolsMenu')?.classList.remove('show');
+  }
+
+  function v295EnsureZipMenu(){
+    v295Style();
+    v295EnsureZipInput();
+
+    const menu=$('v294BackupMenu');
+    if(!menu) return;
+
+    const oldSection=[...menu.querySelectorAll('.v294-menu-section')]
+      .find(el=>/Tutte le categorie/i.test(el.textContent||''));
+    if(oldSection) oldSection.textContent='Tutte le categorie in ZIP';
+
+    ['v294AllCatExport','v294AllCatImport','v294AllCatDir'].forEach(id=>{
+      const el=$(id);
+      if(el) el.classList.add('v295-hidden');
+    });
+
+    if(!$('v295AllCatZipExport')){
+      const btn=document.createElement('button');
+      btn.id='v295AllCatZipExport';
+      btn.className='v294-ok';
+      btn.type='button';
+      btn.innerHTML='<i class="fa-solid fa-file-zipper"></i>Scarica tutte in un unico ZIP <span class="v295-zip-tag">ZIP</span>';
+      if(oldSection){
+        oldSection.insertAdjacentElement('afterend',btn);
+      }else{
+        menu.appendChild(btn);
+      }
+    }
+
+    if(!$('v295AllCatZipImport')){
+      const btn=document.createElement('button');
+      btn.id='v295AllCatZipImport';
+      btn.type='button';
+      btn.innerHTML='<i class="fa-solid fa-file-arrow-up"></i>Importa categorie da ZIP <span class="v295-zip-tag">ZIP</span>';
+      const exp=$('v295AllCatZipExport');
+      if(exp) exp.insertAdjacentElement('afterend',btn);
+      else menu.appendChild(btn);
+    }
+
+    if(!$('v295ZipNote')){
+      const note=document.createElement('small');
+      note.id='v295ZipNote';
+      note.className='v295-zip-note';
+      note.textContent='Lo ZIP contiene file JSON separati per categoria. L’import aggiunge nuove categorie e non elimina quelle già presenti.';
+      const imp=$('v295AllCatZipImport');
+      if(imp) imp.insertAdjacentElement('afterend',note);
+      else menu.appendChild(note);
+    }
+
+    const exp=$('v295AllCatZipExport');
+    if(exp) exp.onclick=async e=>{
+      e.stopPropagation();
+      v295CloseMenus();
+      await v295ExportAllCategoriesZip();
+    };
+
+    const imp=$('v295AllCatZipImport');
+    if(imp) imp.onclick=e=>{
+      e.stopPropagation();
+      v295CloseMenus();
+      v295OpenZipImport();
+    };
+
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_V295_VERSION;
+    document.title='Prompt Studio '+PS_V295_VERSION;
+  }
+
+  const __v295Setup=typeof setup==='function'?setup:null;
+  if(__v295Setup){
+    setup=function(){
+      __v295Setup();
+      v295EnsureZipMenu();
+    };
+  }
+
+  const __v295RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v295RenderDD){
+    renderDD=function(){
+      __v295RenderDD();
+      v295EnsureZipMenu();
+    };
+  }
+
+  const __v295RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v295RenderDashboard){
+    renderDashboard=function(){
+      __v295RenderDashboard();
+      v295EnsureZipMenu();
+    };
+  }
+
+  window.PS_ZIP_CATEGORIES_PATCH='v29.5';
+})();
+
 
 init();
 })();
