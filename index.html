@@ -2048,6 +2048,112 @@ textarea,
   color:#22d3ee!important;
 }
 
+
+/* ── PATCH v28.6: backup per categoria + icone leggibili nei pulsanti in alto ── */
+.bk-cat-panel{
+  margin:0 0 14px;
+  padding:14px;
+  border:1px solid var(--bd);
+  border-radius:var(--r-lg);
+  background:var(--el);
+  display:grid;
+  gap:12px;
+}
+.bk-cat-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.bk-cat-head b{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:var(--font-head);
+  font-size:17px;
+  color:var(--t1);
+}
+.bk-cat-head small{
+  color:var(--t2);
+  font-size:13px;
+  line-height:1.45;
+  max-width:460px;
+}
+.bk-cat-controls{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) auto auto;
+  gap:8px;
+  align-items:center;
+}
+.bk-cat-select{
+  width:100%;
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid var(--bd);
+  border-radius:var(--r-md);
+  background:var(--sf);
+  color:var(--t1);
+  font-family:var(--font-ui);
+  font-size:15px;
+  outline:none;
+}
+.bk-cat-select:focus{
+  border-color:var(--ac);
+  box-shadow:0 0 0 3px var(--acg);
+}
+.bk-list-title{
+  margin:8px 0 8px;
+  font-family:var(--font-head);
+  color:var(--t2);
+  font-size:14px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+@media(max-width:720px){
+  .bk-cat-controls{grid-template-columns:1fr}
+  .bk-cat-controls .mb{width:100%;justify-content:center}
+}
+
+/* Fallback visivo: se FontAwesome non carica, questi pulsanti non mostrano più quadratini */
+.ch .sb[data-a="ic"] > i,
+.ch .sb[data-a="is"] > i,
+.ch .sb[data-a="rc"] > i,
+.ch .sb[data-a="rs"] > i,
+.ch .sb[data-a="dc"] > i,
+.ch .sb[data-a="ds"] > i,
+.ch .ab[data-a="as"] > i,
+.ch .ab[data-a="ap"] > i{
+  display:none!important;
+}
+.ch .sb[data-a="ic"]::before,
+.ch .sb[data-a="is"]::before,
+.ch .sb[data-a="rc"]::before,
+.ch .sb[data-a="rs"]::before,
+.ch .sb[data-a="dc"]::before,
+.ch .sb[data-a="ds"]::before,
+.ch .ab[data-a="as"]::before,
+.ch .ab[data-a="ap"]::before{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  font-family:var(--font-ui),system-ui,sans-serif;
+}
+.ch .sb[data-a="ic"]::before,
+.ch .sb[data-a="is"]::before{content:"🎨";font-size:17px}
+.ch .sb[data-a="rc"]::before,
+.ch .sb[data-a="rs"]::before{content:"✏️";font-size:17px}
+.ch .sb[data-a="dc"]::before,
+.ch .sb[data-a="ds"]::before{content:"🗑️";font-size:17px}
+.ch .ab[data-a="as"]::before,
+.ch .ab[data-a="ap"]::before{
+  content:"+";
+  font-size:22px;
+  font-weight:900;
+  margin-right:2px;
+}
+
 </style>
 </head>
 <body>
@@ -4930,6 +5036,167 @@ v28EnhanceDashboard2=function(){
     if(badge)badge.textContent='v28.5';
   };
 })();
+
+
+/* ── PATCH v28.6: backup per categorie + fix icone header ── */
+(function(){
+  function psFileName(name){
+    return String(name || 'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,72) || 'categoria';
+  }
+
+  function psDownloadJson(payload,filename){
+    const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const u=URL.createObjectURL(b);
+    const a=document.createElement('a');
+    a.href=u;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(u);
+  }
+
+  function psActiveCategories(){
+    return (S.allData||[]).filter(c=>!/cestino|🗑️/i.test(String(c.name||'')));
+  }
+
+  function psSelectedBackupCategory(){
+    const sel=$('bkCatSelect');
+    const id=sel?.value || S.catId || psActiveCategories()[0]?.id || '';
+    return FC(S.allData,id);
+  }
+
+  function psExportCategoryById(catId){
+    const cat=FC(S.allData,catId);
+    if(!cat){
+      Toast.show('Seleziona una categoria da esportare.','er');
+      return;
+    }
+    const date=new Date().toISOString().slice(0,10);
+    psDownloadJson([cat],'prompt_categoria_'+psFileName(cat.name)+'_'+date+'.json');
+    Toast.show('Backup categoria scaricato!','ok');
+  }
+
+  function psRefreshBackupCategorySelect(){
+    const sel=$('bkCatSelect');
+    if(!sel)return;
+    const cats=psActiveCategories();
+    const wanted=sel.value || S.catId || cats[0]?.id || '';
+    sel.innerHTML='';
+    if(!cats.length){
+      const op=document.createElement('option');
+      op.value='';
+      op.textContent='Nessuna categoria disponibile';
+      sel.appendChild(op);
+      sel.disabled=true;
+      const btn=$('bkCatNow');
+      if(btn)btn.disabled=true;
+      return;
+    }
+    cats.forEach(c=>{
+      const op=document.createElement('option');
+      op.value=c.id;
+      const promptCount=(c.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0);
+      op.textContent=(c.icon?c.icon+' ':'')+c.name+' · '+(c.subcategories||[]).length+' sotto · '+promptCount+' prompt';
+      sel.appendChild(op);
+    });
+    sel.disabled=false;
+    sel.value=cats.some(c=>c.id===wanted)?wanted:cats[0].id;
+    const btn=$('bkCatNow');
+    if(btn)btn.disabled=false;
+  }
+
+  function psEnsureBackupCategoryPanel(){
+    if($('bkCatPanel'))return;
+    const list=$('bkList');
+    if(!list)return;
+    list.insertAdjacentHTML('beforebegin',
+      '<div id="bkCatPanel" class="bk-cat-panel">'+
+        '<div class="bk-cat-head">'+
+          '<b>🗂️ Backup per categoria</b>'+
+          '<small>Scarica solo la categoria selezionata in JSON. Il file può essere reimportato con “Importa categoria” senza sovrascrivere tutto l’archivio.</small>'+
+        '</div>'+
+        '<div class="bk-cat-controls">'+
+          '<select id="bkCatSelect" class="bk-cat-select" aria-label="Categoria da esportare"></select>'+
+          '<button class="mb cf" id="bkCatNow" type="button">💾 Scarica categoria</button>'+
+          '<button class="mb cc" id="bkCatImport" type="button">📥 Importa categoria</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="bk-list-title">Backup automatici completi</div>'
+    );
+    $('bkCatNow').onclick=()=>{
+      const cat=psSelectedBackupCategory();
+      psExportCategoryById(cat?.id);
+    };
+    $('bkCatImport').onclick=()=>$('fIC').click();
+  }
+
+  // Anche il pulsante "Export Categ." degli strumenti usa la stessa logica,
+  // esportando la categoria selezionata nel centro backup oppure quella corrente.
+  doExportCat=function(){
+    const cat=psSelectedBackupCategory();
+    psExportCategoryById(cat?.id);
+  };
+
+  showBackupCenter=async function(){
+    const list=$('bkList');
+    if(!list)return;
+    $('mBkCenter').classList.add('show');
+    psEnsureBackupCategoryPanel();
+    psRefreshBackupCategorySelect();
+
+    list.innerHTML='<div class="em" style="height:auto;padding:18px">Caricamento backup…</div>';
+
+    try{
+      const bks=await DB.listBk();
+      if(!bks.length){
+        list.innerHTML='<div class="em" style="height:auto;padding:18px">Nessun backup automatico ancora disponibile.</div>';
+        return;
+      }
+
+      list.innerHTML=bks.slice(0,10).map(b=>
+        '<div class="bk-row">'+
+          '<div><b>Backup automatico</b><br><small>'+fmtD(b.ts)+' · '+((b.data||[]).length)+' categorie</small></div>'+
+          '<button data-bk="'+esc(b.id)+'">Ripristina</button>'+
+        '</div>'
+      ).join('');
+
+      list.querySelectorAll('[data-bk]').forEach(btn=>{
+        btn.onclick=async()=>{
+          const ok=await Modal.confirm('Ripristina backup','Sostituire i dati attuali con questo backup completo?');
+          if(!ok)return;
+          const bk=await DB.getBk(btn.dataset.bk);
+          if(!bk||!validate(bk.data)){
+            Toast.show('Backup non valido.','er');
+            return;
+          }
+          S.view='dashboard';
+          S.pid=null;
+          await save(bk.data,{hist:true});
+          $('mBkCenter').classList.remove('show');
+          Toast.show('Backup ripristinato!','ok');
+        };
+      });
+    }catch(e){
+      console.error(e);
+      list.innerHTML='<div class="em" style="height:auto;padding:18px">Errore lettura backup.</div>';
+    }
+  };
+
+  // Aggiorna label versione.
+  const oldRenderDashboard=renderDashboard;
+  renderDashboard=function(){
+    oldRenderDashboard();
+    document.title='Prompt Studio v28.6';
+    const badge=document.querySelector('.logo-badge');
+    if(badge)badge.textContent='v28.6';
+  };
+})();
+
 
 async function init(){
     Loader.show();try{
