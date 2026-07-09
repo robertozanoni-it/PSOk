@@ -6024,6 +6024,327 @@ v28EnhanceDashboard2=function(){
 })();
 
 
+
+/* ── PATCH v29.0: fix definitivo import backup categorie / wrapper safeImport ── */
+(function(){
+  const PS_V290_VERSION='v29.0';
+  const CAT_NEW='Importa come nuova categoria';
+  const CAT_MERGE='Unisci nella categoria selezionata';
+  const CAT_REPLACE='Sostituisci categoria selezionata';
+  const FULL_APPEND='Aggiungi categorie senza cancellare nulla';
+  const FULL_REPLACE='Ripristina backup completo e sostituisci tutto';
+
+  function v290Clone(obj){
+    try{return structuredClone(obj)}
+    catch(e){return JSON.parse(JSON.stringify(obj||null))}
+  }
+
+  function v290CountPrompts(cat){
+    let n=0;
+    (cat?.subcategories||[]).forEach(s=>n+=(s.prompts||[]).length);
+    if(Array.isArray(cat?.prompts)) n+=cat.prompts.length;
+    return n;
+  }
+
+  function v290CatLabel(cat,i){
+    return (i+1)+') '+(cat?.icon?cat.icon+' ':'')+(cat?.name||'Categoria senza nome')+
+      ' · '+((cat?.subcategories||[]).length)+' sotto · '+v290CountPrompts(cat)+' prompt';
+  }
+
+  function v290UniqueName(base,items,excludeId){
+    base=String(base||'Categoria importata').trim()||'Categoria importata';
+    const used=new Set((items||[])
+      .filter(x=>!excludeId || x.id!==excludeId)
+      .map(x=>String(x.name||'').trim().toLowerCase()));
+    if(!used.has(base.toLowerCase())) return base;
+    let n=base+' (Importata)', i=2;
+    while(used.has(n.toLowerCase())) n=base+' (Importata '+(i++)+')';
+    return n;
+  }
+
+  function v290RawCats(parsed){
+    const out=[];
+    const pull=x=>{
+      if(!x) return;
+      if(Array.isArray(x)){x.forEach(pull);return;}
+      if(Array.isArray(x.categories)){x.categories.forEach(pull);return;}
+      if(Array.isArray(x.data)){x.data.forEach(pull);return;}
+      if(x.category){pull(x.category);return;}
+      if(typeof x.name==='string' && (Array.isArray(x.subcategories)||Array.isArray(x.prompts))){
+        out.push(x);
+      }
+    };
+    pull(parsed);
+    return out;
+  }
+
+  function v290NormalizePrompt(p){
+    p=p||{};
+    const q={...p};
+    q.id=q.id||uid();
+    q.title=String(q.title||q.name||'Prompt importato');
+    q.description=typeof q.description==='string'
+      ? q.description
+      : String(q.description||q.text||q.plainText||'');
+    q.tags=Array.isArray(q.tags)?q.tags:(q.tags?[q.tags]:[]);
+    q.favorite=!!q.favorite;
+    q.pinned=!!q.pinned;
+    q.copyCount=typeof q.copyCount==='number'?q.copyCount:0;
+    q.versions=Array.isArray(q.versions)?q.versions:[];
+    q.related=Array.isArray(q.related)?q.related:[];
+    q.createdAt=typeof q.createdAt==='number'?q.createdAt:Date.now();
+    q.updatedAt=Date.now();
+    q.noAutoVars=!!q.noAutoVars;
+    return q;
+  }
+
+  function v290NormalizeSub(sub){
+    sub=sub||{};
+    return {
+      ...sub,
+      id:sub.id||uid(),
+      name:String(sub.name||'Sottocategoria importata'),
+      icon:sub.icon||'',
+      prompts:(Array.isArray(sub.prompts)?sub.prompts:[]).map(v290NormalizePrompt)
+    };
+  }
+
+  function v290NormalizeCat(cat,opts={}){
+    cat=cat||{};
+    let subs=(Array.isArray(cat.subcategories)?cat.subcategories:[]).map(v290NormalizeSub);
+    const rootPrompts=(Array.isArray(cat.prompts)?cat.prompts:[]).map(v290NormalizePrompt);
+    if(rootPrompts.length){
+      subs.unshift({id:uid(),name:'Prompt importati',icon:'',prompts:rootPrompts});
+    }
+    return {
+      ...cat,
+      id:opts.forceId || (opts.keepId && cat.id ? cat.id : uid()),
+      name:String(cat.name||'Categoria importata'),
+      icon:cat.icon||'',
+      prompts:[],
+      subcategories:subs
+    };
+  }
+
+  function v290ActiveCats(){
+    return (S.allData||[]).filter(c=>!/cestino|🗑️/i.test(String(c.name||'')));
+  }
+
+  async function v290AppendCats(cats,showChoice){
+    const normalized=(cats||[]).map(c=>v290NormalizeCat(c));
+    if(!normalized.length){Toast.show('Nessuna categoria valida nel file.','er');return false;}
+    const data=v290Clone(S.allData||[]);
+    let first=null;
+    normalized.forEach(c=>{
+      c.name=v290UniqueName(c.name,data);
+      data.push(c);
+      if(!first) first=c;
+    });
+    await save(data,{ids:{
+      view:'columns',
+      catId:first?.id||S.catId||null,
+      subId:first?.subcategories?.[0]?.id||null,
+      pid:first?.subcategories?.[0]?.prompts?.[0]?.id||null
+    }});
+    Toast.show('Categoria aggiunta: '+(first?.name||'importata')+'. Le altre categorie sono rimaste intatte.','ok',4500);
+    return true;
+  }
+
+  async function v290ReplaceAll(cats){
+    const ok=await Modal.confirm(
+      'Conferma ripristino completo',
+      'Questa azione sostituisce tutte le categorie attuali. Per aggiungere una sola categoria usa “Importa Categ.”.'
+    );
+    if(!ok)return false;
+    const data=(cats||[]).map(c=>v290NormalizeCat(c,{keepId:true}));
+    await save(data,{ids:{
+      view:'columns',
+      catId:data[0]?.id||null,
+      subId:data[0]?.subcategories?.[0]?.id||null,
+      pid:data[0]?.subcategories?.[0]?.prompts?.[0]?.id||null
+    },hist:true});
+    Toast.show('Backup completo ripristinato.','ok');
+    return true;
+  }
+
+  async function v290ImportCategoryWithChoice(parsed){
+    const cats=v290RawCats(parsed);
+    if(!cats.length){
+      Toast.show('Il file non contiene categorie importabili.','er');
+      return false;
+    }
+
+    const sourceLabels=cats.map(v290CatLabel);
+    const existing=v290ActiveCats();
+    const targetLabels=['Nuova categoria'].concat(existing.map(v290CatLabel));
+    const currentIndex=Math.max(0,existing.findIndex(c=>c.id===S.catId));
+
+    const res=await Modal.prompt('Importa categoria senza cancellare le altre',[
+      {label:'Categoria nel file da importare',type:'select',options:sourceLabels,default:sourceLabels[0]},
+      {label:'Azione',type:'select',options:[CAT_NEW,CAT_MERGE,CAT_REPLACE],default:CAT_NEW},
+      {label:'Categoria di destinazione per unione/sostituzione',type:'select',options:targetLabels,default:targetLabels[currentIndex+1]||targetLabels[0]}
+    ]);
+    if(!res)return false;
+
+    const srcIdx=Math.max(0,sourceLabels.indexOf(res.f0));
+    const source=cats[srcIdx];
+    const mode=res.f1||CAT_NEW;
+    const targetIdx=targetLabels.indexOf(res.f2)-1;
+    const target=targetIdx>=0?existing[targetIdx]:null;
+
+    if(mode===CAT_NEW){
+      return await v290AppendCats([source],true);
+    }
+
+    if(!target){
+      Toast.show('Scegli una categoria di destinazione.','er');
+      return false;
+    }
+
+    const data=v290Clone(S.allData||[]);
+    const targetInData=data.find(c=>c.id===target.id);
+    if(!targetInData){
+      Toast.show('Categoria di destinazione non trovata.','er');
+      return false;
+    }
+
+    let selectedCatId=targetInData.id, selectedSubId=null, selectedPromptId=null;
+
+    if(mode===CAT_REPLACE){
+      const ok=await Modal.confirm(
+        'Sostituire solo questa categoria?',
+        'Sarà sostituita solo “'+targetInData.name+'”. Tutte le altre categorie resteranno intatte.'
+      );
+      if(!ok)return false;
+      const replacement=v290NormalizeCat(source,{forceId:targetInData.id});
+      replacement.name=v290UniqueName(replacement.name,data,targetInData.id);
+      const idx=data.findIndex(c=>c.id===targetInData.id);
+      data[idx]=replacement;
+      selectedCatId=replacement.id;
+      selectedSubId=replacement.subcategories?.[0]?.id||null;
+      selectedPromptId=replacement.subcategories?.[0]?.prompts?.[0]?.id||null;
+    }else{
+      if(!Array.isArray(targetInData.subcategories)) targetInData.subcategories=[];
+      const imported=v290NormalizeCat(source);
+      (imported.subcategories||[]).forEach(sub=>{
+        sub.name=v290UniqueName(sub.name,targetInData.subcategories);
+        targetInData.subcategories.push(sub);
+      });
+      const firstImported=targetInData.subcategories[targetInData.subcategories.length-(imported.subcategories||[]).length]||targetInData.subcategories[0];
+      selectedSubId=firstImported?.id||null;
+      selectedPromptId=firstImported?.prompts?.[0]?.id||null;
+    }
+
+    await save(data,{ids:{view:'columns',catId:selectedCatId,subId:selectedSubId,pid:selectedPromptId}});
+    Toast.show('Import categoria completato. Nessuna altra categoria è stata eliminata.','ok',4500);
+    return true;
+  }
+
+  async function v290ImportJsonSafe(parsed){
+    const cats=v290RawCats(parsed);
+    if(!cats.length){
+      Toast.show('JSON non valido o formato non riconosciuto.','er');
+      return false;
+    }
+
+    const isSafeCategoryPackage=parsed && !Array.isArray(parsed) &&
+      (parsed.type==='prompt-studio-category-import' || parsed.safeImport || parsed.mode==='append');
+
+    if(isSafeCategoryPackage || cats.length===1){
+      return await v290AppendCats(cats);
+    }
+
+    const res=await Modal.prompt('Importa JSON in sicurezza',[
+      {label:'Azione',type:'select',options:[FULL_APPEND,FULL_REPLACE],default:FULL_APPEND}
+    ]);
+    if(!res)return false;
+    if(res.f0===FULL_REPLACE) return await v290ReplaceAll(cats);
+    return await v290AppendCats(cats);
+  }
+
+  doImport=function(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        await v290ImportJsonSafe(parsed);
+      }catch(err){
+        console.error(err);
+        Toast.show('Errore nel parsing JSON.','er');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  };
+
+  doImportCat=function(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        await v290ImportCategoryWithChoice(parsed);
+      }catch(err){
+        console.error(err);
+        Toast.show('Errore importazione categoria.','er');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  };
+
+  const oldShowBackupCenterV290=typeof showBackupCenter==='function'?showBackupCenter:null;
+  if(oldShowBackupCenterV290){
+    showBackupCenter=async function(){
+      await oldShowBackupCenterV290();
+      const importBtn=$('bkCatImport');
+      if(importBtn){
+        importBtn.innerHTML='📥 Importa categoria senza cancellare';
+        importBtn.onclick=()=>{$('fIC').onchange=doImportCat;$('fIC').click();};
+      }
+      const small=document.querySelector('#bkCatPanel .bk-cat-head small');
+      if(small){
+        small.textContent='Import sicuro: aggiunge una nuova categoria o permette unione/sostituzione solo della categoria scelta. Non cancella l’archivio.';
+      }
+    };
+  }
+
+  const oldSetupV290=typeof setup==='function'?setup:null;
+  if(oldSetupV290){
+    setup=function(){
+      oldSetupV290();
+      const fB=$('fB'), fIC=$('fIC');
+      if(fB) fB.onchange=doImport;
+      if(fIC) fIC.onchange=doImportCat;
+    };
+  }
+
+  const oldRenderDashboardV290=typeof renderDashboard==='function'?renderDashboard:null;
+  if(oldRenderDashboardV290){
+    renderDashboard=function(){
+      oldRenderDashboardV290();
+      document.title='Prompt Studio '+PS_V290_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V290_VERSION;
+    };
+  }
+
+  const oldRenderDDV290=typeof renderDD==='function'?renderDD:null;
+  if(oldRenderDDV290){
+    renderDD=function(){
+      oldRenderDDV290();
+      document.title='Prompt Studio '+PS_V290_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V290_VERSION;
+    };
+  }
+
+  window.PS_CATEGORY_IMPORT_PATCH='v29.0';
+})();
+
 async function init(){
     Loader.show();try{
         await DB.init();Modal.init();
