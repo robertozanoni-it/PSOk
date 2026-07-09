@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v29.5 - backup categorie ZIP</title>
+<title>Prompt Studio v29.8 - categorie ordinate senza doppioni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -8923,6 +8923,457 @@ S.view = 'dashboard';
   }
 
   window.PS_BULK_DELETE_CATEGORIES_PATCH='v29.7';
+})();
+
+
+/* ── PATCH v29.8: categorie ordinate senza doppioni + deduplica sicura ── */
+(function(){
+  const PS_V298_VERSION='v29.8';
+
+  function v298Clone(obj){
+    try{return structuredClone(obj)}
+    catch(_){return JSON.parse(JSON.stringify(obj))}
+  }
+
+  function v298Esc(s){
+    const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(s??'').replace(/[&<>"']/g,c=>m[c]);
+  }
+
+  function v298Plain(s){
+    const div=document.createElement('div');
+    div.innerHTML=String(s||'');
+    return (div.textContent||div.innerText||String(s||''))
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function v298StripLeadingIcon(name){
+    let n=String(name||'').trim();
+    try{
+      n=n.replace(/^\s*(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF]\uFE0F?\s*)+/gu,'');
+    }catch(_){}
+    return n.trim();
+  }
+
+  function v298BaseName(name){
+    let n=v298StripLeadingIcon(name)
+      .replace(/\s+/g,' ')
+      .trim();
+
+    // Normalizza doppioni importati: "Categoria (2)", "Categoria (3)", ecc.
+    n=n.replace(/\s*\(\d+\)\s*$/,'').trim();
+
+    // Normalizza vecchi import automatici.
+    n=n.replace(/\s*\(Importata(?:\s+\d+)?\)\s*$/i,'').trim();
+
+    return n || 'Categoria senza nome';
+  }
+
+  function v298SortKey(name){
+    return v298BaseName(name)
+      .toLocaleLowerCase('it')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\p{L}\p{N}\s-]/gu,'')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function v298CatPromptCount(cat){
+    let n=0;
+    try{
+      if(Array.isArray(cat?.prompts)) n+=cat.prompts.length;
+      (cat?.subcategories||[]).forEach(s=>{n+=(s?.prompts||[]).length});
+    }catch(_){}
+    return n;
+  }
+
+  function v298PromptSignature(p){
+    const title=String(p?.title||'').toLocaleLowerCase('it').replace(/\s+/g,' ').trim();
+    const purpose=String(p?.purpose||'').toLocaleLowerCase('it').replace(/\s+/g,' ').trim();
+    const body=v298Plain(p?.description||p?.text||p?.plainText||'')
+      .toLocaleLowerCase('it')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0,1200);
+    return title+'|'+purpose+'|'+body;
+  }
+
+  function v298SubKey(name){
+    return String(name||'Generale')
+      .toLocaleLowerCase('it')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ')
+      .trim() || 'generale';
+  }
+
+  function v298EnsureIds(cat){
+    if(!cat.id) cat.id=uid();
+    if(!Array.isArray(cat.subcategories)) cat.subcategories=[];
+    if(!cat.icon) cat.icon='';
+    cat.subcategories.forEach(s=>{
+      if(!s.id) s.id=uid();
+      if(!Array.isArray(s.prompts)) s.prompts=[];
+      if(!s.icon) s.icon='';
+      s.prompts.forEach(p=>{
+        if(!p.id) p.id=uid();
+        if(typeof p.title!=='string') p.title=String(p.title||'Prompt senza titolo');
+        if(typeof p.description!=='string') p.description=p.description||p.text||p.plainText||'';
+        if(!Array.isArray(p.tags)) p.tags=p.tags?[p.tags]:[];
+        if(!Array.isArray(p.versions)) p.versions=[];
+        if(typeof p.copyCount!=='number') p.copyCount=0;
+        if(typeof p.favorite!=='boolean') p.favorite=!!p.favorite;
+        if(typeof p.pinned!=='boolean') p.pinned=!!p.pinned;
+        if(typeof p.createdAt!=='number') p.createdAt=Date.now();
+        if(typeof p.updatedAt!=='number') p.updatedAt=Date.now();
+        if(!Array.isArray(p.related)) p.related=[];
+        if(typeof p.noAutoVars!=='boolean') p.noAutoVars=!!p.noAutoVars;
+      });
+    });
+    return cat;
+  }
+
+  function v298MoveRootPromptsToGeneral(cat){
+    if(!Array.isArray(cat?.prompts)||!cat.prompts.length) return 0;
+    if(!Array.isArray(cat.subcategories)) cat.subcategories=[];
+    let sub=cat.subcategories.find(s=>v298SubKey(s.name)==='generale');
+    if(!sub){
+      sub={id:uid(),name:'Generale',icon:'',prompts:[]};
+      cat.subcategories.unshift(sub);
+    }
+    if(!Array.isArray(sub.prompts)) sub.prompts=[];
+    const before=sub.prompts.length;
+    cat.prompts.forEach(p=>{
+      if(!p.id) p.id=uid();
+      sub.prompts.push(p);
+    });
+    cat.prompts=[];
+    return sub.prompts.length-before;
+  }
+
+  function v298ExistingPromptSigns(cat){
+    const set=new Set();
+    (cat?.subcategories||[]).forEach(s=>(s?.prompts||[]).forEach(p=>set.add(v298PromptSignature(p))));
+    if(Array.isArray(cat?.prompts)) cat.prompts.forEach(p=>set.add(v298PromptSignature(p)));
+    return set;
+  }
+
+  function v298FindOrCreateSub(cat, sourceSub){
+    const targetName=String(sourceSub?.name||'Generale').trim()||'Generale';
+    const key=v298SubKey(targetName);
+    let sub=(cat.subcategories||[]).find(s=>v298SubKey(s.name)===key);
+    if(!sub){
+      sub={...v298Clone(sourceSub||{}),id:uid(),name:targetName,icon:sourceSub?.icon||'',prompts:[]};
+      if(!Array.isArray(cat.subcategories)) cat.subcategories=[];
+      cat.subcategories.push(sub);
+    }
+    if(!Array.isArray(sub.prompts)) sub.prompts=[];
+    return sub;
+  }
+
+  function v298MergeCategoryInto(target, source){
+    v298MoveRootPromptsToGeneral(target);
+    v298MoveRootPromptsToGeneral(source);
+
+    const signs=v298ExistingPromptSigns(target);
+    let added=0, skipped=0, addedSubs=0;
+
+    (source.subcategories||[]).forEach(srcSub=>{
+      if(!srcSub) return;
+      const beforeSubs=(target.subcategories||[]).length;
+      const dstSub=v298FindOrCreateSub(target,srcSub);
+      if((target.subcategories||[]).length>beforeSubs) addedSubs++;
+
+      (srcSub.prompts||[]).forEach(srcPrompt=>{
+        const sig=v298PromptSignature(srcPrompt);
+        if(signs.has(sig)){
+          skipped++;
+          return;
+        }
+        const p=v298Clone(srcPrompt);
+        if(!p.id) p.id=uid();
+        p.updatedAt=Date.now();
+        dstSub.prompts.push(p);
+        signs.add(sig);
+        added++;
+      });
+    });
+
+    return {added,skipped,addedSubs};
+  }
+
+  function v298GroupCategories(data){
+    const groups=new Map();
+    (data||[]).forEach((cat,index)=>{
+      if(!cat||!cat.id) return;
+      const base=v298BaseName(cat.name);
+      const key=v298SortKey(base);
+      if(!groups.has(key)) groups.set(key,{key,base,items:[]});
+      groups.get(key).items.push({cat,index,name:String(cat.name||''),count:v298CatPromptCount(cat)});
+    });
+    return [...groups.values()].sort((a,b)=>a.key.localeCompare(b.key,'it',{sensitivity:'base',numeric:true}));
+  }
+
+  function v298ChooseKeeper(group){
+    const items=[...group.items];
+    items.sort((a,b)=>{
+      const aClean=v298BaseName(a.name)===String(a.name||'').trim();
+      const bClean=v298BaseName(b.name)===String(b.name||'').trim();
+      if(aClean!==bClean) return aClean?-1:1;
+      if(b.count!==a.count) return b.count-a.count;
+      return a.index-b.index;
+    });
+    return items[0];
+  }
+
+  function v298VisibleCategories(){
+    return v298GroupCategories(S.allData||[]).map(g=>v298ChooseKeeper(g).cat);
+  }
+
+  function v298FindKeeperForCatId(catId){
+    const cat=FC(S.allData||[],catId);
+    if(!cat) return null;
+    const key=v298SortKey(cat.name);
+    const group=v298GroupCategories(S.allData||[]).find(g=>g.key===key);
+    return group?v298ChooseKeeper(group).cat:null;
+  }
+
+  function v298RebuildCategoryDropdown(){
+    if(!cS) return;
+
+    const specials=['dashboard','all','favorites','recents','tags','trash','search'];
+    const currentValue=cS.value||S.view||S.catId||'dashboard';
+
+    cS.innerHTML='';
+
+    const o=(v,t)=>{
+      const e=document.createElement('option');
+      e.value=v;
+      e.textContent=t;
+      return e;
+    };
+    const sep=(t)=>{
+      const e=o('',t);
+      e.disabled=true;
+      return e;
+    };
+
+    cS.appendChild(o('dashboard','🏠 Dashboard'));
+    cS.appendChild(o('all','🌐 Tutti'));
+    cS.appendChild(o('favorites','⭐ Preferiti'));
+    cS.appendChild(o('recents','🕒 Recenti'));
+    cS.appendChild(o('tags','🏷️ Tag'));
+    cS.appendChild(o('trash','🗑️ Cestino'));
+    if(S.view==='search') cS.appendChild(o('search','🔍 Ricerca'));
+
+    const cats=v298VisibleCategories()
+      .filter(Boolean)
+      .sort((a,b)=>v298SortKey(a.name).localeCompare(v298SortKey(b.name),'it',{sensitivity:'base',numeric:true}));
+
+    if(cats.length){
+      cS.appendChild(sep('──── Categorie ordinate ────'));
+      cats.forEach(c=>{
+        const icon=c.icon?c.icon+' ':'';
+        cS.appendChild(o(c.id,icon+String(c.name||'Senza nome')+' · '+v298CatPromptCount(c)+' prompt'));
+      });
+    }
+
+    if(typeof V28_SPECIAL_VIEWS!=='undefined' && Array.isArray(V28_SPECIAL_VIEWS)){
+      const labels={best:'🏆 Migliori',least:'📉 Meno usati',useless:'🧹 Inutili?',duplicates:'🧬 Duplicati',archived:'📦 Archivio',review:'🔎 Da revisionare'};
+      cS.appendChild(sep('──── V28 ────'));
+      V28_SPECIAL_VIEWS.forEach(v=>cS.appendChild(o(v,labels[v]||v)));
+    }
+
+    if([...specials,...(typeof V28_SPECIAL_VIEWS!=='undefined'?V28_SPECIAL_VIEWS:[])].includes(S.view)){
+      cS.value=S.view;
+      return;
+    }
+
+    const hasCurrent=[...cS.options].some(opt=>opt.value===S.catId);
+    if(hasCurrent){
+      cS.value=S.catId;
+      return;
+    }
+
+    const keeper=S.catId?v298FindKeeperForCatId(S.catId):null;
+    if(keeper){
+      S.catId=keeper.id;
+      cS.value=keeper.id;
+      return;
+    }
+
+    cS.value=currentValue;
+  }
+
+  function v298NextSelection(data){
+    if(!data?.length) return {view:'dashboard',catId:null,subId:null,pid:null};
+    const cat=data[0];
+    const sub=(cat.subcategories||[])[0]||null;
+    const p=(sub?.prompts||[])[0]||null;
+    return {view:'columns',catId:cat.id,subId:sub?.id||null,pid:p?.id||null};
+  }
+
+  async function v298DeduplicateCategories(){
+    if(!await dirtyCheck()) return false;
+
+    const original=S.allData||[];
+    const data=v298Clone(original).map(v298EnsureIds);
+    const groups=v298GroupCategories(data).filter(g=>g.items.length>1);
+
+    // Anche se non ci sono doppioni, riordina e normalizza root prompts.
+    let rootMoved=0;
+    data.forEach(c=>{rootMoved+=v298MoveRootPromptsToGeneral(c)});
+
+    if(!groups.length){
+      const ordered=data.sort((a,b)=>v298SortKey(a.name).localeCompare(v298SortKey(b.name),'it',{sensitivity:'base',numeric:true}));
+      const ok=await save(ordered,{ids:v298NextSelection(ordered)});
+      if(ok) Toast.show('Categorie già senza doppioni. Ho solo riordinato l’elenco.','ok',5200);
+      return ok;
+    }
+
+    const preview=groups.map(g=>{
+      const keeper=v298ChooseKeeper(g);
+      const removed=g.items.filter(x=>x.cat.id!==keeper.cat.id);
+      return '• '+v298BaseName(keeper.name)+' → tengo "'+keeper.name+'", unisco/rimuovo: '+removed.map(x=>'"'+x.name+'"').join(', ');
+    }).join('\n');
+
+    const ok=await Modal.confirm(
+      'Riordina e rimuovi doppioni categorie',
+      'Ho trovato '+groups.length+' gruppi di categorie duplicate.\n\n'+
+      preview+
+      '\n\nI prompt non identici verranno uniti nella categoria mantenuta. I duplicati uguali verranno rimossi. Procedo?'
+    );
+    if(!ok) return false;
+
+    const removeIds=new Set();
+    let mergedPrompts=0, skippedPrompts=0, mergedSubs=0, renamed=0;
+
+    groups.forEach(g=>{
+      const keeperRow=v298ChooseKeeper(g);
+      const keeper=keeperRow.cat;
+      const base=v298BaseName(keeper.name);
+      if(keeper.name!==base){
+        keeper.name=base;
+        renamed++;
+      }
+
+      g.items.forEach(row=>{
+        if(row.cat.id===keeper.id) return;
+        const res=v298MergeCategoryInto(keeper,row.cat);
+        mergedPrompts+=res.added;
+        skippedPrompts+=res.skipped;
+        mergedSubs+=res.addedSubs;
+        removeIds.add(row.cat.id);
+      });
+    });
+
+    let cleaned=data.filter(c=>!removeIds.has(c.id));
+    cleaned=cleaned.sort((a,b)=>v298SortKey(a.name).localeCompare(v298SortKey(b.name),'it',{sensitivity:'base',numeric:true}));
+
+    if(typeof validate==='function' && !validate(cleaned)){
+      Toast.show('Dati non validi dopo la deduplica. Operazione annullata.','er',6500);
+      return false;
+    }
+
+    S.recents=(S.recents||[]).filter(r=>!removeIds.has(r.catId)&&!removeIds.has(r.cid));
+    if(typeof DB!=='undefined' && DB?.saveR) await DB.saveR(S.recents);
+
+    const saved=await save(cleaned,{ids:v298NextSelection(cleaned)});
+    if(!saved){
+      Toast.show('Deduplica non completata: salvataggio non riuscito.','er',6500);
+      return false;
+    }
+
+    Toast.show(
+      'Categorie riordinate. Rimossi '+removeIds.size+' doppioni, uniti '+mergedPrompts+' prompt, saltati '+skippedPrompts+' duplicati identici.',
+      'ok',
+      7000
+    );
+    return true;
+  }
+
+  function v298DuplicateSummary(){
+    const groups=v298GroupCategories(S.allData||[]).filter(g=>g.items.length>1);
+    const totalDup=groups.reduce((n,g)=>n+g.items.length-1,0);
+    return {groups,totalDup};
+  }
+
+  function v298BindButtons(){
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_V298_VERSION;
+    document.title='Prompt Studio '+PS_V298_VERSION;
+
+    const toolsGrid=document.querySelector('#toM .tm-grid');
+    if(toolsGrid && !$('v298DedupTools')){
+      const b=document.createElement('button');
+      b.className='tb';
+      b.id='v298DedupTools';
+      b.style.background='#10b981';
+      b.innerHTML='<i class="fa-solid fa-arrow-down-a-z"></i>Riordina / No doppioni';
+      b.title='Ordina alfabeticamente e rimuove categorie duplicate tipo (2)';
+      b.onclick=async()=>{
+        $('toM')?.classList.remove('show');
+        $('v294BackupMenu')?.classList.remove('show');
+        await v298DeduplicateCategories();
+      };
+      toolsGrid.insertBefore(b,toolsGrid.children[2]||null);
+    }
+
+    const menu=$('v294BackupMenu');
+    if(menu && !$('v298DedupFromBackup')){
+      const sec=document.createElement('div');
+      sec.className='v294-menu-section';
+      sec.textContent='Pulizia e riordino categorie';
+      const b=document.createElement('button');
+      b.id='v298DedupFromBackup';
+      b.type='button';
+      b.innerHTML='<i class="fa-solid fa-arrow-down-a-z"></i>Riordina e rimuovi doppioni';
+      b.onclick=async e=>{
+        e.stopPropagation();
+        $('v294BackupMenu')?.classList.remove('show');
+        $('bkCenterBtn')?.classList.remove('active');
+        await v298DeduplicateCategories();
+      };
+      menu.appendChild(sec);
+      menu.appendChild(b);
+    }
+
+    const {totalDup}=v298DuplicateSummary();
+    const delBtn=$('bDelCat');
+    if(delBtn && totalDup){
+      delBtn.title='Ci sono '+totalDup+' categorie duplicate. Puoi eliminarle o usare Riordina / No doppioni.';
+    }
+  }
+
+  const __v298Setup=typeof setup==='function'?setup:null;
+  if(__v298Setup){
+    setup=function(){
+      __v298Setup();
+      v298BindButtons();
+      v298RebuildCategoryDropdown();
+    };
+  }
+
+  const __v298RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v298RenderDD){
+    renderDD=function(){
+      __v298RenderDD();
+      v298RebuildCategoryDropdown();
+      v298BindButtons();
+    };
+  }
+
+  const __v298RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v298RenderDashboard){
+    renderDashboard=function(){
+      __v298RenderDashboard();
+      v298BindButtons();
+    };
+  }
+
+  window.PS_DEDUP_CATEGORIES_PATCH='v29.8';
 })();
 
 
