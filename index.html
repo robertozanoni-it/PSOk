@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v28.7 - Backup categorie con scelta import/export</title>
+<title>Prompt Studio v29.1 - Elimina categorie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2323,7 +2323,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v28.7</span>
+    <span class="logo-badge">v29.1</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -2359,6 +2359,7 @@ textarea,
       <div class="tm" id="toM" role="menu">
         <div class="tm-grid">
           <button class="tb" style="background:var(--gn)" id="bAC"><i class="fa-solid fa-plus"></i>Nuova Categoria</button>
+          <button class="tb" style="background:var(--rd)" id="bDelCat"><i class="fa-regular fa-trash-can"></i>Elimina Categ.</button>
           <button class="tb" style="background:#f59e0b" id="bU" disabled><i class="fa-solid fa-rotate-left"></i>Annulla</button>
           <button class="tb" style="background:#f59e0b" id="bR" disabled><i class="fa-solid fa-rotate-right"></i>Ripristina</button>
           <button class="tb" style="background:#3b82f6" id="bBk"><i class="fa-solid fa-download"></i>Backup JSON</button>
@@ -6344,6 +6345,173 @@ v28EnhanceDashboard2=function(){
 
   window.PS_CATEGORY_IMPORT_PATCH='v29.0';
 })();
+
+
+/* ── V29.1 DELETE CATEGORY PATCH ─────────────────────────── */
+(function(){
+  const PS_V291_VERSION='v29.1';
+
+  function v291IsTrashCat(c){
+    return /cestino|🗑️/i.test(String(c?.name||''));
+  }
+
+  function v291CountPrompts(cat){
+    let n=0;
+    (cat?.subcategories||[]).forEach(s=>n+=(s?.prompts||[]).length);
+    if(Array.isArray(cat?.prompts)) n+=cat.prompts.length;
+    return n;
+  }
+
+  function v291CatLabel(cat,i){
+    const icon=cat?.icon?cat.icon+' ':'';
+    const warn=v291IsTrashCat(cat)?' · CESTINO':'';
+    return (i+1)+') '+icon+(cat?.name||'Categoria senza nome')+
+      ' · '+((cat?.subcategories||[]).length)+' sotto · '+v291CountPrompts(cat)+' prompt'+warn;
+  }
+
+  function v291CollectPromptIds(cat){
+    const ids=new Set();
+    (cat?.subcategories||[]).forEach(s=>(s?.prompts||[]).forEach(p=>ids.add(p.id)));
+    (cat?.prompts||[]).forEach(p=>ids.add(p.id));
+    return ids;
+  }
+
+  function v291NextSelection(data,deletedIndex){
+    if(!data.length){
+      return {view:'dashboard',catId:null,subId:null,pid:null};
+    }
+    const next=data[deletedIndex]||data[deletedIndex-1]||data.find(c=>!v291IsTrashCat(c))||data[0];
+    const sub=next?.subcategories?.[0]||null;
+    const prompt=sub?.prompts?.[0]||null;
+    return {
+      view:'columns',
+      catId:next?.id||null,
+      subId:sub?.id||null,
+      pid:prompt?.id||null
+    };
+  }
+
+  async function v291DeleteCategoryFlow(preselectId){
+    if(!await dirtyCheck()) return false;
+
+    const cats=(S.allData||[]).filter(c=>c&&c.id);
+    if(!cats.length){
+      Toast.show('Nessuna categoria da eliminare.','er');
+      return false;
+    }
+
+    const labels=cats.map(v291CatLabel);
+    const preIndex=Math.max(0,cats.findIndex(c=>c.id===preselectId));
+    const selectedDefault=labels[preIndex]||labels[0];
+
+    const res=await Modal.prompt('Elimina categoria',[
+      {label:'Categoria da eliminare',type:'select',options:labels,default:selectedDefault},
+      {label:'Conferma scrivendo ELIMINA',type:'text',placeholder:'ELIMINA'}
+    ]);
+    if(!res) return false;
+
+    if(String(res.f1||'').trim().toUpperCase()!=='ELIMINA'){
+      Toast.show('Eliminazione annullata: conferma non valida.','er',3500);
+      return false;
+    }
+
+    const idx=Math.max(0,labels.indexOf(res.f0));
+    const cat=cats[idx];
+    if(!cat){
+      Toast.show('Categoria non trovata.','er');
+      return false;
+    }
+
+    const total=v291CountPrompts(cat);
+    const subCount=(cat.subcategories||[]).length;
+    const msg=(v291IsTrashCat(cat)
+      ? 'Stai eliminando il Cestino: i prompt eliminati saranno rimossi definitivamente. '
+      : '')+
+      'Eliminare definitivamente “'+(cat.name||'Categoria senza nome')+'” con '+subCount+' sottocategorie e '+total+' prompt?';
+
+    const ok=await Modal.confirm('Conferma eliminazione categoria',msg);
+    if(!ok) return false;
+
+    const data=structuredClone(S.allData||[]);
+    const delIndex=data.findIndex(c=>c.id===cat.id);
+    if(delIndex<0){
+      Toast.show('Categoria non trovata nei dati.','er');
+      return false;
+    }
+
+    const toRemove=data[delIndex];
+    const promptIds=v291CollectPromptIds(toRemove);
+    data.splice(delIndex,1);
+
+    S.recents=(S.recents||[]).filter(r=>r.catId!==cat.id && r.cid!==cat.id && !promptIds.has(r.pid));
+    await DB.saveR(S.recents);
+
+    const ids=v291NextSelection(data,delIndex);
+    await save(data,{ids});
+    Toast.show('Categoria eliminata: '+(cat.name||'senza nome')+'.','ok',3500);
+    return true;
+  }
+
+  function v291BindDeleteButton(){
+    const btn=$('bDelCat');
+    if(btn){
+      btn.onclick=async()=>{
+        const tm=$('toM');
+        if(tm) tm.classList.remove('show');
+        await v291DeleteCategoryFlow(S.catId);
+      };
+    }
+  }
+
+  const __v291Setup=typeof setup==='function'?setup:null;
+  if(__v291Setup){
+    setup=function(){
+      __v291Setup();
+      v291BindDeleteButton();
+    };
+  }
+
+  const __v291RenderC1=typeof renderC1==='function'?renderC1:null;
+  if(__v291RenderC1){
+    renderC1=function(){
+      __v291RenderC1();
+      const col=$('c1');
+      const cat=FC(S.allData,S.catId);
+      const del=col?.querySelector('[data-a="dc"]');
+      if(del&&cat){
+        del.title='Elimina categoria selezionata';
+        del.onclick=async e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          await v291DeleteCategoryFlow(cat.id);
+        };
+      }
+    };
+  }
+
+  const __v291RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v291RenderDD){
+    renderDD=function(){
+      __v291RenderDD();
+      document.title='Prompt Studio '+PS_V291_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V291_VERSION;
+    };
+  }
+
+  const __v291RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v291RenderDashboard){
+    renderDashboard=function(){
+      __v291RenderDashboard();
+      document.title='Prompt Studio '+PS_V291_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V291_VERSION;
+    };
+  }
+
+  window.PS_DELETE_CATEGORY_PATCH='v29.1';
+})();
+
 
 async function init(){
     Loader.show();try{
