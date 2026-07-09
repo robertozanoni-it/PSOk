@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v29.1 - Elimina categorie</title>
+<title>Prompt Studio v29.2 - categorie separate import/export</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2323,7 +2323,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v29.1</span>
+    <span class="logo-badge">v29.2</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -6512,6 +6512,386 @@ v28EnhanceDashboard2=function(){
   window.PS_DELETE_CATEGORY_PATCH='v29.1';
 })();
 
+
+
+/* ── V29.2 EXPORT/IMPORT TUTTE LE CATEGORIE IN FILE SEPARATI ───────────────── */
+(function(){
+  const PS_V292_VERSION='v29.2';
+
+  function v292Slug(name){
+    return String(name || 'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,80) || 'categoria';
+  }
+
+  function v292Clone(obj){
+    try{return structuredClone(obj)}
+    catch(e){return JSON.parse(JSON.stringify(obj||null))}
+  }
+
+  function v292PromptCount(cat){
+    let n=0;
+    try{
+      (cat?.subcategories||[]).forEach(s=>n+=(s?.prompts||[]).length);
+      if(Array.isArray(cat?.prompts)) n+=cat.prompts.length;
+    }catch(e){}
+    return n;
+  }
+
+  function v292DownloadText(filename,content,type='application/json'){
+    const b=new Blob([content],{type});
+    const u=URL.createObjectURL(b);
+    const a=document.createElement('a');
+    a.href=u;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(u),400);
+  }
+
+  function v292CategoryFilename(cat,index){
+    const idx=String(index+1).padStart(2,'0');
+    const date=new Date().toISOString().slice(0,10);
+    return idx+'_prompt_categoria_'+v292Slug(cat?.name||('categoria_'+idx))+'_'+date+'.json';
+  }
+
+  function v292CategoryPayload(cat){
+    // Formato compatibile con "Importa Categ.": ogni file contiene una singola categoria in array.
+    return [cat];
+  }
+
+  async function v292ExportAllCategoriesSeparate(){
+    const cats=(S.allData||[]).filter(c=>c&&c.id);
+    if(!cats.length){
+      Toast.show('Nessuna categoria da esportare.','er');
+      return;
+    }
+
+    const totalPrompts=cats.reduce((n,c)=>n+v292PromptCount(c),0);
+    const ok=await Modal.confirm(
+      'Scaricare tutte le categorie?',
+      'Verranno creati '+cats.length+' file JSON separati, uno per ogni categoria, per un totale di '+totalPrompts+' prompt. Nessun dato verrà modificato.'
+    );
+    if(!ok) return;
+
+    const files=cats.map((cat,i)=>({
+      name:v292CategoryFilename(cat,i),
+      content:JSON.stringify(v292CategoryPayload(v292Clone(cat)),null,2)
+    }));
+
+    // Su Chrome/Edge moderni permette di scegliere una cartella e salvare file separati senza aprire mille download.
+    if(window.showDirectoryPicker){
+      try{
+        const dir=await window.showDirectoryPicker({mode:'readwrite'});
+        for(const f of files){
+          const handle=await dir.getFileHandle(f.name,{create:true});
+          const writable=await handle.createWritable();
+          await writable.write(f.content);
+          await writable.close();
+        }
+        Toast.show('Esportate '+files.length+' categorie in file separati.','ok',4500);
+        return;
+      }catch(err){
+        if(err && err.name==='AbortError') return;
+        console.warn('Export cartella non disponibile, uso download multipli.',err);
+      }
+    }
+
+    // Fallback: download multipli. Il browser potrebbe chiedere conferma per download multipli.
+    files.forEach((f,i)=>setTimeout(()=>v292DownloadText(f.name,f.content),i*180));
+    Toast.show('Download separati avviati: '+files.length+' file JSON.','ok',4500);
+  }
+
+  function v292RawCats(parsed){
+    const out=[];
+    const pull=x=>{
+      if(!x) return;
+      if(Array.isArray(x)){x.forEach(pull);return;}
+      if(Array.isArray(x.categories)){x.categories.forEach(pull);return;}
+      if(Array.isArray(x.data)){x.data.forEach(pull);return;}
+      if(Array.isArray(x.allData)){x.allData.forEach(pull);return;}
+      if(x.category){pull(x.category);return;}
+      if(typeof x.name==='string' && (Array.isArray(x.subcategories)||Array.isArray(x.prompts))){
+        out.push(x);
+      }
+    };
+    pull(parsed);
+    return out;
+  }
+
+  function v292UniqueName(base,items){
+    base=String(base||'Categoria importata').trim()||'Categoria importata';
+    const used=new Set((items||[]).map(x=>String(x.name||'').trim().toLowerCase()));
+    if(!used.has(base.toLowerCase())) return base;
+    let n=base+' (Importata)', i=2;
+    while(used.has(n.toLowerCase())){
+      n=base+' (Importata '+(i++)+')';
+    }
+    return n;
+  }
+
+  function v292NormalizePrompt(p){
+    p=p||{};
+    const q={...p};
+    q.id=uid();
+    q.title=String(q.title||q.name||'Prompt importato');
+    q.description=typeof q.description==='string'
+      ? q.description
+      : String(q.description||q.text||q.plainText||'');
+    if(q.text && typeof q.text!=='string') q.text=String(q.text||'');
+    if(q.plainText && typeof q.plainText!=='string') q.plainText=String(q.plainText||'');
+    q.tags=Array.isArray(q.tags)?q.tags:(q.tags?[q.tags]:[]);
+    q.favorite=!!q.favorite;
+    q.pinned=!!q.pinned;
+    q.copyCount=typeof q.copyCount==='number'?q.copyCount:0;
+    q.versions=Array.isArray(q.versions)?q.versions:[];
+    q.related=Array.isArray(q.related)?q.related:[];
+    q.createdAt=typeof q.createdAt==='number'?q.createdAt:Date.now();
+    q.updatedAt=Date.now();
+    q.noAutoVars=!!q.noAutoVars;
+    return q;
+  }
+
+  function v292NormalizeSub(sub){
+    sub=sub||{};
+    return {
+      ...sub,
+      id:uid(),
+      name:String(sub.name||'Sottocategoria importata'),
+      icon:sub.icon||'',
+      prompts:(Array.isArray(sub.prompts)?sub.prompts:[]).map(v292NormalizePrompt)
+    };
+  }
+
+  function v292NormalizeCat(cat,existingData){
+    cat=cat||{};
+    let subs=(Array.isArray(cat.subcategories)?cat.subcategories:[]).map(v292NormalizeSub);
+    const rootPrompts=(Array.isArray(cat.prompts)?cat.prompts:[]).map(v292NormalizePrompt);
+    if(rootPrompts.length){
+      subs.unshift({id:uid(),name:'Prompt importati',icon:'',prompts:rootPrompts});
+    }
+    const c={
+      ...cat,
+      id:uid(),
+      name:String(cat.name||'Categoria importata'),
+      icon:cat.icon||'',
+      prompts:[],
+      subcategories:subs
+    };
+    c.name=v292UniqueName(c.name,existingData);
+    return c;
+  }
+
+  function v292ReadFile(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=ev=>resolve(String(ev.target.result||''));
+      reader.onerror=()=>reject(reader.error||new Error('Errore lettura file'));
+      reader.readAsText(file);
+    });
+  }
+
+  async function v292ImportCategoryFiles(filesLike){
+    const files=[...(filesLike||[])].filter(f=>f && /\.json$/i.test(f.name||''));
+    if(!files.length){
+      Toast.show('Seleziona uno o più file JSON di categoria.','er');
+      return false;
+    }
+
+    const cats=[];
+    const errors=[];
+
+    for(const file of files){
+      try{
+        const parsed=JSON.parse(await v292ReadFile(file));
+        const found=v292RawCats(parsed);
+        if(found.length) cats.push(...found);
+        else errors.push(file.name);
+      }catch(err){
+        console.error('Errore import file categoria',file.name,err);
+        errors.push(file.name);
+      }
+    }
+
+    if(!cats.length){
+      Toast.show('Nessuna categoria valida trovata nei file selezionati.','er',4500);
+      return false;
+    }
+
+    const promptTotal=cats.reduce((n,c)=>n+v292PromptCount(c),0);
+    const msg='Trovate '+cats.length+' categorie in '+files.length+' file JSON, con circa '+promptTotal+' prompt. Verranno aggiunte come nuove categorie. Nessuna categoria esistente verrà eliminata o sostituita.'+
+      (errors.length?' File ignorati/non validi: '+errors.slice(0,5).join(', ')+(errors.length>5?'…':''):'');
+    const ok=await Modal.confirm('Importa categorie separate',msg);
+    if(!ok) return false;
+
+    const data=v292Clone(S.allData||[]);
+    let first=null;
+    cats.forEach(cat=>{
+      const copy=v292NormalizeCat(cat,data);
+      data.push(copy);
+      if(!first) first=copy;
+    });
+
+    await save(data,{ids:{
+      view:'columns',
+      catId:first?.id||S.catId||null,
+      subId:first?.subcategories?.[0]?.id||null,
+      pid:first?.subcategories?.[0]?.prompts?.[0]?.id||null
+    }});
+
+    Toast.show('Importate '+cats.length+' categorie senza eliminare nulla.','ok',5000);
+    return true;
+  }
+
+  function v292EnsureHiddenInputs(){
+    if(!$('fICM')){
+      const inp=document.createElement('input');
+      inp.type='file';
+      inp.id='fICM';
+      inp.accept='.json,application/json';
+      inp.multiple=true;
+      inp.style.display='none';
+      document.body.appendChild(inp);
+    }
+    if(!$('fICD')){
+      const inp=document.createElement('input');
+      inp.type='file';
+      inp.id='fICD';
+      inp.accept='.json,application/json';
+      inp.multiple=true;
+      inp.setAttribute('webkitdirectory','');
+      inp.setAttribute('directory','');
+      inp.style.display='none';
+      document.body.appendChild(inp);
+    }
+  }
+
+  function v292EnsureToolButtons(){
+    const grid=document.querySelector('#toM .tm-grid');
+    if(!grid) return;
+
+    if(!$('bExpAllCats')){
+      const btn=document.createElement('button');
+      btn.className='tb';
+      btn.id='bExpAllCats';
+      btn.style.background='#0891b2';
+      btn.innerHTML='<i class="fa-solid fa-folder-tree"></i>Export Tutte Categ.';
+      grid.appendChild(btn);
+    }
+
+    if(!$('bImpAllCats')){
+      const btn=document.createElement('button');
+      btn.className='tb';
+      btn.id='bImpAllCats';
+      btn.style.background='#7c3aed';
+      btn.innerHTML='<i class="fa-solid fa-file-import"></i>Importa Più Categ.';
+      grid.appendChild(btn);
+    }
+
+    if(!$('bImpDirCats')){
+      const btn=document.createElement('button');
+      btn.className='tb';
+      btn.id='bImpDirCats';
+      btn.style.background='#4f46e5';
+      btn.innerHTML='<i class="fa-solid fa-folder-plus"></i>Importa Cartella';
+      grid.appendChild(btn);
+    }
+  }
+
+  function v292BindButtons(){
+    v292EnsureHiddenInputs();
+    v292EnsureToolButtons();
+
+    const exp=$('bExpAllCats');
+    if(exp) exp.onclick=async()=>{
+      const tm=$('toM'); if(tm) tm.classList.remove('show');
+      await v292ExportAllCategoriesSeparate();
+    };
+
+    const imp=$('bImpAllCats');
+    if(imp) imp.onclick=()=>{
+      const tm=$('toM'); if(tm) tm.classList.remove('show');
+      const f=$('fICM');
+      if(f){f.onchange=async e=>{await v292ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}
+    };
+
+    const impDir=$('bImpDirCats');
+    if(impDir) impDir.onclick=()=>{
+      const tm=$('toM'); if(tm) tm.classList.remove('show');
+      const f=$('fICD');
+      if(f){f.onchange=async e=>{await v292ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}
+    };
+  }
+
+  const __v292Setup=typeof setup==='function'?setup:null;
+  if(__v292Setup){
+    setup=function(){
+      __v292Setup();
+      v292BindButtons();
+    };
+  }
+
+  // Aggiunge i comandi anche nel centro Backup e Ripristino.
+  const __v292ShowBackupCenter=typeof showBackupCenter==='function'?showBackupCenter:null;
+  if(__v292ShowBackupCenter){
+    showBackupCenter=async function(){
+      await __v292ShowBackupCenter();
+      v292EnsureHiddenInputs();
+
+      const panel=$('bkCatPanel');
+      if(panel && !$('bkAllCatTools')){
+        panel.insertAdjacentHTML('beforeend',
+          '<div id="bkAllCatTools" class="bk-cat-controls" style="margin-top:8px">'+
+            '<button class="mb cf" id="bkAllCatsExport" type="button">📦 Scarica tutte separate</button>'+
+            '<button class="mb cc" id="bkAllCatsImport" type="button">📥 Importa più file</button>'+
+            '<button class="mb cc" id="bkAllCatsImportDir" type="button">🗂️ Importa cartella</button>'+
+          '</div>'+
+          '<small style="display:block;color:var(--t3);line-height:1.45;margin-top:6px">Export: crea un JSON separato per ogni categoria. Import: aggiunge le categorie come nuove e non elimina nulla.</small>'
+        );
+      }
+
+      const ex=$('bkAllCatsExport');
+      if(ex) ex.onclick=v292ExportAllCategoriesSeparate;
+
+      const im=$('bkAllCatsImport');
+      if(im) im.onclick=()=>{
+        const f=$('fICM');
+        if(f){f.onchange=async e=>{await v292ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}
+      };
+
+      const id=$('bkAllCatsImportDir');
+      if(id) id.onclick=()=>{
+        const f=$('fICD');
+        if(f){f.onchange=async e=>{await v292ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}
+      };
+    };
+  }
+
+  const __v292RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v292RenderDD){
+    renderDD=function(){
+      __v292RenderDD();
+      document.title='Prompt Studio '+PS_V292_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V292_VERSION;
+    };
+  }
+
+  const __v292RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v292RenderDashboard){
+    renderDashboard=function(){
+      __v292RenderDashboard();
+      document.title='Prompt Studio '+PS_V292_VERSION;
+      const badge=document.querySelector('.logo-badge');
+      if(badge) badge.textContent=PS_V292_VERSION;
+    };
+  }
+
+  window.PS_MULTI_CATEGORY_FILES_PATCH='v29.2';
+})();
 
 async function init(){
     Loader.show();try{
