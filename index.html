@@ -8402,9 +8402,7 @@ S.view = 'dashboard';
   }
 
   function v297ParseCsvDeletePlan(text) {
-    const lines=String(text||'').split(/
-?
-/).filter(Boolean);
+    const lines=String(text||'').split(/\r?\n/).filter(Boolean);
     if(!lines.length) return [];
     const sep=(lines[0].includes(';')&&!lines[0].includes(','))?';':',';
     const headers=lines[0].split(sep).map(x=>x.replace(/^"|"$/g,'').trim().toLowerCase());
