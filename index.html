@@ -2350,6 +2350,137 @@ textarea,
   .v293-cat-menu{left:0;right:auto;width:min(320px,88vw)}
 }
 
+
+/* ── PATCH v30.0: categorie ordinate A-Z in elenco cliccabile ── */
+.ps-native-select-hidden{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  min-width:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+}
+.ps-catnav-wrap{
+  position:relative;
+  min-width:260px;
+  max-width:360px;
+  flex:0 0 auto;
+}
+.ps-catnav-btn{
+  width:100%;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background:var(--el);
+  border:1px solid var(--bd);
+  border-radius:var(--r-md);
+  color:var(--t1);
+  padding:8px 12px;
+  font-size:15px;
+  font-family:var(--font-ui);
+  font-weight:700;
+  cursor:pointer;
+  text-align:left;
+  transition:border-color var(--tr),background var(--tr),box-shadow var(--tr);
+}
+.ps-catnav-btn:hover,
+.ps-catnav-btn[aria-expanded="true"]{
+  border-color:var(--ac);
+  background:var(--sf2);
+  box-shadow:0 0 0 3px var(--acg);
+}
+.ps-catnav-label{
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.ps-catnav-btn i{
+  flex:0 0 auto;
+  color:var(--t3);
+  font-size:12px;
+}
+.ps-catnav-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  z-index:10020;
+  width:min(520px,92vw);
+  max-height:72vh;
+  overflow:auto;
+  padding:8px;
+  background:var(--sf);
+  border:1px solid var(--bd2);
+  border-radius:var(--r-lg);
+  box-shadow:0 18px 46px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.04);
+}
+.ps-catnav-menu.show{
+  display:block;
+  animation:dropdown-in var(--tr-fast) both;
+}
+.ps-catnav-sep{
+  padding:10px 10px 6px;
+  color:var(--t3);
+  font-size:12px;
+  font-family:var(--font-mono);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  cursor:default;
+  user-select:none;
+}
+.ps-catnav-item{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 12px;
+  margin:2px 0;
+  border:1px solid transparent;
+  border-radius:var(--r-md);
+  background:transparent;
+  color:var(--t1);
+  font-size:15px;
+  font-family:var(--font-ui);
+  font-weight:700;
+  line-height:1.25;
+  text-align:left;
+  cursor:pointer;
+  transition:background var(--tr),border-color var(--tr),transform var(--tr),color var(--tr);
+}
+.ps-catnav-item:hover,
+.ps-catnav-item:focus-visible{
+  background:var(--el);
+  border-color:var(--bd2);
+  transform:translateY(-1px);
+}
+.ps-catnav-item.active{
+  background:var(--acg);
+  border-color:var(--ac);
+  color:var(--ac);
+}
+.ps-catnav-item .ps-catnav-text{
+  min-width:0;
+  white-space:normal;
+}
+@media(max-width:980px){
+  .ps-catnav-wrap{
+    flex:1 1 180px;
+    min-width:180px;
+    max-width:none;
+  }
+  .ps-catnav-menu{
+    left:0;
+    right:auto;
+    width:min(560px,92vw);
+  }
+}
+
 </style>
 </head>
 <body>
@@ -9608,6 +9739,240 @@ S.view = 'dashboard';
   }
 
   window.PS_DELETE_PLAN_IMPORT_PATCH='v29.9';
+})();
+
+
+/* ── PATCH v30.0: menu categorie A-Z cliccabile, sostituisce il select nativo ── */
+(function(){
+  const PS_V300_VERSION='v30.0';
+  const SPECIAL_VIEWS=['dashboard','all','favorites','recents','tags','trash','search'];
+  const V28_LABELS={best:'🏆 Migliori',least:'📉 Meno usati',useless:'🧹 Inutili?',duplicates:'🧬 Duplicati',archived:'📦 Archivio',review:'🔎 Da revisionare'};
+
+  function v300SortText(s){
+    return String(s||'')
+      .replace(/^[^\p{L}\p{N}]+/u,'')
+      .replace(/\s*·\s*\d+\s*prompt\s*$/i,'')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase();
+  }
+
+  function v300FirstPromptInSub(sub){
+    return [...(sub?.prompts||[])].sort((a,b)=>{
+      if(a?.pinned&&!b?.pinned) return -1;
+      if(!a?.pinned&&b?.pinned) return 1;
+      return String(a?.title||'').localeCompare(String(b?.title||''),'it',{sensitivity:'base',numeric:true});
+    })[0] || null;
+  }
+
+  function v300FirstSub(cat){
+    return [...(cat?.subcategories||[])].sort((a,b)=>
+      String(a?.name||'').localeCompare(String(b?.name||''),'it',{sensitivity:'base',numeric:true})
+    )[0] || null;
+  }
+
+  function v300NormalizeSeparator(text){
+    const t=String(text||'').replace(/[─—–-]+/g,' ').replace(/\s+/g,' ').trim();
+    if(/categorie/i.test(t)) return 'Categorie ordinate A-Z';
+    if(/v28/i.test(t)) return 'V28';
+    return t || 'Sezione';
+  }
+
+  function v300EnsureCatNav(){
+    if(!cS) return null;
+    cS.classList.add('ps-native-select-hidden');
+
+    let wrap=document.getElementById('psCatNavWrap');
+    if(wrap) return wrap;
+
+    wrap=document.createElement('div');
+    wrap.id='psCatNavWrap';
+    wrap.className='ps-catnav-wrap';
+    wrap.innerHTML=
+      '<button id="psCatNavBtn" class="ps-catnav-btn" type="button" aria-haspopup="listbox" aria-expanded="false" title="Categorie ordinate e cliccabili">' +
+        '<span id="psCatNavLabel" class="ps-catnav-label">Categorie</span>' +
+        '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>' +
+      '</button>' +
+      '<div id="psCatNavMenu" class="ps-catnav-menu" role="listbox" aria-label="Categorie ordinate"></div>';
+
+    cS.insertAdjacentElement('afterend',wrap);
+
+    const btn=document.getElementById('psCatNavBtn');
+    const menu=document.getElementById('psCatNavMenu');
+
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const open=!menu.classList.contains('show');
+      document.querySelectorAll('.ps-catnav-menu.show').forEach(m=>m.classList.remove('show'));
+      menu.classList.toggle('show',open);
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open){
+        const active=menu.querySelector('.ps-catnav-item.active') || menu.querySelector('.ps-catnav-item');
+        active?.focus?.({preventScroll:true});
+      }
+    });
+
+    btn.addEventListener('keydown',e=>{
+      if(e.key==='ArrowDown' || e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        btn.click();
+      }
+    });
+
+    menu.addEventListener('keydown',e=>{
+      const items=[...menu.querySelectorAll('.ps-catnav-item')];
+      const i=items.indexOf(document.activeElement);
+      if(e.key==='Escape'){
+        e.preventDefault();
+        menu.classList.remove('show');
+        btn.setAttribute('aria-expanded','false');
+        btn.focus();
+      }else if(e.key==='ArrowDown'){
+        e.preventDefault();
+        (items[i+1]||items[0])?.focus();
+      }else if(e.key==='ArrowUp'){
+        e.preventDefault();
+        (items[i-1]||items[items.length-1])?.focus();
+      }
+    });
+
+    document.addEventListener('click',e=>{
+      if(!wrap.contains(e.target)){
+        menu.classList.remove('show');
+        btn.setAttribute('aria-expanded','false');
+      }
+    });
+
+    return wrap;
+  }
+
+  async function v300SelectValue(value){
+    if(!value) return;
+
+    const wrap=document.getElementById('psCatNavWrap');
+    const menu=document.getElementById('psCatNavMenu');
+    const btn=document.getElementById('psCatNavBtn');
+    menu?.classList.remove('show');
+    btn?.setAttribute('aria-expanded','false');
+
+    if(!await dirtyCheck()){
+      v300RefreshCatNav();
+      return;
+    }
+
+    cS.value=value;
+
+    if(SPECIAL_VIEWS.includes(value)){
+      S.view=value;
+      S.pid=null;
+    }else{
+      S.view='columns';
+      S.catId=value;
+      const cat=FC(S.allData,value);
+      const sub=v300FirstSub(cat);
+      const prompt=v300FirstPromptInSub(sub);
+      S.subId=sub?.id||null;
+      S.pid=prompt?.id||null;
+    }
+
+    render();
+  }
+
+  function v300RefreshCatNav(){
+    const wrap=v300EnsureCatNav();
+    if(!wrap || !cS) return;
+
+    const btn=document.getElementById('psCatNavBtn');
+    const label=document.getElementById('psCatNavLabel');
+    const menu=document.getElementById('psCatNavMenu');
+    if(!btn || !label || !menu) return;
+
+    const options=[...cS.options];
+    const currentValue = SPECIAL_VIEWS.includes(S.view) ? S.view : (S.catId || cS.value || 'dashboard');
+    const selected = options.find(o=>!o.disabled && o.value===currentValue) ||
+                     options.find(o=>!o.disabled && o.value===cS.value) ||
+                     options.find(o=>!o.disabled && o.value==='dashboard');
+
+    label.textContent = selected ? selected.textContent : 'Categorie';
+    btn.title = selected ? selected.textContent : 'Categorie ordinate e cliccabili';
+
+    menu.innerHTML='';
+
+    let inCatSection=false;
+    let catButtons=[];
+
+    options.forEach(opt=>{
+      if(opt.disabled || !opt.value){
+        const sepText=v300NormalizeSeparator(opt.textContent);
+        const sep=document.createElement('div');
+        sep.className='ps-catnav-sep';
+        sep.textContent=sepText;
+        menu.appendChild(sep);
+        inCatSection=/categorie/i.test(sepText);
+        catButtons=[];
+        return;
+      }
+
+      const item=document.createElement('button');
+      item.type='button';
+      item.className='ps-catnav-item'+(opt.value===currentValue?' active':'');
+      item.dataset.value=opt.value;
+      item.setAttribute('role','option');
+      item.setAttribute('aria-selected',opt.value===currentValue?'true':'false');
+      item.tabIndex=0;
+
+      const text=document.createElement('span');
+      text.className='ps-catnav-text';
+      text.textContent=V28_LABELS[opt.value] || opt.textContent;
+      item.appendChild(text);
+
+      item.addEventListener('click',()=>v300SelectValue(opt.value));
+
+      if(inCatSection){
+        catButtons.push(item);
+        const existing=[...menu.querySelectorAll('.ps-catnav-item[data-cat-section="1"]')];
+        item.dataset.catSection='1';
+
+        // Inserisce le categorie sempre in ordine A-Z anche se i dati arrivano non ordinati.
+        const all=[...existing,item].sort((a,b)=>
+          v300SortText(a.textContent).localeCompare(v300SortText(b.textContent),'it',{sensitivity:'base',numeric:true})
+        );
+        existing.forEach(n=>n.remove());
+        const lastSep=[...menu.querySelectorAll('.ps-catnav-sep')].pop();
+        let anchor=lastSep;
+        all.forEach(n=>{anchor.insertAdjacentElement('afterend',n);anchor=n;});
+      }else{
+        menu.appendChild(item);
+      }
+    });
+  }
+
+  function v300Bind(){
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_V300_VERSION;
+    document.title='Prompt Studio '+PS_V300_VERSION;
+    v300RefreshCatNav();
+  }
+
+  const __v300Setup=typeof setup==='function'?setup:null;
+  if(__v300Setup){
+    setup=function(){
+      __v300Setup();
+      v300Bind();
+    };
+  }
+
+  const __v300RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v300RenderDD){
+    renderDD=function(){
+      __v300RenderDD();
+      v300Bind();
+    };
+  }
+
+  window.PS_CLICKABLE_CATEGORY_LIST_PATCH='v30.0';
 })();
 
 init();
