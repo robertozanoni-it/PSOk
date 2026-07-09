@@ -7374,6 +7374,511 @@ S.view = 'dashboard';
         setup();render();DB.bk(S.allData);
     }catch(e){console.error(e);Toast.show('Errore inizializzazione.','er')}finally{Loader.hide()}
 }
+/* ── PATCH v29.4: unico pulsante Backup / Import / Export ── */
+(function(){
+  const PS_V294_VERSION='v29.4';
+
+  function v294Style(){
+    if($('v294BackupStyle'))return;
+    const st=document.createElement('style');
+    st.id='v294BackupStyle';
+    st.textContent=`
+      .v294-backup-wrap{position:relative;display:flex;align-items:center}
+      .v294-backup-main{
+        width:auto!important;
+        min-width:118px!important;
+        padding:0 12px!important;
+        gap:8px!important;
+        color:#34d399!important;
+        background:rgba(52,211,153,.10)!important;
+        border:1px solid rgba(52,211,153,.25)!important;
+        box-shadow:0 0 14px rgba(52,211,153,.12)!important;
+        font-size:14px!important;
+        font-weight:900!important;
+      }
+      .v294-backup-main:hover{
+        background:rgba(52,211,153,.18)!important;
+        box-shadow:0 0 16px rgba(52,211,153,.25)!important;
+      }
+      .v294-backup-main .fa-chevron-down{font-size:11px;opacity:.8}
+      .v294-backup-menu{
+        display:none;
+        position:absolute;
+        top:calc(100% + 10px);
+        right:0;
+        width:min(360px,92vw);
+        background:var(--sf);
+        border:1px solid var(--bd2);
+        border-radius:var(--r-lg);
+        box-shadow:0 18px 48px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.04);
+        padding:9px;
+        z-index:2000;
+      }
+      .v294-backup-menu.show{display:block;animation:dropdown-in var(--tr-fast) both}
+      .v294-menu-head{
+        padding:10px 11px 8px;
+        color:var(--t1);
+        font-family:var(--font-head);
+        font-size:15px;
+        font-weight:900;
+        letter-spacing:.01em;
+      }
+      .v294-menu-note{
+        display:block;
+        padding:0 11px 10px;
+        color:var(--t3);
+        font-size:12px;
+        line-height:1.45;
+      }
+      .v294-menu-section{
+        margin:8px 6px 5px;
+        padding:8px 8px 5px;
+        border-top:1px solid var(--bd);
+        color:var(--t3);
+        font-size:11px;
+        font-family:var(--font-mono);
+        font-weight:900;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+      }
+      .v294-backup-menu button{
+        width:100%;
+        min-height:38px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        border:0;
+        border-radius:var(--r-md);
+        padding:9px 11px;
+        margin:2px 0;
+        background:transparent;
+        color:var(--t2);
+        text-align:left;
+        cursor:pointer;
+        font-family:var(--font-ui);
+        font-size:13px;
+        font-weight:800;
+        transition:background var(--tr),color var(--tr),transform var(--tr);
+      }
+      .v294-backup-menu button:hover{background:var(--el);color:var(--t1);transform:translateX(2px)}
+      .v294-backup-menu button i{width:18px;text-align:center;color:var(--ac)}
+      .v294-backup-menu button.v294-danger i{color:var(--rd)}
+      .v294-backup-menu button.v294-ok i{color:var(--gn)}
+      .v294-hidden-old{display:none!important}
+      @media(max-width:980px){
+        .v294-backup-main{min-width:46px!important;width:46px!important;padding:0!important}
+        .v294-backup-main span{display:none}
+        .v294-backup-menu{right:auto;left:0}
+      }`;
+    document.head.appendChild(st);
+  }
+
+  function v294Clone(obj){
+    try{return structuredClone(obj)}
+    catch(e){return JSON.parse(JSON.stringify(obj||null))}
+  }
+
+  function v294SafeName(name){
+    return String(name||'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,78)||'categoria';
+  }
+
+  function v294CountPrompts(cat){
+    let n=0;
+    (cat?.subcategories||[]).forEach(s=>n+=(s.prompts||[]).length);
+    if(Array.isArray(cat?.prompts))n+=cat.prompts.length;
+    return n;
+  }
+
+  function v294DownloadJson(filename,data){
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),900);
+  }
+
+  function v294ActiveCats(){
+    return (S.allData||[]).filter(c=>c&&c.id);
+  }
+
+  function v294UniqueName(base,existing){
+    base=String(base||'Categoria importata').trim()||'Categoria importata';
+    const used=new Set((existing||[]).map(c=>String(c.name||'').trim().toLowerCase()));
+    if(!used.has(base.toLowerCase()))return base;
+    let i=2;
+    while(used.has((base+' ('+i+')').toLowerCase()))i++;
+    return base+' ('+i+')';
+  }
+
+  function v294RawCats(parsed){
+    if(Array.isArray(parsed))return parsed;
+    if(parsed&&Array.isArray(parsed.categories))return parsed.categories;
+    if(parsed&&Array.isArray(parsed.data))return parsed.data;
+    if(parsed&&parsed.category)return [parsed.category];
+    if(parsed&&typeof parsed.name==='string'&&(Array.isArray(parsed.subcategories)||Array.isArray(parsed.prompts)))return [parsed];
+    return [];
+  }
+
+  function v294NormalizeCat(cat,existing){
+    const c=v294Clone(cat||{});
+    const rootPrompts=Array.isArray(c.prompts)?c.prompts:[];
+    let subs=Array.isArray(c.subcategories)?c.subcategories:[];
+    if(rootPrompts.length)subs=[{id:uid(),name:'Importati',icon:'',prompts:rootPrompts},...subs];
+    if(!subs.length)subs=[{id:uid(),name:'Generale',icon:'',prompts:[]}];
+
+    const nc={
+      ...c,
+      id:uid(),
+      name:v294UniqueName(c.name,existing),
+      icon:c.icon||'',
+      subcategories:subs.map(s=>({
+        ...s,
+        id:uid(),
+        name:String(s?.name||'Generale'),
+        icon:s?.icon||'',
+        prompts:(Array.isArray(s?.prompts)?s.prompts:[]).map(p=>({
+          ...p,
+          id:uid(),
+          title:String(p?.title||'Prompt importato'),
+          description:p?.description||p?.text||'',
+          tags:Array.isArray(p?.tags)?p.tags:[],
+          favorite:!!p?.favorite,
+          versions:Array.isArray(p?.versions)?p.versions:[],
+          copyCount:typeof p?.copyCount==='number'?p.copyCount:0,
+          pinned:!!p?.pinned,
+          createdAt:typeof p?.createdAt==='number'?p.createdAt:Date.now(),
+          updatedAt:Date.now(),
+          related:Array.isArray(p?.related)?p.related:[],
+          noAutoVars:!!p?.noAutoVars
+        }))
+      }))
+    };
+    delete nc.prompts;
+    return nc;
+  }
+
+  function v294ReadFile(file){
+    return new Promise((resolve,reject)=>{
+      const r=new FileReader();
+      r.onload=ev=>resolve(String(ev.target.result||''));
+      r.onerror=()=>reject(r.error||new Error('Errore lettura file'));
+      r.readAsText(file);
+    });
+  }
+
+  async function v294ExportCategory(){
+    const cats=v294ActiveCats();
+    if(!cats.length){Toast.show('Nessuna categoria da esportare.','er');return}
+    const labels=cats.map((c,i)=>(i+1)+') '+(c.icon?c.icon+' ':'')+c.name+' · '+v294CountPrompts(c)+' prompt');
+    const cur=Math.max(0,cats.findIndex(c=>c.id===S.catId));
+    const res=await Modal.prompt('Esporta una categoria',[
+      {label:'Categoria da esportare',type:'select',options:labels,default:labels[cur]||labels[0]}
+    ]);
+    if(!res)return;
+    const idx=Math.max(0,labels.indexOf(res.f0));
+    const cat=cats[idx];
+    const date=new Date().toISOString().slice(0,10);
+    v294DownloadJson('prompt_categoria_'+v294SafeName(cat.name)+'_'+date+'.json',v294Clone(cat));
+    Toast.show('Categoria esportata: '+cat.name,'ok');
+  }
+
+  async function v294ExportAllSeparate(){
+    const cats=v294ActiveCats();
+    if(!cats.length){Toast.show('Nessuna categoria da esportare.','er');return}
+    const total=cats.reduce((n,c)=>n+v294CountPrompts(c),0);
+    const ok=await Modal.confirm(
+      'Scaricare tutte le categorie in file separati?',
+      'Verranno creati '+cats.length+' file JSON separati, per circa '+total+' prompt. Nessun dato verrà modificato.'
+    );
+    if(!ok)return;
+
+    const date=new Date().toISOString().slice(0,10);
+    const files=cats.map((cat,i)=>({
+      name:String(i+1).padStart(2,'0')+'_prompt_categoria_'+v294SafeName(cat.name)+'_'+date+'.json',
+      content:JSON.stringify(v294Clone(cat),null,2)
+    }));
+
+    if(window.showDirectoryPicker){
+      try{
+        const dir=await window.showDirectoryPicker({mode:'readwrite'});
+        for(const f of files){
+          const h=await dir.getFileHandle(f.name,{create:true});
+          const w=await h.createWritable();
+          await w.write(f.content);
+          await w.close();
+        }
+        Toast.show('Esportate '+files.length+' categorie separate.','ok',4200);
+        return;
+      }catch(e){
+        // Se l'utente annulla, non facciamo fallback rumoroso.
+        if(String(e?.name||'').includes('Abort'))return;
+        console.warn(e);
+      }
+    }
+
+    files.forEach((f,i)=>{
+      setTimeout(()=>{
+        const blob=new Blob([f.content],{type:'application/json;charset=utf-8'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download=f.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),900);
+      },i*180);
+    });
+    Toast.show('Download avviato: '+files.length+' file separati.','ok',5000);
+  }
+
+  async function v294ImportCategoryFiles(filesLike){
+    const files=[...(filesLike||[])].filter(f=>f&&/\.json$/i.test(f.name||''));
+    if(!files.length){Toast.show('Seleziona uno o più file JSON di categoria.','er');return false}
+
+    const found=[];
+    const errors=[];
+    for(const f of files){
+      try{
+        const parsed=JSON.parse(await v294ReadFile(f));
+        const cats=v294RawCats(parsed);
+        if(cats.length)found.push(...cats);
+        else errors.push(f.name);
+      }catch(e){
+        console.error('Errore import categoria',f.name,e);
+        errors.push(f.name);
+      }
+    }
+
+    if(!found.length){
+      Toast.show('Nessuna categoria valida trovata nei file selezionati.','er',4500);
+      return false;
+    }
+
+    const msg='Trovate '+found.length+' categorie in '+files.length+' file. Verranno aggiunte come nuove categorie senza eliminare nulla.'+
+      (errors.length?' File ignorati: '+errors.slice(0,5).join(', ')+(errors.length>5?'…':''):'');
+    const ok=await Modal.confirm('Importare categorie separate?',msg);
+    if(!ok)return false;
+
+    const existing=v294Clone(S.allData||[]);
+    const imported=[];
+    let rolling=existing;
+    found.forEach(c=>{
+      const nc=v294NormalizeCat(c,rolling);
+      imported.push(nc);
+      rolling=[...rolling,nc];
+    });
+
+    const merged=[...existing,...imported];
+    if(!validate(merged)){
+      Toast.show('I file selezionati non producono dati validi.','er');
+      return false;
+    }
+
+    const first=imported[0];
+    const firstSub=first?.subcategories?.[0];
+    const firstPrompt=firstSub?.prompts?.[0];
+
+    await save(merged,{ids:{
+      view:'columns',
+      catId:first?.id||S.catId,
+      subId:firstSub?.id||S.subId,
+      pid:firstPrompt?.id||null
+    },hist:true});
+
+    Toast.show('Importate '+imported.length+' categorie senza cancellare le altre.','ok',5200);
+    return true;
+  }
+
+  function v294EnsureInputs(){
+    if(!$('v294MultiCats')){
+      const i=document.createElement('input');
+      i.type='file';
+      i.id='v294MultiCats';
+      i.accept='.json,application/json';
+      i.multiple=true;
+      i.style.display='none';
+      document.body.appendChild(i);
+    }
+    if(!$('v294DirCats')){
+      const i=document.createElement('input');
+      i.type='file';
+      i.id='v294DirCats';
+      i.accept='.json,application/json';
+      i.multiple=true;
+      i.setAttribute('webkitdirectory','');
+      i.setAttribute('directory','');
+      i.style.display='none';
+      document.body.appendChild(i);
+    }
+  }
+
+  function v294OpenFullImport(){
+    const f=$('fB');
+    if(!f)return;
+    f.onchange=doImport;
+    f.click();
+  }
+
+  function v294OpenCategoryImport(){
+    const f=$('fIC');
+    if(!f)return;
+    f.onchange=doImportCat;
+    f.click();
+  }
+
+  function v294OpenMultiImport(){
+    const f=$('v294MultiCats');
+    if(!f)return;
+    f.onchange=async e=>{await v294ImportCategoryFiles(e.target.files);e.target.value='';};
+    f.click();
+  }
+
+  function v294OpenDirImport(){
+    const f=$('v294DirCats');
+    if(!f)return;
+    f.onchange=async e=>{await v294ImportCategoryFiles(e.target.files);e.target.value='';};
+    f.click();
+  }
+
+  function v294CloseMenus(){
+    $('v294BackupMenu')?.classList.remove('show');
+    $('toM')?.classList.remove('show');
+    $('catToolsMenu')?.classList.remove('show');
+  }
+
+  function v294BindMenuButtons(){
+    const map={
+      v294FullExport:()=>doBackup(),
+      v294FullImport:()=>v294OpenFullImport(),
+      v294OpenAuto:()=>showBackupCenter(),
+      v294MdExport:()=>doExportMd(),
+      v294CatExport:()=>v294ExportCategory(),
+      v294CatImport:()=>v294OpenCategoryImport(),
+      v294AllCatExport:()=>v294ExportAllSeparate(),
+      v294AllCatImport:()=>v294OpenMultiImport(),
+      v294AllCatDir:()=>v294OpenDirImport()
+    };
+    Object.entries(map).forEach(([id,fn])=>{
+      const b=$(id);
+      if(!b)return;
+      b.onclick=async e=>{
+        e.stopPropagation();
+        v294CloseMenus();
+        await fn();
+      };
+    });
+  }
+
+  function v294EnsureUnifiedButton(){
+    v294Style();
+    v294EnsureInputs();
+
+    const btn=$('bkCenterBtn');
+    if(!btn)return;
+
+    let wrap=$('v294BackupWrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id='v294BackupWrap';
+      wrap.className='v294-backup-wrap';
+      btn.parentNode.insertBefore(wrap,btn);
+      wrap.appendChild(btn);
+    }
+
+    btn.classList.add('v294-backup-main');
+    btn.title='Backup, import ed export';
+    btn.innerHTML='<i class="fa-solid fa-shield-halved"></i><span>Backup</span><i class="fa-solid fa-chevron-down"></i>';
+
+    let menu=$('v294BackupMenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v294BackupMenu';
+      menu.className='v294-backup-menu';
+      menu.innerHTML=
+        '<div class="v294-menu-head">Backup, Import ed Export</div>'+
+        '<small class="v294-menu-note">Tutti i comandi sono qui. Gli import categoria e multi-categoria aggiungono dati senza cancellare le categorie esistenti.</small>'+
+        '<div class="v294-menu-section">Backup completo</div>'+
+        '<button id="v294FullExport" class="v294-ok" type="button"><i class="fa-solid fa-download"></i>Scarica backup completo JSON</button>'+
+        '<button id="v294FullImport" type="button"><i class="fa-solid fa-upload"></i>Importa / ripristina JSON</button>'+
+        '<button id="v294OpenAuto" type="button"><i class="fa-solid fa-clock-rotate-left"></i>Backup automatici salvati</button>'+
+        '<button id="v294MdExport" type="button"><i class="fa-solid fa-file-lines"></i>Export Markdown completo</button>'+
+        '<div class="v294-menu-section">Categoria singola</div>'+
+        '<button id="v294CatExport" class="v294-ok" type="button"><i class="fa-solid fa-folder-open"></i>Esporta una categoria</button>'+
+        '<button id="v294CatImport" type="button"><i class="fa-solid fa-folder-plus"></i>Importa una categoria</button>'+
+        '<div class="v294-menu-section">Tutte le categorie separate</div>'+
+        '<button id="v294AllCatExport" class="v294-ok" type="button"><i class="fa-solid fa-box-archive"></i>Scarica tutte in file separati</button>'+
+        '<button id="v294AllCatImport" type="button"><i class="fa-solid fa-file-import"></i>Importa più file categoria</button>'+
+        '<button id="v294AllCatDir" type="button"><i class="fa-solid fa-folder-plus"></i>Importa cartella categorie</button>';
+      wrap.appendChild(menu);
+    }
+
+    btn.onclick=e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen=menu.classList.toggle('show');
+      $('toM')?.classList.remove('show');
+      $('catToolsMenu')?.classList.remove('show');
+      btn.classList.toggle('active',isOpen);
+    };
+    menu.onclick=e=>e.stopPropagation();
+
+    v294BindMenuButtons();
+  }
+
+  function v294HideOldBackupButtons(){
+    // Pulsante "Categorie" v29.3 e comandi duplicati negli strumenti.
+    const catWrap=$('catToolsBtn')?.closest('.v293-cat-tools');
+    if(catWrap)catWrap.classList.add('v294-hidden-old');
+
+    ['bBk','bIm','bExpMd','bExpCat','bImpCat','bExpAllCats','bImpAllCats','bImpDirCats'].forEach(id=>{
+      const el=$(id);
+      if(el)el.classList.add('v294-hidden-old');
+    });
+
+    const badge=document.querySelector('.logo-badge');
+    if(badge)badge.textContent=PS_V294_VERSION;
+    document.title='Prompt Studio '+PS_V294_VERSION;
+  }
+
+  const __v294Setup=typeof setup==='function'?setup:null;
+  if(__v294Setup){
+    setup=function(){
+      __v294Setup();
+      v294EnsureUnifiedButton();
+      v294HideOldBackupButtons();
+    };
+  }
+
+  const __v294RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v294RenderDD){
+    renderDD=function(){
+      __v294RenderDD();
+      v294EnsureUnifiedButton();
+      v294HideOldBackupButtons();
+    };
+  }
+
+  const __v294RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v294RenderDashboard){
+    renderDashboard=function(){
+      __v294RenderDashboard();
+      v294EnsureUnifiedButton();
+      v294HideOldBackupButtons();
+    };
+  }
+
+  document.addEventListener('click',()=>{$('v294BackupMenu')?.classList.remove('show');$('bkCenterBtn')?.classList.remove('active');});
+})();
+
 init();
 })();
 </script>
