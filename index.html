@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v29.2 - categorie separate import/export</title>
+<title>Prompt Studio v29.3 - menu categorie visibile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2275,6 +2275,80 @@ textarea,
   .v27-sidebar-nav.v289-dd .v27-nav-grid{grid-template-columns:1fr!important}
 }
 
+
+/* ── V29.3: menu categorie visibile ───────────────────────── */
+.v293-cat-tools{position:relative;flex:0 0 auto}
+.v293-cat-btn{
+  height:38px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid rgba(34,211,238,.45);
+  background:#0891b2;
+  color:#fff;
+  border-radius:12px;
+  padding:0 13px;
+  font-weight:900;
+  font-size:14px;
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(34,211,238,.20);
+  font-family:var(--font-ui);
+  white-space:nowrap;
+}
+.v293-cat-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.v293-cat-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 9px);
+  right:0;
+  width:320px;
+  background:var(--sf);
+  border:1px solid var(--bd2);
+  border-radius:16px;
+  padding:10px;
+  box-shadow:0 18px 42px rgba(0,0,0,.60);
+  z-index:3000;
+}
+.v293-cat-menu.show{display:block;animation:dropdown-in var(--tr-fast) both}
+.v293-cat-menu-title{
+  color:var(--t2);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:900;
+  margin:2px 2px 8px;
+  font-family:var(--font-mono);
+}
+.v293-cat-menu button{
+  width:100%;
+  border:1px solid var(--bd);
+  background:var(--el);
+  color:var(--t1);
+  border-radius:12px;
+  padding:10px 11px;
+  margin-bottom:7px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  cursor:pointer;
+  font-weight:900;
+  font-size:13px;
+  font-family:var(--font-ui);
+  text-align:left;
+}
+.v293-cat-menu button:hover{background:var(--elh);border-color:var(--bd2)}
+.v293-cat-note{
+  display:block;
+  color:var(--t3);
+  font-size:12px;
+  line-height:1.35;
+  padding:4px 3px 0;
+}
+@media(max-width:980px){
+  .v293-cat-tools{order:4}
+  .v293-cat-menu{left:0;right:auto;width:min(320px,88vw)}
+}
+
 </style>
 </head>
 <body>
@@ -2323,7 +2397,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v29.2</span>
+    <span class="logo-badge">v29.3</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -6891,6 +6965,359 @@ v28EnhanceDashboard2=function(){
   }
 
   window.PS_MULTI_CATEGORY_FILES_PATCH='v29.2';
+})();
+
+
+/* ── PATCH v29.3: menu categorie visibile + import/export multiplo evidente ── */
+(function(){
+  const PS_V293_VERSION='v29.3';
+
+  function v293Slug(name){
+    return String(name || 'categoria')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9]+/g,'-')
+      .replace(/^-+|-+$/g,'')
+      .toLowerCase() || 'categoria';
+  }
+
+  function v293Clone(obj){
+    try{return structuredClone(obj)}
+    catch(e){return JSON.parse(JSON.stringify(obj))}
+  }
+
+  function v293PromptCount(cat){
+    return (cat?.subcategories||[]).reduce((n,s)=>n+(s?.prompts||[]).length,0)+(cat?.prompts||[]).length;
+  }
+
+  function v293RawCats(data){
+    if(!data) return [];
+
+    if(Array.isArray(data)){
+      return data.filter(x=>x && typeof x==='object' && (Array.isArray(x.subcategories) || Array.isArray(x.prompts)));
+    }
+
+    if(data.type==='prompt-studio-category-import' && Array.isArray(data.categories)){
+      return data.categories.filter(x=>x && typeof x==='object' && (Array.isArray(x.subcategories) || Array.isArray(x.prompts)));
+    }
+
+    if(Array.isArray(data.categories)){
+      return data.categories.filter(x=>x && typeof x==='object' && (Array.isArray(x.subcategories) || Array.isArray(x.prompts)));
+    }
+
+    if(data.category && typeof data.category==='object'){
+      return [data.category];
+    }
+
+    if(typeof data==='object' && (Array.isArray(data.subcategories) || Array.isArray(data.prompts))){
+      return [data];
+    }
+
+    return [];
+  }
+
+  function v293NormalizeCategory(cat, existingCats){
+    const copy=v293Clone(cat);
+    const used=new Set((existingCats||[]).map(c=>String(c.name||'').trim().toLowerCase()));
+
+    const base=String(copy.name||'Categoria importata').trim() || 'Categoria importata';
+    let name=base, i=2;
+    while(used.has(name.toLowerCase())){
+      name=base+' (Importata '+i+')';
+      i++;
+    }
+
+    copy.id=uid();
+    copy.name=name;
+    copy.icon=copy.icon||'';
+
+    copy.prompts=Array.isArray(copy.prompts)?copy.prompts:[];
+
+    copy.subcategories=(copy.subcategories||[]).map(sub=>{
+      const ns=v293Clone(sub);
+      ns.id=uid();
+      ns.name=ns.name||'Senza nome';
+      ns.icon=ns.icon||'';
+      ns.prompts=(ns.prompts||[]).map(p=>{
+        const np=v293Clone(p);
+        np.id=uid();
+        np.title=np.title||'Prompt senza titolo';
+        np.description=np.description||np.text||np.plainText||'';
+        np.tags=Array.isArray(np.tags)?np.tags:[];
+        np.versions=Array.isArray(np.versions)?np.versions:[];
+        np.related=Array.isArray(np.related)?np.related:[];
+        np.favorite=!!np.favorite;
+        np.pinned=!!np.pinned;
+        np.copyCount=Number(np.copyCount||0);
+        np.createdAt=np.createdAt||Date.now();
+        np.updatedAt=Date.now();
+        np.noAutoVars=!!np.noAutoVars;
+        return np;
+      });
+      return ns;
+    });
+
+    if(copy.prompts.length){
+      copy.subcategories.unshift({
+        id:uid(),
+        name:'Importati',
+        icon:'',
+        prompts:copy.prompts.map(p=>{
+          const np=v293Clone(p);
+          np.id=uid();
+          np.title=np.title||'Prompt senza titolo';
+          np.description=np.description||np.text||np.plainText||'';
+          np.tags=Array.isArray(np.tags)?np.tags:[];
+          np.versions=Array.isArray(np.versions)?np.versions:[];
+          np.related=Array.isArray(np.related)?np.related:[];
+          np.favorite=!!np.favorite;
+          np.pinned=!!np.pinned;
+          np.copyCount=Number(np.copyCount||0);
+          np.createdAt=np.createdAt||Date.now();
+          np.updatedAt=Date.now();
+          np.noAutoVars=!!np.noAutoVars;
+          return np;
+        })
+      });
+      copy.prompts=[];
+    }
+
+    return copy;
+  }
+
+  function v293DownloadJson(filename,data){
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+  async function v293ExportAllSeparate(){
+    const cats=Array.isArray(S.allData)?S.allData:[];
+    if(!cats.length){
+      Toast.show('Nessuna categoria da esportare.','er');
+      return;
+    }
+
+    const ok=await Modal.confirm(
+      'Scaricare tutte le categorie separate?',
+      'Verrà avviato un download per ogni categoria: '+cats.length+' file JSON separati. Il browser potrebbe chiedere di consentire download multipli.'
+    );
+    if(!ok) return;
+
+    cats.forEach((cat,idx)=>{
+      setTimeout(()=>{
+        const safe=v293Slug(cat.name);
+        v293DownloadJson('prompt_categoria_'+safe+'.json',v293Clone(cat));
+      },idx*180);
+    });
+
+    Toast.show('Download avviato: '+cats.length+' categorie separate.','ok',5000);
+  }
+
+  function v293ReadFile(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=e=>resolve(e.target.result);
+      reader.onerror=reject;
+      reader.readAsText(file);
+    });
+  }
+
+  async function v293ImportCategoryFiles(filesLike){
+    const files=[...(filesLike||[])].filter(f=>f && /\.json$/i.test(f.name||''));
+    if(!files.length){
+      Toast.show('Seleziona uno o più file JSON di categoria.','er');
+      return false;
+    }
+
+    const found=[];
+    const errors=[];
+
+    for(const file of files){
+      try{
+        const parsed=JSON.parse(await v293ReadFile(file));
+        const cats=v293RawCats(parsed);
+        if(cats.length) found.push(...cats);
+        else errors.push(file.name);
+      }catch(err){
+        console.error('Errore import categoria',file.name,err);
+        errors.push(file.name);
+      }
+    }
+
+    if(!found.length){
+      Toast.show('Nessuna categoria valida trovata nei file selezionati.','er',4500);
+      return false;
+    }
+
+    const promptTotal=found.reduce((n,c)=>n+v293PromptCount(c),0);
+    const msg='Trovate '+found.length+' categorie e circa '+promptTotal+' prompt. Verranno aggiunte come nuove categorie. Nessuna categoria esistente verrà eliminata o sostituita.'+
+      (errors.length?'<br><br>File ignorati: '+errors.slice(0,8).join(', ')+(errors.length>8?'…':''):'');
+    const ok=await Modal.confirm('Importa categorie senza eliminare nulla',msg);
+    if(!ok) return false;
+
+    const data=v293Clone(S.allData||[]);
+    let first=null;
+    found.forEach(cat=>{
+      const clean=v293NormalizeCategory(cat,data);
+      data.push(clean);
+      if(!first) first=clean;
+    });
+
+    await save(data,{ids:{
+      view:'columns',
+      catId:first?.id||S.catId||null,
+      subId:first?.subcategories?.[0]?.id||null,
+      pid:first?.subcategories?.[0]?.prompts?.[0]?.id||null
+    }});
+
+    Toast.show('Importate '+found.length+' categorie senza eliminare nulla.','ok',5000);
+    return true;
+  }
+
+  function v293EnsureInputs(){
+    if(!$('fV293CatsMulti')){
+      const inp=document.createElement('input');
+      inp.type='file';
+      inp.id='fV293CatsMulti';
+      inp.accept='.json,application/json';
+      inp.multiple=true;
+      inp.style.display='none';
+      document.body.appendChild(inp);
+    }
+    if(!$('fV293CatsDir')){
+      const inp=document.createElement('input');
+      inp.type='file';
+      inp.id='fV293CatsDir';
+      inp.accept='.json,application/json';
+      inp.multiple=true;
+      inp.setAttribute('webkitdirectory','');
+      inp.setAttribute('directory','');
+      inp.style.display='none';
+      document.body.appendChild(inp);
+    }
+  }
+
+  function v293EnsureVisibleMenu(){
+    if($('catToolsBtn')) return;
+
+    const catSelect=$('cS');
+    const host=catSelect?.parentElement || document.querySelector('.hd .hr') || document.querySelector('.hd');
+    if(!host) return;
+
+    const wrap=document.createElement('div');
+    wrap.className='v293-cat-tools';
+    wrap.innerHTML=
+      '<button id="catToolsBtn" class="v293-cat-btn" type="button" title="Import/export categorie">' +
+        '<i class="fa-solid fa-folder-tree"></i> Categorie' +
+      '</button>' +
+      '<div id="catToolsMenu" class="v293-cat-menu" role="menu">' +
+        '<div class="v293-cat-menu-title">Import / export categorie</div>' +
+        '<button id="v293ExpAllCats" type="button"><i class="fa-solid fa-download"></i>Scarica tutte separate</button>' +
+        '<button id="v293ImpMultiCats" type="button"><i class="fa-solid fa-file-import"></i>Importa più file categoria</button>' +
+        '<button id="v293ImpDirCats" type="button"><i class="fa-solid fa-folder-plus"></i>Importa cartella categorie</button>' +
+        '<button id="v293OpenBackup" type="button"><i class="fa-solid fa-shield-halved"></i>Apri backup e ripristino</button>' +
+        '<small class="v293-cat-note">Questi comandi aggiungono categorie senza cancellare quelle esistenti.</small>' +
+      '</div>';
+
+    host.appendChild(wrap);
+
+    const btn=$('catToolsBtn');
+    const menu=$('catToolsMenu');
+
+    btn.onclick=e=>{
+      e.stopPropagation();
+      menu.classList.toggle('show');
+      const tm=$('toM'); if(tm) tm.classList.remove('show');
+    };
+
+    menu.onclick=e=>e.stopPropagation();
+
+    window.addEventListener('click',()=>menu.classList.remove('show'));
+  }
+
+  function v293MoveButtonsToTopOfTools(){
+    const grid=document.querySelector('#toM .tm-grid');
+    if(!grid) return;
+
+    const items=[
+      ['bExpAllCats','<i class="fa-solid fa-folder-tree"></i>Export Tutte Categ.','#0891b2',v293ExportAllSeparate],
+      ['bImpAllCats','<i class="fa-solid fa-file-import"></i>Importa Più Categ.','#7c3aed',()=>{const f=$('fV293CatsMulti'); if(f){f.onchange=async e=>{await v293ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}}],
+      ['bImpDirCats','<i class="fa-solid fa-folder-plus"></i>Importa Cartella','#4f46e5',()=>{const f=$('fV293CatsDir'); if(f){f.onchange=async e=>{await v293ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}}]
+    ];
+
+    // crea o sposta i tre pulsanti in cima al menu strumenti
+    items.reverse().forEach(([id,html,bg,handler])=>{
+      let b=$(id);
+      if(!b){
+        b=document.createElement('button');
+        b.className='tb';
+        b.id=id;
+        grid.insertBefore(b,grid.firstChild);
+      }else{
+        grid.insertBefore(b,grid.firstChild);
+      }
+      b.innerHTML=html;
+      b.style.background=bg;
+      b.onclick=async()=>{
+        const tm=$('toM'); if(tm) tm.classList.remove('show');
+        await handler();
+      };
+    });
+  }
+
+  function v293Bind(){
+    v293EnsureInputs();
+    v293EnsureVisibleMenu();
+    v293MoveButtonsToTopOfTools();
+
+    const exp=$('v293ExpAllCats');
+    if(exp) exp.onclick=async()=>{const m=$('catToolsMenu'); if(m)m.classList.remove('show'); await v293ExportAllSeparate();};
+
+    const imp=$('v293ImpMultiCats');
+    if(imp) imp.onclick=()=>{const m=$('catToolsMenu'); if(m)m.classList.remove('show'); const f=$('fV293CatsMulti'); if(f){f.onchange=async e=>{await v293ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}};
+
+    const dir=$('v293ImpDirCats');
+    if(dir) dir.onclick=()=>{const m=$('catToolsMenu'); if(m)m.classList.remove('show'); const f=$('fV293CatsDir'); if(f){f.onchange=async e=>{await v293ImportCategoryFiles(e.target.files); e.target.value='';}; f.click();}};
+
+    const bk=$('v293OpenBackup');
+    if(bk) bk.onclick=()=>{const m=$('catToolsMenu'); if(m)m.classList.remove('show'); if(typeof showBackupCenter==='function') showBackupCenter();};
+
+    document.title='Prompt Studio '+PS_V293_VERSION;
+    const badge=document.querySelector('.logo-badge');
+    if(badge) badge.textContent=PS_V293_VERSION;
+  }
+
+  const __v293Setup=typeof setup==='function'?setup:null;
+  if(__v293Setup){
+    setup=function(){
+      __v293Setup();
+      v293Bind();
+    };
+  }
+
+  const __v293RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v293RenderDD){
+    renderDD=function(){
+      __v293RenderDD();
+      v293Bind();
+    };
+  }
+
+  const __v293RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v293RenderDashboard){
+    renderDashboard=function(){
+      __v293RenderDashboard();
+      v293Bind();
+    };
+  }
+
+  window.PS_VISIBLE_CATEGORY_MENU_PATCH='v29.3';
 })();
 
 async function init(){
