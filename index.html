@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v30.2 - ricategorizzazione visibile e guidata</title>
+<title>Prompt Studio v30.3 - categorie senza sovrapposizioni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -11098,6 +11098,889 @@ S.view = 'dashboard';
   // Ultimo rinforzo contro gli override di versione eseguiti in coda al rendering.
   document.addEventListener('DOMContentLoaded',()=>setTimeout(v302Refresh,0),{once:true});
   window.PS_VISIBLE_RECAT_PATCH=PS_V302_VERSION;
+})();
+
+/* ── PROMPT STUDIO v30.3: TASSONOMIA FUNZIONALE SENZA SOVRAPPOSIZIONI ──
+   Correzioni principali:
+   - "Clienti e Progetti" non è più una categoria primaria: il cliente diventa un tag;
+   - la destinazione è scelta in base al risultato richiesto, non alla vecchia cartella;
+   - contenuti SEO scritti da zero vanno in Content, analisi/ottimizzazione in SEO;
+   - Elementor/WordPress prevalgono solo per attività tecniche;
+   - immagini e video prevalgono sui canali social quando sono il deliverable;
+   - il Cestino non viene più ripetuto nell'elenco categorie;
+   - nuova anteprima, backup, report, rollback e ricalcolo completo dei dati v30.2.
+*/
+(function(){
+  'use strict';
+
+  const V303_VERSION='v30.3';
+  const V303_CLASSIFIER='semantic-taxonomy-2026-07-v2-no-overlap';
+  const V303_ROLLBACK_KEY='taxonomyRollbackV303';
+  const V303_QUEUE='Da classificare';
+  const V303_PREVIEW_KEY='PS_V303_RECAT_PREVIEW_SHOWN';
+
+  const V303_TAXONOMY=[
+    {key:'ai',name:'AI e Prompt Engineering',icon:'🤖',subs:[
+      'Prompt design e template','Miglioramento dei prompt','Qualità, verifica e anti-allucinazioni',
+      'Agenti, GPT, GEM e chatbot','AI Operating System e orchestrazione',
+      'Memoria, contesto e Second Brain','Ricerca e aggiornamenti AI'
+    ]},
+    {key:'seo',name:'SEO, SERP e Search Analytics',icon:'🔎',subs:[
+      'Keyword research e search intent','SERP, competitor e content gap','SEO on-page','SEO tecnica',
+      'Local SEO','Internal linking e topical authority','Schema e dati strutturati',
+      'Google Search Console e analytics SEO','Audit e monitoraggio SEO'
+    ]},
+    {key:'content',name:'Scrittura e Copywriting',icon:'✍️',subs:[
+      'Articoli, guide e contenuti editoriali','Landing page e pagine servizio','Copy persuasivo e CTA',
+      'Editing, correzione e riscrittura','Umanizzazione dei testi','Email e newsletter',
+      'Outline e brief editoriali','Storytelling e creatività'
+    ]},
+    {key:'marketing',name:'Strategia Marketing e Business',icon:'📈',subs:[
+      'Analisi di mercato','Analisi della concorrenza','Buyer persona e segmentazione',
+      'Posizionamento e proposta di valore','Funnel e customer journey',
+      'Offerte, pricing e monetizzazione','CRO e conversione','Growth ed esperimenti',
+      'Business model e validazione'
+    ]},
+    {key:'social',name:'Social Copy e Community',icon:'📱',subs:[
+      'Strategia e piano editoriale','Post, caption e hook','Instagram e Facebook','LinkedIn',
+      'YouTube e Shorts','Influencer e community','Analisi delle performance'
+    ]},
+    {key:'wordpress',name:'WordPress, Elementor e UX Web',icon:'🌐',subs:[
+      'WordPress e Gutenberg','Elementor e widget HTML','Plugin, temi e snippet','UX/UI e web design',
+      'Accessibilità e responsive','Performance e Core Web Vitals','Sicurezza e manutenzione',
+      'Debug dei siti WordPress'
+    ]},
+    {key:'code',name:'Sviluppo Web, Codice e App',icon:'💻',subs:[
+      'HTML, CSS e JavaScript','Progettazione web app','Funzionalità e architettura',
+      'Debug, code review e refactoring','Estrazione e trasformazione del codice',
+      'Database e salvataggio dati','Importazione ed esportazione','GitHub, deployment e applicazioni desktop',
+      'No-code e strumenti frontend'
+    ]},
+    {key:'graphics',name:'Immagini, Grafica e Branding',icon:'🎨',subs:[
+      'Prompt per generazione immagini','Editing e trasformazione immagini','Branding e identità visiva',
+      'Layout e materiali grafici','Fotografia prodotto e still life','Food photography',
+      'Visual social e thumbnail','Illustrazioni, personaggi e mockup'
+    ]},
+    {key:'video',name:'Video, Animazione e Audio',icon:'🎬',subs:[
+      'Generazione video AI','Storyboard e pianificazione scene','Script e voice-over',
+      'Animazioni e motion design','Reel, Shorts e video brevi',
+      'Trasformazione testo o immagini in video','Analisi e miglioramento video'
+    ]},
+    {key:'productivity',name:'Documenti, Dati e Produttività',icon:'⚙️',subs:[
+      'SOP e workflow','Agenda, attività e scadenze','Meeting, verbali e sintesi','Apprendimento e studio',
+      'PDF e documenti','CSV, Excel e dati tabellari','Checklist e pianificazione',
+      'Backup, importazione ed esportazione','Utility operative'
+    ]}
+  ];
+
+  const V303_BY_KEY=new Map(V303_TAXONOMY.map(c=>[c.key,c]));
+  const V303_BY_NAME=new Map(V303_TAXONOMY.map(c=>[v303Norm(c.name),c]));
+  const V303_CANONICAL=new Set([...V303_TAXONOMY.map(c=>v303Norm(c.name)),v303Norm(V303_QUEUE)]);
+
+  function v303Clone(value){
+    try{return structuredClone(value)}catch(_){return JSON.parse(JSON.stringify(value))}
+  }
+
+  function v303Plain(html){
+    const box=document.createElement('div');
+    box.innerHTML=String(html||'');
+    return (box.textContent||box.innerText||'').replace(/\s+/g,' ').trim();
+  }
+
+  function v303Norm(value){
+    return String(value||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9._:/\-\s]/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function v303Slug(value){
+    return v303Norm(value).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,72)||'generale';
+  }
+
+  function v303Esc(value){
+    const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(value??'').replace(/[&<>"']/g,c=>map[c]);
+  }
+
+  function v303Csv(value){
+    return '"'+String(value??'').replace(/"/g,'""').replace(/\r?\n/g,' ')+'"';
+  }
+
+  function v303IsTrash(cat){
+    return /cestino|🗑️/i.test(String(cat?.name||''));
+  }
+
+  function v303Entries(data){
+    const out=[];
+    (data||[]).forEach((cat,ci)=>{
+      if(!cat||v303IsTrash(cat))return;
+      const catName=String(cat.name||'Senza categoria');
+      (cat.subcategories||[]).forEach((sub,si)=>{
+        const subName=String(sub?.name||'Generale');
+        (sub?.prompts||[]).forEach((prompt,pi)=>{
+          if(!prompt)return;
+          out.push({
+            key:[cat.id||ci,sub.id||si,prompt.id||pi,pi].join('|'),
+            cat,sub,prompt,catName,subName,catIndex:ci,subIndex:si,promptIndex:pi
+          });
+        });
+      });
+      (cat.prompts||[]).forEach((prompt,pi)=>{
+        if(!prompt)return;
+        out.push({
+          key:[cat.id||ci,'root',prompt.id||pi,pi].join('|'),
+          cat,sub:null,prompt,catName,subName:'Generale',catIndex:ci,subIndex:-1,promptIndex:pi
+        });
+      });
+    });
+    return out;
+  }
+
+  function v303Corpus(entry){
+    const p=entry.prompt||{};
+    const title=v303Norm(p.title||p.name||'');
+    const purpose=v303Norm(p.purpose||p.goal||p.objective||'');
+    const body=v303Norm(v303Plain(p.description||p.text||p.plainText||''));
+    const tags=v303Norm((Array.isArray(p.tags)?p.tags:[p.tags]).filter(Boolean).join(' '));
+    const all=[title,purpose,tags,body].filter(Boolean).join(' ');
+    const source=v303Norm(entry.catName+' '+entry.subName);
+    return {title,purpose,body,tags,all,source,raw:String(p.title||'')+' '+v303Plain(p.description||p.text||p.plainText||'')};
+  }
+
+  function v303Matches(text,rx){
+    rx.lastIndex=0;
+    return rx.test(text);
+  }
+
+  function v303ClientTags(corpus,entry){
+    const text=corpus.all+' '+corpus.source;
+    const tags=[];
+    const rules=[
+      ['client:roberto-zanoni',/roberto\s*zanoni|robertozanoni\.it|tool\.zanoni|\brz\b.{0,35}(seo|sito|portfolio|servizi)/],
+      ['client:galbiati-dental-group',/galbiati\s*dental|galbiati.{0,25}dent/],
+      ['client:buena-onda',/yoga\s*buena\s*onda|pilates\s*buena\s*onda|yogabuenaonda\.it|pilatesbuenaonda\.it|cinisello\s*balsamo.{0,40}(yoga|pilates)/],
+      ['client:sano-in-tavola',/sano\s*in\s*tavola|i\s*buoni\s*sani|sanointavola|ibuonisani/],
+      ['client:trova-esperti-digitali',/trova\s*esperti\s*digitali|trovaespertidigitali\.it|\bted\b.{0,30}(freelance|esperti|professionisti)/],
+      ['client:zirafa',/zirafa|studiodentisticozirafa\.com|metodo\s*sato.{0,30}bergamo/]
+    ];
+    rules.forEach(([tag,rx])=>{if(v303Matches(text,rx))tags.push(tag)});
+
+    if(/clienti e progetti|progetti specifici|cliente/.test(corpus.source)&&!tags.length){
+      const candidate=String(entry.subName||'').trim();
+      if(candidate&&!/generale|altri clienti|inbox|scremata|master/i.test(candidate))tags.push('client:'+v303Slug(candidate));
+      else tags.push('client:altro');
+    }
+    return [...new Set(tags)];
+  }
+
+  function v303Score(entry){
+    const c=v303Corpus(entry);
+    const a=c.all;
+    const scores={};
+    const reasons={};
+    V303_TAXONOMY.forEach(x=>{scores[x.key]=0;reasons[x.key]=[]});
+
+    const add=(key,points,reason)=>{
+      scores[key]=(scores[key]||0)+points;
+      if(reason&&!reasons[key].includes(reason))reasons[key].push(reason);
+    };
+    const sub=(key,points,reason)=>{scores[key]=Math.max(0,(scores[key]||0)-points);if(reason&&!reasons[key].includes(reason))reasons[key].push(reason)};
+    const hit=(rx)=>v303Matches(a,rx);
+
+    const explicitAiMeta=hit(/(?:crea|genera|scrivi|migliora|ottimizza|riscrivi|valuta|analizza|audit).{0,50}(?:un\s+)?(?:prompt|system prompt|istruzioni personalizzate)|prompt engineering|meta prompt|custom gpt|custom gem|gem personalizzat|gpt personalizzat|agente ai|chatbot|anti allucinazioni|guardrail|second brain|operating system ai|ai marketing operating system|orchestrazione ai/);
+    const codeBuild=hit(/(?:crea|costruisci|sviluppa|implementa|genera|correggi|ripara|debug|refactor|fai audit).{0,75}(?:web app|applicazione|software|plugin|script|codice|html|css|javascript|typescript|php|python|database|api|rest api|estensione|dashboard interattiva)/);
+    const wpTechnical=hit(/(?:wordpress|elementor|gutenberg|woocommerce|wpcode|shortcode|functions\.php|hook|tema wordpress|plugin wordpress|wp cli)/) &&
+      hit(/(?:crea|sviluppa|implementa|correggi|ripara|debug|audit|ottimizza|codice|html|css|javascript|php|widget|shortcode|hook|responsive|performance|sicurezza|backup|import|export)/);
+    const imageDeliverable=hit(/(?:crea|genera|realizza|disegna|modifica|ritocca|trasforma|rivisita|migliora).{0,55}(?:immagine|foto|fotografia|grafica|visual|logo|thumbnail|miniatura|mockup|illustrazione|copertina|banner|poster|packshot|still life)/) || hit(/prompt.{0,30}(?:immagine|midjourney|stable diffusion|dall e|leonardo ai)/);
+    const videoDeliverable=hit(/(?:crea|genera|realizza|monta|modifica|trasforma|anima|scrivi).{0,55}(?:video|reel|shorts?|animazione|storyboard|voice over|voiceover|scena video|spot video)/) || hit(/(?:image|immagine|foto|testo)\s*(?:to|in)\s*video/);
+    const socialTask=hit(/piano editoriale|strategia social|caption|hashtag|post instagram|post facebook|post linkedin|carosello social|community management|influencer|social analytics|engagement rate|calendario social/);
+    const contentCreate=hit(/(?:scrivi|crea|genera|redigi|prepara|sviluppa).{0,55}(?:articolo|guida|blog post|landing page|pagina servizio|pagina corso|testo|copy|email|newsletter|headline|cta|descrizione prodotto|comunicato|ricetta|contenuto editoriale)/);
+    const contentEdit=hit(/(?:riscrivi|correggi|revisiona|migliora|semplifica|umanizza|fai editing|proofreading).{0,55}(?:testo|articolo|contenuto|copy|email|pagina|descrizione|messaggio)/);
+    const seoAnalysis=hit(/keyword research|ricerca keyword|search intent|analisi serp|serp gap|content gap|audit seo|seo tecnica|search console|\bgsc\b|schema markup|dati strutturati|json ld|internal linking|link interni|pagina orfana|topical authority|indicizzazione|robots txt|sitemap|canonical|redirect 301|monitoraggio seo|report seo/);
+    const seoOptimize=hit(/(?:ottimizza|migliora|audit|analizza|verifica).{0,55}(?:seo|articolo|pagina|contenuto|title|meta description|serp|indicizzazione|link interni)/);
+    const marketingTask=hit(/analisi di mercato|market research|buyer persona|segmentazione|posizionamento|proposta di valore|value proposition|funnel|customer journey|pricing|monetizzazione|business model|business plan|validazione idea|growth hacking|cro|conversion rate|a b test|ab test|analisi concorrenti|competitor analysis/);
+    const productivityTask=hit(/\bsop\b|standard operating procedure|workflow operativo|procedura operativa|scadenzario|agenda|to do list|task manager|promemoria|verbale riunione|meeting notes|piano di studio|flashcard|analizza pdf|documento word|\bcsv\b|\bexcel\b|\bxlsx\b|foglio di calcolo|checklist|roadmap|backup dati|ripristino backup/);
+
+    if(explicitAiMeta)add('ai',78,'il prompt o l’assistente AI è l’oggetto del lavoro');
+    if(hit(/revisione qualita e limiti/))add('ai',82,'revisione della qualità e dei limiti dell’AI');
+    if(c.title==='elementor')add('wordpress',58,'prompt tecnico dedicato a Elementor');
+    if(hit(/custom gpt|custom gem|gem personalizzat|gpt personalizzat|agente ai|chatbot/))add('ai',35,'assistente o agente AI personalizzato');
+    if(hit(/anti allucinazioni|allucinazioni|guardrail|fact check|verifica fonti/))add('ai',34,'controllo qualità delle risposte AI');
+    if(hit(/ai marketing operating system|operating system ai|orchestrazione ai|multi agent|control tower/))add('ai',42,'orchestrazione o sistema multi-agente');
+    if(hit(/second brain|memoria persistente|knowledge base|gestione contesto/))add('ai',28,'memoria e contesto AI');
+    if(hit(/ultime funzioni ai|aggiornamenti ai|novita ai|confronta modelli ai|ricerca funzioni recenti/))add('ai',30,'ricerca e aggiornamenti AI');
+
+    if(wpTechnical)add('wordpress',72,'implementazione tecnica WordPress o Elementor');
+    else if(hit(/wordpress|elementor|gutenberg|woocommerce/))add('wordpress',10,'piattaforma WordPress citata');
+    if(codeBuild)add('code',70,'sviluppo o modifica di codice/applicazione');
+    if(hit(/debug|bug|errore javascript|errore php|code review|refactor/))add('code',25,'debug o revisione del codice');
+    if(hit(/estrai html|estrapola html|trasforma html|parser|regex|json parser/))add('code',34,'estrazione o trasformazione del codice');
+    if(hit(/database|indexeddb|localstorage|sqlite|mysql|salvataggio dati/))add('code',24,'database e persistenza dati');
+    if(hit(/github|deploy|deployment|electron|desktop app|npm|node\.js/))add('code',24,'deployment o applicazione desktop');
+
+    if(imageDeliverable)add('graphics',76,'l’output richiesto è un’immagine o un elaborato grafico');
+    if(hit(/logo|brand identity|identita visiva|palette colori|brand kit/))add('graphics',26,'branding e identità visiva');
+    if(hit(/still life|packshot|fotografia prodotto/))add('graphics',30,'fotografia prodotto e still life');
+    if(hit(/food photography|fotografia food|piatto fotografico|ricetta.{0,30}(immagine|foto)|(?:immagine|foto).{0,30}ricetta/))add('graphics',28,'fotografia food');
+    if(hit(/thumbnail|miniatura youtube|copertina youtube|visual social/))add('graphics',28,'visual social o thumbnail');
+
+    if(videoDeliverable)add('video',78,'l’output richiesto è un video o un’animazione');
+    if(hit(/storyboard|sequenza scene|shot list/))add('video',27,'storyboard e pianificazione delle scene');
+    if(hit(/voice over|voiceover|script video|copione video/))add('video',22,'script e voice-over');
+    if(hit(/motion design|animazione|animate image/))add('video',25,'animazione e motion design');
+
+    if(socialTask)add('social',60,'contenuto o strategia specifica per social media');
+    if(hit(/instagram|facebook|linkedin|youtube|tiktok|social media/))add('social',12,'canale social esplicito');
+    if(hit(/piano editoriale|calendario editoriale|rubriche social/))add('social',24,'strategia e piano editoriale social');
+    if(hit(/caption|hook|hashtag|carosello|post social/))add('social',24,'post, caption o hook social');
+
+    if(contentCreate)add('content',64,'scrittura di un contenuto completo');
+    if(contentEdit)add('content',58,'editing o riscrittura di un contenuto');
+    if(hit(/landing page|pagina servizio|pagina corso|sales page/))add('content',22,'landing page o pagina servizio');
+    if(hit(/articolo|blog post|guida completa|contenuto editoriale|ricetta/))add('content',18,'articolo o contenuto editoriale');
+    if(hit(/email|newsletter|oggetto email|sequenza email/))add('content',22,'email o newsletter');
+    if(hit(/outline|brief editoriale|content brief|scaletta articolo/))add('content',25,'outline o brief editoriale');
+    if(hit(/storytelling|racconto|poesia|narrazione/))add('content',22,'storytelling o scrittura creativa');
+
+    if(seoAnalysis)add('seo',68,'analisi o attività SEO specialistica');
+    if(seoOptimize)add('seo',42,'ottimizzazione SEO di una risorsa esistente');
+    if(hit(/\bseo\b|serp|keyword|search console|indicizzazione|schema|link interni/))add('seo',13,'segnali SEO espliciti');
+    if(hit(/local seo|seo locale|google business profile|google maps|near me/))add('seo',28,'SEO locale');
+
+    if(marketingTask)add('marketing',62,'strategia, mercato o crescita commerciale');
+    if(hit(/analisi concorrenti|analisi della concorrenza|competitor analysis/)&&!hit(/serp|seo|keyword|search engine/))add('marketing',28,'analisi competitiva non SEO');
+    if(hit(/buyer persona|cliente ideale|pubblico target/))add('marketing',24,'buyer persona o segmentazione');
+    if(hit(/funnel|customer journey|lead nurturing/))add('marketing',24,'funnel o customer journey');
+    if(hit(/pricing|prezzo|offerta commerciale|monetizzazione/))add('marketing',24,'pricing o monetizzazione');
+
+    if(productivityTask)add('productivity',55,'attività operativa, documento o gestione dati');
+    if(hit(/\bcsv\b|\bexcel\b|\bxlsx\b|spreadsheet|foglio di calcolo/))add('productivity',24,'dati tabellari o foglio di calcolo');
+    if(hit(/\bpdf\b|\bdocx\b|documento word/))add('productivity',19,'documenti e PDF');
+    if(hit(/scadenzario|agenda|task manager|promemoria/))add('productivity',25,'agenda, attività e scadenze');
+
+    // Regole di precedenza: il risultato richiesto prevale sul canale o sulla tecnologia citata.
+    if(videoDeliverable){sub('social',30,'il video prevale sul canale social');sub('graphics',12,'il video è il deliverable finale');if(contentCreate&&!hit(/articolo|blog post|landing page|pagina servizio|email|newsletter/))sub('content',30,'il testo è parte del video, non il deliverable editoriale')}
+    if(imageDeliverable&&!videoDeliverable){sub('social',24,'l’immagine prevale sul canale social');if(contentCreate&&!hit(/articolo|blog post|landing page|pagina servizio|email|newsletter|guida completa/))sub('content',42,'il testo è parte del visual, non il deliverable editoriale');}
+    if(contentCreate&&!seoAnalysis){add('content',28,'la scrittura da zero prevale sul tema SEO');sub('seo',18,'SEO conservata come tag, non come categoria primaria')}
+    if(contentCreate&&hit(/seo|keyword|serp/)&&!seoAnalysis){add('content',14,'contenuto SEO da produrre, non analisi SEO')}
+    if(seoAnalysis&&!contentCreate)add('seo',22,'l’analisi prevale sulla produzione editoriale');
+    if(contentCreate&&hit(/wordpress|elementor/)&&!wpTechnical){add('content',22,'WordPress è solo il supporto di pubblicazione');sub('wordpress',16,'nessuna attività tecnica WordPress')}
+    if(wpTechnical){sub('content',20,'l’implementazione tecnica prevale sul testo');sub('code',8,'WordPress è il contesto tecnico specifico')}
+    if(codeBuild){sub('productivity',18,'la costruzione dell’app prevale sulla funzione operativa')}
+    if(explicitAiMeta){sub('content',12,'il risultato è un prompt, non il contenuto finale');sub('marketing',8,'AI è l’oggetto primario')}
+
+    // La vecchia cartella non guida la classificazione. Viene usata solo come fallback minimo.
+    const currentName=v303Norm(entry.catName);
+    const current=V303_BY_NAME.get(currentName);
+    const maxBefore=Math.max(...Object.values(scores));
+    if(current&&maxBefore<18){
+      add(current.key,10,'fallback debole dalla categoria funzionale precedente');
+    }
+
+    const ranked=Object.entries(scores)
+      .map(([key,score])=>({key,score,reasons:reasons[key]}))
+      .sort((x,y)=>y.score-x.score);
+    return {corpus:c,scores,ranked};
+  }
+
+  const V303_SUB_RULES={
+    ai:[
+      ['AI Operating System e orchestrazione',/ai marketing operating system|operating system ai|orchestrazione|multi agent|control tower|agentic workflow/,70],
+      ['Agenti, GPT, GEM e chatbot',/custom gpt|custom gem|gem personalizzat|gpt personalizzat|agente ai|assistente ai|chatbot/,65],
+      ['Qualità, verifica e anti-allucinazioni',/allucinazioni|guardrail|fact check|verifica fonti|accuratezza|qualita e limiti/,60],
+      ['Memoria, contesto e Second Brain',/second brain|memoria persistente|knowledge base|gestione contesto|context window/,58],
+      ['Ricerca e aggiornamenti AI',/ultime funzioni|aggiornamenti ai|novita ai|confronta modelli|ricerca funzioni recenti/,55],
+      ['Miglioramento dei prompt',/migliora prompt|ottimizza prompt|riscrivi prompt|valuta prompt|audit prompt|prompt optimizer/,54],
+      ['Prompt design e template',/prompt engineering|meta prompt|template prompt|crea.{0,35}prompt|genera.{0,35}prompt|istruzioni personalizzate/,45]
+    ],
+    seo:[
+      ['Google Search Console e analytics SEO',/google search console|search console|\bgsc\b|query performance|click impression|ctr organico|ga4/,62],
+      ['Schema e dati strutturati',/schema markup|dati strutturati|json ld|localbusiness|rich result|schema faq|schema org/,60],
+      ['Internal linking e topical authority',/internal linking|link interni|pagina orfana|anchor text|topical authority|pagina pillar|link equity|cluster/,59],
+      ['Local SEO',/local seo|seo locale|google business profile|google maps|near me|cinisello balsamo|bergamo/,57],
+      ['SEO tecnica',/seo tecnica|crawl|robots txt|sitemap|canonical|redirect 301|status code|indicizzazione|core web vitals/,56],
+      ['Keyword research e search intent',/keyword research|ricerca keyword|search intent|intento di ricerca|keyword gap|volume di ricerca|long tail/,55],
+      ['SERP, competitor e content gap',/analisi serp|analizza.{0,25}serp|serp gap|serp competitor|content gap|primi 10 risultati|confronta serp|competitor seo/,65],
+      ['SEO on-page',/seo on page|title seo|meta description|h1 h2|ottimizza.{0,30}articolo|slug|keyword density/,50],
+      ['Audit e monitoraggio SEO',/audit seo|monitoraggio seo|report seo|errori seo|priorita seo|checklist seo|diagnosi seo/,48]
+    ],
+    content:[
+      ['Email e newsletter',/newsletter|email marketing|scrivi email|oggetto email|sequenza email|cold email/,60],
+      ['Landing page e pagine servizio',/landing page|pagina servizio|sales page|pagina corso|hero section|pagina locale/,64],
+      ['Editing, correzione e riscrittura',/riscrivi|correggi testo|editing|revisione testo|proofreading|scrivi meglio|semplifica testo/,57],
+      ['Umanizzazione dei testi',/umanizza|humanize|tono naturale|sembrare umano|anti ai detector|testo naturale/,56],
+      ['Outline e brief editoriali',/outline|brief editoriale|scaletta articolo|content brief|struttura contenuto|piano articolo/,55],
+      ['Copy persuasivo e CTA',/copy persuasivo|cta|call to action|headline|testo vendita|conversion copy|persuasione/,52],
+      ['Storytelling e creatività',/storytelling|storia creativa|racconto|poesia|narrazione|idea creativa/,50],
+      ['Articoli, guide e contenuti editoriali',/articolo|blog post|guida completa|contenuto editoriale|post blog|ricetta|introduzione articolo/,62]
+    ],
+    marketing:[
+      ['Analisi della concorrenza',/analisi concorrenti|analisi concorrenza|competitor analysis|benchmark concorrenti|vantaggio competitivo/,62],
+      ['Buyer persona e segmentazione',/buyer persona|target audience|segmentazione|cliente ideale|profilo cliente|pubblico target/,60],
+      ['Posizionamento e proposta di valore',/posizionamento|value proposition|proposta di valore|unique selling proposition|\busp\b|differenziazione/,58],
+      ['Funnel e customer journey',/funnel|customer journey|percorso cliente|lead nurturing|touchpoint/,56],
+      ['Offerte, pricing e monetizzazione',/pricing|prezzo|offerta commerciale|monetizzazione|pacchetto servizi|preventivo|upsell|cross sell/,55],
+      ['CRO e conversione',/\bcro\b|conversion rate|ottimizzazione conversioni|a b test|ab test|tasso conversione|abbandono/,54],
+      ['Growth ed esperimenti',/growth hacking|north star metric|esperimento marketing|acquisizione utenti|viral loop/,52],
+      ['Business model e validazione',/business model|business plan|validazione idea|\bmvp\b|lean canvas|modello di business|fattibilita/,51],
+      ['Analisi di mercato',/analisi di mercato|market research|dimensione mercato|trend di mercato|domanda di mercato|settore mercato/,50]
+    ],
+    social:[
+      ['Strategia e piano editoriale',/strategia social|piano editoriale|calendario editoriale|social media strategy|rubriche social/,62],
+      ['Analisi delle performance',/social analytics|performance social|engagement rate|insight instagram|metriche social|report social/,60],
+      ['Influencer e community',/influencer|community management|ambassador|engagement community|creator strategy/,56],
+      ['LinkedIn',/linkedin|post linkedin|profilo linkedin|company page linkedin/,55],
+      ['YouTube e Shorts',/youtube|youtube shorts|canale youtube|titolo youtube|descrizione youtube/,53],
+      ['Instagram e Facebook',/instagram|facebook|meta business suite|stories instagram|post instagram|post facebook/,51],
+      ['Post, caption e hook',/caption|hook|post social|carosello|hashtag|copy social/,48]
+    ],
+    wordpress:[
+      ['Elementor e widget HTML',/elementor|widget html|container elementor|template elementor/,64],
+      ['Plugin, temi e snippet',/plugin wordpress|tema wordpress|functions\.php|wpcode|shortcode|hook|snippet/,62],
+      ['Debug dei siti WordPress',/debug wordpress|errore wordpress|bug wordpress|white screen|fatal error|conflitto plugin/,60],
+      ['Performance e Core Web Vitals',/core web vitals|pagespeed|lighthouse|cache|litespeed|ottimizza velocita|performance wordpress/,58],
+      ['Sicurezza e manutenzione',/sicurezza wordpress|malware|login|captcha|backup wordpress|manutenzione|hardening/,56],
+      ['Accessibilità e responsive',/accessibilita|responsive|mobile|tablet|breakpoint|wcag/,54],
+      ['UX/UI e web design',/ux|ui|web design|layout sito|header|footer|navigazione|interfaccia/,52],
+      ['WordPress e Gutenberg',/wordpress|gutenberg|blocchi wordpress|wp admin|wp cli/,48]
+    ],
+    code:[
+      ['Debug, code review e refactoring',/debug|bug|code review|refactor|errore javascript|errore php|ripara codice/,63],
+      ['Estrazione e trasformazione del codice',/estrai html|estrapola html|trasforma html|parser|regex|converti codice/,61],
+      ['Database e salvataggio dati',/database|indexeddb|localstorage|sqlite|mysql|salvataggio dati|storage/,59],
+      ['Importazione ed esportazione',/importa|esporta|import export|zip|json|csv|backup.{0,20}app/,56],
+      ['GitHub, deployment e applicazioni desktop',/github|deploy|deployment|electron|desktop app|npm|node\.js|github pages/,55],
+      ['No-code e strumenti frontend',/no code|nocode|tampermonkey|userscript|estensione browser|frontend tool/,52],
+      ['Progettazione web app',/web app|applicazione|dashboard interattiva|app locale|scadenzario|gestionale/,51],
+      ['Funzionalità e architettura',/architettura|funzionalita|modulo|componente|api|rest api|sistema/,49],
+      ['HTML, CSS e JavaScript',/html|css|javascript|typescript|php|python|codice/,47]
+    ],
+    graphics:[
+      ['Fotografia prodotto e still life',/still life|packshot|fotografia prodotto|product photography/,64],
+      ['Food photography',/food photography|fotografia food|piatto|ricetta|cibo|torta|pasta|pesce/,61],
+      ['Visual social e thumbnail',/thumbnail|miniatura youtube|copertina youtube|visual social|post grafico|banner social/,59],
+      ['Branding e identità visiva',/branding|identita visiva|logo|brand kit|palette colori/,57],
+      ['Editing e trasformazione immagini',/modifica immagine|ritocca|rimuovi sfondo|upscale|trasforma immagine|rivisita immagine/,56],
+      ['Illustrazioni, personaggi e mockup',/illustrazione|personaggio|mockup|3d|cartoon|anime|fumetto/,54],
+      ['Layout e materiali grafici',/brochure|flyer|locandina|poster|layout|materiale grafico|presentazione grafica/,52],
+      ['Prompt per generazione immagini',/crea immagine|genera immagine|prompt immagine|midjourney|stable diffusion|dall e|leonardo ai/,48]
+    ],
+    video:[
+      ['Trasformazione testo o immagini in video',/(?:image|immagine|foto|testo)\s*(?:to|in)\s*video|animate image/,64],
+      ['Storyboard e pianificazione scene',/storyboard|sequenza scene|shot list|inquadrature/,61],
+      ['Script e voice-over',/voice over|voiceover|script video|copione video|narrazione video/,59],
+      ['Animazioni e motion design',/motion design|animazione|animated|grafica animata/,57],
+      ['Reel, Shorts e video brevi',/reel|shorts?|tiktok video|video breve|verticale 9 16/,55],
+      ['Analisi e miglioramento video',/analizza video|migliora video|audit video|ottimizza video|video critique/,53],
+      ['Generazione video AI',/crea video|genera video|video ai|text to video|google flow|veo|sora/,49]
+    ],
+    productivity:[
+      ['Agenda, attività e scadenze',/scadenzario|scadenze|to do list|agenda|task manager|promemoria|pianifica giornata/,63],
+      ['Meeting, verbali e sintesi',/meeting|verbale riunione|meeting notes|trascrizione riunione|sintesi riunione|action item/,61],
+      ['CSV, Excel e dati tabellari',/\bcsv\b|\bexcel\b|\bxlsx\b|foglio di calcolo|tabella dati|spreadsheet|pivot/,59],
+      ['PDF e documenti',/\bpdf\b|documento word|\bdocx\b|estrai da pdf|analizza documento|document management/,57],
+      ['SOP e workflow',/\bsop\b|standard operating procedure|workflow operativo|procedura operativa|processo operativo|automazione workflow/,55],
+      ['Apprendimento e studio',/studio|apprendimento|piano di studio|quiz|flashcard|lezione|programma scolastico/,53],
+      ['Checklist e pianificazione',/checklist|piano d azione|roadmap|pianificazione|priorita operative|step operativi/,51],
+      ['Backup, importazione ed esportazione',/backup dati|ripristino backup|importazione dati|esportazione dati|migrazione dati|archivio dati/,49],
+      ['Utility operative',/utility|convertitore|estrattore dati|generatore elenco|strumento operativo|calcolatore/,47]
+    ]
+  };
+
+  function v303Subcategory(key,corpus){
+    const rules=V303_SUB_RULES[key]||[];
+    const a=corpus.all;
+    let best=null;
+    rules.forEach(([name,rx,weight])=>{
+      if(v303Matches(a,rx)&&(!best||weight>best.weight))best={name,weight};
+    });
+    if(best)return best.name;
+    const cat=V303_BY_KEY.get(key);
+    return cat?.subs?.[0]||'Generale';
+  }
+
+  function v303ControlledTags(entry,result,corpus){
+    const p=entry.prompt||{};
+    const noise=new Set(['riordinato','scremato','generico','copy','copia','prova','test','a','b','c','prompt','master']);
+    const tags=[];
+    (Array.isArray(p.tags)?p.tags:[p.tags]).filter(Boolean).forEach(t=>{
+      const raw=String(t).trim();
+      if(!raw||raw.length<2||noise.has(v303Norm(raw)))return;
+      tags.push(raw);
+    });
+    v303ClientTags(corpus,entry).forEach(t=>tags.push(t));
+
+    const pairs=[
+      ['instagram','channel:instagram'],['facebook','channel:facebook'],['linkedin','channel:linkedin'],
+      ['youtube','channel:youtube'],['tiktok','channel:tiktok'],['whatsapp','channel:whatsapp'],
+      ['elementor','tool:elementor'],['wordpress','tool:wordpress'],['canva','tool:canva'],
+      ['chatgpt','tool:chatgpt'],['claude','tool:claude'],['gemini','tool:gemini'],['codex','tool:codex'],
+      ['midjourney','tool:midjourney'],['google flow','tool:google-flow'],
+      ['html','format:html'],['json','format:json'],['csv','format:csv'],['excel','format:xlsx'],
+      ['xlsx','format:xlsx'],['pdf','format:pdf'],['markdown','format:markdown'],['schema','format:schema']
+    ];
+    pairs.forEach(([needle,tag])=>{if(corpus.all.includes(needle))tags.push(tag)});
+
+    // Le competenze secondarie diventano tag, evitando categorie duplicate.
+    const secondary=result.alternative;
+    if(secondary&&secondary.score>=25)tags.push('related:'+v303Slug(secondary.catName));
+    if(result.catKey==='content'&&/(seo|serp|keyword|search console)/.test(corpus.all))tags.push('task:seo');
+    if(result.catKey!=='social'&&/(instagram|facebook|linkedin|youtube|tiktok)/.test(corpus.all))tags.push('task:social');
+    tags.push('task:'+v303Slug(result.catName));
+    tags.push('content:'+v303Slug(result.sub));
+    tags.push('origin:'+v303Slug(entry.catName));
+
+    return [...new Map(tags.map(t=>[v303Norm(t),String(t).trim()])).values()].slice(0,30);
+  }
+
+  function v303Classify(entry){
+    const scored=v303Score(entry);
+    const ranked=scored.ranked;
+    const best=ranked[0]||{key:'',score:0,reasons:[]};
+    const second=ranked[1]||{key:'',score:0,reasons:[]};
+    const margin=Math.max(0,best.score-second.score);
+
+    if(best.score<22){
+      const alt=best.key&&V303_BY_KEY.get(best.key);
+      const result={
+        catKey:'queue',catName:V303_QUEUE,catIcon:'🧭',sub:'Da revisionare',confidence:Math.max(35,Math.min(59,Math.round(35+best.score))),
+        reasons:['segnali funzionali insufficienti'],
+        alternative:alt?{catKey:alt.key,catName:alt.name,sub:v303Subcategory(alt.key,scored.corpus),score:Math.round(best.score)}:null
+      };
+      result.tags=v303ControlledTags(entry,result,scored.corpus);
+      return result;
+    }
+
+    const cat=V303_BY_KEY.get(best.key);
+    const secondCat=V303_BY_KEY.get(second.key);
+    let confidence=Math.round(54+Math.min(30,best.score*.34)+Math.min(14,margin*.65));
+    confidence=Math.max(60,Math.min(99,confidence));
+    const ambiguous=margin<6&&best.score<68;
+
+    if(ambiguous){
+      const result={
+        catKey:'queue',catName:V303_QUEUE,catIcon:'🧭',sub:'Da revisionare',confidence:Math.min(64,confidence),
+        reasons:['due intenti primari troppo vicini',...(best.reasons||[]).slice(0,3)],
+        alternative:{catKey:cat.key,catName:cat.name,sub:v303Subcategory(cat.key,scored.corpus),score:Math.round(best.score)}
+      };
+      result.tags=v303ControlledTags(entry,result,scored.corpus);
+      return result;
+    }
+
+    const result={
+      catKey:cat.key,catName:cat.name,catIcon:cat.icon,sub:v303Subcategory(cat.key,scored.corpus),
+      confidence,reasons:(best.reasons||[]).slice(0,5),
+      alternative:secondCat&&second.score>=18?{
+        catKey:secondCat.key,catName:secondCat.name,sub:v303Subcategory(secondCat.key,scored.corpus),score:Math.round(second.score)
+      }:null
+    };
+    if(!result.reasons.length)result.reasons=['classificazione funzionale per risultato richiesto'];
+    result.tags=v303ControlledTags(entry,result,scored.corpus);
+    return result;
+  }
+
+  function v303BuildPlan(){
+    return v303Entries(S.allData||[]).map(entry=>{
+      const result=v303Classify(entry);
+      const current=entry.catName+' › '+entry.subName;
+      const proposed=result.catName+' › '+result.sub;
+      const unchanged=v303Norm(entry.catName)===v303Norm(result.catName)&&v303Norm(entry.subName)===v303Norm(result.sub);
+      return {
+        ...entry,result,current,proposed,unchanged,selected:true,
+        level:result.confidence>=85?'high':result.catKey==='queue'?'low':'medium'
+      };
+    });
+  }
+
+  function v303Signature(p){
+    const title=v303Norm(p?.title||'');
+    const body=v303Norm(v303Plain(p?.description||p?.text||p?.plainText||''));
+    return title+'|'+body.slice(0,3000);
+  }
+
+  function v303Merge(target,source){
+    target.favorite=!!(target.favorite||source.favorite);
+    target.pinned=!!(target.pinned||source.pinned);
+    target.copyCount=Math.max(Number(target.copyCount||0),Number(source.copyCount||0));
+    target.tags=[...new Map([...(target.tags||[]),...(source.tags||[])].map(t=>[v303Norm(t),t])).values()];
+    target.related=[...new Set([...(target.related||[]),...(source.related||[])])];
+    target.versions=[...(target.versions||[]),...(source.versions||[])].sort((a,b)=>(a.ts||0)-(b.ts||0)).slice(-30);
+    target.updatedAt=Math.max(target.updatedAt||0,source.updatedAt||0,Date.now());
+    target.originHistory=[...(target.originHistory||[]),...(source.originHistory||[])].slice(-30);
+  }
+
+  function v303FindSub(cat,name){
+    let sub=(cat.subcategories||[]).find(s=>v303Norm(s.name)===v303Norm(name));
+    if(!sub){sub={id:uid(),name,icon:'',prompts:[]};cat.subcategories.push(sub)}
+    if(!Array.isArray(sub.prompts))sub.prompts=[];
+    return sub;
+  }
+
+  function v303BuildData(plan,selectedKeys){
+    const selected=new Set(selectedKeys);
+    const full=selected.size===plan.length;
+    const trash=(S.allData||[]).filter(v303IsTrash).map(c=>{
+      const copy=v303Clone(c);
+      copy.name='Cestino';copy.icon='🗑️';
+      return copy;
+    });
+
+    const catMap=new Map();
+    const categories=[];
+    const getCat=result=>{
+      const key=result.catKey==='queue'?'queue':result.catKey;
+      if(catMap.has(key))return catMap.get(key);
+      const def=result.catKey==='queue'?{name:V303_QUEUE,icon:'🧭'}:V303_BY_KEY.get(result.catKey);
+      const cat={id:uid(),name:def.name,icon:def.icon,subcategories:[]};
+      catMap.set(key,cat);categories.push(cat);return cat;
+    };
+
+    const usedIds=new Set();
+    const signatures=new Map();
+    const idMap=new Map();
+    const locationMap=new Map();
+    const report=[];
+
+    // Se l'utente applica solo una parte, conserva i non selezionati nella posizione attuale.
+    if(!full){
+      v303Entries(S.allData||[]).filter(x=>!selected.has(x.key)).forEach(row=>{
+        const currentDef=V303_BY_NAME.get(v303Norm(row.catName));
+        const result=currentDef?{catKey:currentDef.key,catName:currentDef.name,catIcon:currentDef.icon,sub:row.subName}:{catKey:'queue',catName:V303_QUEUE,catIcon:'🧭',sub:'Da revisionare'};
+        const cat=getCat(result);const sub=v303FindSub(cat,result.sub);
+        const p=v303Clone(row.prompt);if(!p.id||usedIds.has(p.id))p.id=uid();usedIds.add(p.id);sub.prompts.push(p);
+        signatures.set(v303Signature(p),p);locationMap.set(p.id,{catId:cat.id,subId:sub.id});
+      });
+    }
+
+    plan.filter(x=>selected.has(x.key)).forEach(row=>{
+      const cat=getCat(row.result);
+      const sub=v303FindSub(cat,row.result.sub);
+      const p=v303Clone(row.prompt||{});
+      const oldId=p.id;
+      if(!p.id||usedIds.has(p.id))p.id=uid();
+      usedIds.add(p.id);
+      p.title=String(p.title||'Prompt senza titolo');
+      p.description=typeof p.description==='string'?p.description:String(p.description||p.text||p.plainText||'');
+      p.tags=row.result.tags||[];
+      p.favorite=!!p.favorite;p.pinned=!!p.pinned;p.copyCount=Number(p.copyCount||0);
+      p.versions=Array.isArray(p.versions)?p.versions:[];p.related=Array.isArray(p.related)?p.related:[];
+      p.createdAt=Number(p.createdAt||Date.now());p.updatedAt=Date.now();p.noAutoVars=!!p.noAutoVars;
+      p.originCategory=p.originCategory||row.catName;
+      p.originSubcategory=p.originSubcategory||row.subName;
+      p.originHistory=[...(p.originHistory||[]),{category:row.catName,subcategory:row.subName,at:Date.now()}].slice(-30);
+      p.classificationVersion=V303_CLASSIFIER;
+      p.classificationScore=row.result.confidence;
+      p.classificationReasons=[...(row.result.reasons||[])];
+      p.classificationAlternative=row.result.alternative||null;
+      p.classifiedAt=Date.now();
+      const clientTags=(p.tags||[]).filter(t=>String(t).startsWith('client:'));
+      p.clientContext=clientTags.length?clientTags:null;
+
+      const sig=v303Signature(p);
+      const duplicate=signatures.get(sig);
+      if(duplicate){
+        v303Merge(duplicate,p);
+        if(oldId)idMap.set(oldId,duplicate.id);
+        report.push({action:'merged_exact_duplicate',prompt:p.title,from:row.current,to:row.proposed,confidence:row.result.confidence,reasons:(row.result.reasons||[]).join(', ')});
+      }else{
+        sub.prompts.push(p);signatures.set(sig,p);
+        if(oldId)idMap.set(oldId,p.id);
+        locationMap.set(p.id,{catId:cat.id,subId:sub.id});
+        report.push({action:row.unchanged?'kept':'moved',prompt:p.title,from:row.current,to:row.proposed,confidence:row.result.confidence,reasons:(row.result.reasons||[]).join(', ')});
+      }
+    });
+
+    const order=new Map(V303_TAXONOMY.map((c,i)=>[c.key,i]));
+    categories.forEach(cat=>{
+      cat.subcategories=(cat.subcategories||[])
+        .filter(s=>(s.prompts||[]).length)
+        .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base',numeric:true}));
+      cat.subcategories.forEach(s=>s.prompts.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base',numeric:true})));
+    });
+    categories.sort((a,b)=>{
+      if(v303Norm(a.name)===v303Norm(V303_QUEUE))return 1;
+      if(v303Norm(b.name)===v303Norm(V303_QUEUE))return -1;
+      const ka=V303_BY_NAME.get(v303Norm(a.name))?.key;
+      const kb=V303_BY_NAME.get(v303Norm(b.name))?.key;
+      return (order.get(ka)??999)-(order.get(kb)??999);
+    });
+
+    const data=[...categories,...trash];
+    data.forEach(cat=>(cat.subcategories||[]).forEach(sub=>(sub.prompts||[]).forEach(p=>{
+      p.related=[...new Set((p.related||[]).map(id=>idMap.get(id)||id).filter(Boolean).filter(id=>id!==p.id))];
+      locationMap.set(p.id,{catId:cat.id,subId:sub.id});
+    })));
+
+    return {data,idMap,locationMap,report};
+  }
+
+  function v303PlanCsv(plan){
+    const rows=[['prompt','categoria_origine','sottocategoria_origine','categoria_destinazione','sottocategoria_destinazione','confidenza','livello','motivazioni','alternativa'].map(v303Csv).join(';')];
+    plan.forEach(x=>rows.push([
+      x.prompt?.title||'',x.catName,x.subName,x.result.catName,x.result.sub,x.result.confidence,x.level,
+      (x.result.reasons||[]).join(', '),x.result.alternative?(x.result.alternative.catName+' › '+x.result.alternative.sub):''
+    ].map(v303Csv).join(';')));
+    return rows.join('\n');
+  }
+
+  function v303Download(filename,blob){
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),900);
+  }
+
+  async function v303Package(snapshot,plan,built){
+    const date=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const reportCsv=['azione','prompt','origine','destinazione','confidenza','motivazioni'].map(v303Csv).join(';')+'\n'+built.report.map(r=>[r.action,r.prompt,r.from,r.to,r.confidence,r.reasons].map(v303Csv).join(';')).join('\n');
+    const reviewCsv=v303PlanCsv(plan.filter(x=>x.level!=='high'));
+    const manifest={
+      type:'prompt-studio-functional-taxonomy',version:V303_VERSION,classifier:V303_CLASSIFIER,generatedAt:new Date().toISOString(),
+      promptCount:plan.length,moved:built.report.filter(r=>r.action==='moved').length,
+      mergedExactDuplicates:built.report.filter(r=>r.action==='merged_exact_duplicate').length,
+      clientCategoryRemoved:true,reviewCases:plan.filter(x=>x.level!=='high').length,
+      categories:built.data.filter(c=>!v303IsTrash(c)).map(c=>({name:c.name,prompts:(c.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0)}))
+    };
+    if(typeof JSZip!=='undefined'){
+      const zip=new JSZip();
+      zip.file('backup_prima_v30_3.json',JSON.stringify(snapshot.data,null,2));
+      zip.file('libreria_v30_3_senza_sovrapposizioni.json',JSON.stringify(built.data,null,2));
+      zip.file('report_spostamenti_v30_3.csv',reportCsv);
+      zip.file('casi_da_rivedere_v30_3.csv',reviewCsv);
+      zip.file('manifest_v30_3.json',JSON.stringify(manifest,null,2));
+      const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+      v303Download('prompt_studio_v30_3_'+date+'.zip',blob);
+    }
+  }
+
+  async function v303Apply(plan,keys,overlay){
+    if(!keys.length){Toast.show('Seleziona almeno un prompt.','er');return}
+    const ok=await Modal.confirm(
+      'Applicare la tassonomia v30.3?',
+      'I prompt verranno riclassificati per funzione. “Clienti e Progetti” sarà eliminata come categoria primaria e sostituita da tag client:. Verrà creato un backup completo.'
+    );
+    if(!ok)return;
+    Loader.show();
+    try{
+      const snapshot={data:v303Clone(S.allData||[]),recents:v303Clone(S.recents||[]),ts:Date.now(),version:V303_VERSION};
+      if(DB?._put)await DB._put(V303_ROLLBACK_KEY,snapshot);
+      if(DB?.bk)DB.bk(S.allData||[]);
+      const built=v303BuildData(plan,keys);
+      if(typeof validate==='function'&&!validate(built.data))throw new Error('Dataset ricategorizzato non valido');
+
+      const newRecents=[];
+      (S.recents||[]).forEach(r=>{
+        const id=built.idMap.get(r.pid)||r.pid;const loc=built.locationMap.get(id);
+        if(loc&&!newRecents.some(x=>x.pid===id))newRecents.push({...r,pid:id,cid:loc.catId,catId:loc.catId,sid:loc.subId,subId:loc.subId});
+      });
+      S.recents=newRecents.slice(0,30);await DB.saveR(S.recents);
+      const first=built.data.find(c=>!v303IsTrash(c)&&(c.subcategories||[]).some(s=>(s.prompts||[]).length));
+      const firstSub=first?.subcategories?.find(s=>(s.prompts||[]).length);const firstPrompt=firstSub?.prompts?.[0];
+      await save(built.data,{ids:{view:'dashboard',catId:first?.id||null,subId:firstSub?.id||null,pid:firstPrompt?.id||null},hist:true});
+      try{localStorage.setItem('PS_TAXONOMY_APPLIED',V303_CLASSIFIER)}catch(_){ }
+      await v303Package(snapshot,plan.filter(x=>keys.includes(x.key)),built);
+      overlay?.remove();
+      Toast.show('Categorie sistemate: struttura funzionale applicata e categoria Clienti convertita in tag.','ok',8000);
+    }catch(err){
+      console.error(err);Toast.show('Ricategorizzazione non completata: '+(err.message||'errore'),'er',8000);
+    }finally{Loader.hide()}
+  }
+
+  async function v303Rollback(){
+    const snap=DB?._get?await DB._get(V303_ROLLBACK_KEY,null):null;
+    if(!snap?.data){Toast.show('Nessun rollback v30.3 disponibile.','er');return}
+    const ok=await Modal.confirm('Ripristinare la struttura precedente?','Verrà ripristinato il backup del '+fmtD(snap.ts)+'.');
+    if(!ok)return;
+    Loader.show();
+    try{
+      S.recents=Array.isArray(snap.recents)?snap.recents:[];await DB.saveR(S.recents);
+      const first=snap.data.find(c=>!v303IsTrash(c));const sub=first?.subcategories?.[0];const p=sub?.prompts?.[0];
+      await save(v303Clone(snap.data),{ids:{view:'dashboard',catId:first?.id||null,subId:sub?.id||null,pid:p?.id||null},hist:true});
+      Toast.show('Rollback v30.3 completato.','ok',5000);
+    }finally{Loader.hide()}
+  }
+
+  function v303EnsureStyle(){
+    if(document.getElementById('v303Style'))return;
+    const st=document.createElement('style');st.id='v303Style';st.textContent=`
+      .v303-overlay{position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.82);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:16px}
+      .v303-card{width:min(1540px,98vw);height:min(920px,95vh);display:flex;flex-direction:column;overflow:hidden;background:var(--sf);border:1px solid var(--bd2);border-radius:24px;box-shadow:0 32px 110px rgba(0,0,0,.75)}
+      .v303-head{padding:19px 22px 15px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;gap:15px;align-items:flex-start}.v303-head h2{font-size:25px;margin:0 0 5px}.v303-head p{margin:0;color:var(--t2);font-size:14px;line-height:1.48;max-width:1000px}.v303-close{margin-left:auto;width:38px;height:38px;border-radius:12px;border:1px solid var(--bd);background:var(--el);color:var(--t1);cursor:pointer}
+      .v303-fix-note{margin:11px 18px 0;padding:11px 13px;border-radius:13px;background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.26);color:#d1fae5;font-size:13px;line-height:1.45}.v303-fix-note b{color:#6ee7b7}
+      .v303-summary{display:grid;grid-template-columns:repeat(6,minmax(105px,1fr));gap:8px;padding:11px 18px}.v303-stat{background:var(--el);border:1px solid var(--bd);border-radius:13px;padding:9px 11px}.v303-stat b{display:block;color:var(--ac);font-size:22px}.v303-stat span{font-size:12px;color:var(--t2);font-weight:800}
+      .v303-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 18px;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);background:var(--sf2)}.v303-tools input{flex:1;min-width:230px;padding:9px 11px;border-radius:11px;border:1px solid var(--bd);background:var(--el);color:var(--t1)}.v303-tools button,.v303-foot button,.v303-edit{border:1px solid var(--bd);background:var(--el);color:var(--t1);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer}.v303-tools button.ac{background:var(--ac);color:#fff}
+      .v303-table-wrap{flex:1;overflow:auto;background:var(--bg)}.v303-table{width:100%;min-width:1200px;border-collapse:separate;border-spacing:0;font-size:13px}.v303-table th{position:sticky;top:0;z-index:3;background:var(--sf);color:var(--t2);padding:10px;text-align:left;border-bottom:1px solid var(--bd2);font-size:11px;text-transform:uppercase}.v303-table td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:top}.v303-table tr:hover td{background:var(--sf2)}.v303-title{font-weight:900;max-width:340px}.v303-path{color:var(--t2);line-height:1.35}.v303-dest{font-weight:900;color:var(--t1)}.v303-reason{color:var(--t3);font-size:12px;line-height:1.35;max-width:300px}.v303-alt{margin-top:4px;font-size:11px;color:var(--t3)}
+      .v303-confidence{display:inline-flex;border-radius:999px;padding:4px 8px;font-weight:900;font-size:11px}.v303-confidence.high{background:rgba(52,211,153,.15);color:#34d399}.v303-confidence.medium{background:rgba(251,191,36,.15);color:#fbbf24}.v303-confidence.low{background:rgba(248,113,113,.15);color:#f87171}
+      .v303-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--bd);background:var(--sf)}.v303-foot .note{margin-right:auto;color:var(--t3);font-size:12px;max-width:690px}.v303-foot .primary{background:var(--ac);color:#fff;border-color:var(--ac)}.v303-foot .safe{background:#047857;color:#fff;border-color:#10b981}
+      .v303-banner{margin:0 0 16px;padding:14px 16px;border-radius:16px;border:1px solid rgba(251,191,36,.34);background:#3a2404;color:#fff7d6;display:flex;align-items:center;justify-content:space-between;gap:14px}.v303-banner.applied{background:#052e2b;border-color:rgba(52,211,153,.36);color:#d1fae5}.v303-banner strong{display:block;font-size:17px;margin-bottom:4px}.v303-banner p{margin:0;font-size:13px;line-height:1.4}.v303-banner button{border:0;border-radius:11px;padding:9px 12px;background:#2563eb;color:#fff;font-weight:900;cursor:pointer;white-space:nowrap}.v303-banner.applied button{background:#047857}
+      @media(max-width:800px){.v303-summary{grid-template-columns:repeat(2,1fr)}.v303-foot .note{width:100%;margin-right:0}.v303-banner{flex-direction:column;align-items:flex-start}.v303-banner button{width:100%}}
+    `;document.head.appendChild(st);
+  }
+
+  function v303TaxonomyOverview(){
+    const html=V303_TAXONOMY.map(c=>c.icon+' '+c.name+'\n  • '+c.subs.join('\n  • ')).join('\n\n');
+    Modal.prompt('Tassonomia funzionale v30.3',[{label:'Categorie e sottocategorie',type:'textarea',default:html}]);
+  }
+
+  function v303EditRow(plan,index,rerender){
+    const row=plan[index];
+    const labels=[...V303_TAXONOMY.map(c=>c.icon+' '+c.name),'🧭 '+V303_QUEUE];
+    const current=(row.result.catKey==='queue'?'🧭 '+V303_QUEUE:(V303_BY_KEY.get(row.result.catKey)?.icon||'')+' '+row.result.catName);
+    Modal.prompt('Correggi destinazione',[{label:'Categoria',type:'select',options:labels,default:current}]).then(r=>{
+      if(!r)return;
+      const idx=labels.indexOf(r.f0);
+      const cat=idx===V303_TAXONOMY.length?null:V303_TAXONOMY[Math.max(0,idx)];
+      const subs=cat?cat.subs:['Da revisionare'];
+      Modal.prompt('Sottocategoria',[{label:'Sottocategoria',type:'select',options:subs,default:subs.includes(row.result.sub)?row.result.sub:subs[0]}]).then(r2=>{
+        if(!r2)return;
+        row.result.catKey=cat?cat.key:'queue';row.result.catName=cat?cat.name:V303_QUEUE;row.result.catIcon=cat?cat.icon:'🧭';row.result.sub=r2.f0;
+        row.result.confidence=100;row.result.reasons=['destinazione corretta manualmente'];row.level='high';row.proposed=row.result.catName+' › '+row.result.sub;row.selected=true;
+        row.result.tags=v303ControlledTags(row,row.result,v303Corpus(row));rerender();
+      });
+    });
+  }
+
+  function v303Preview(plan){
+    v303EnsureStyle();
+    document.querySelector('.v303-overlay')?.remove();
+    const ov=document.createElement('div');ov.className='v303-overlay';
+    let filter='changed';let query='';
+
+    const draw=()=>{
+      const high=plan.filter(x=>x.level==='high').length;
+      const medium=plan.filter(x=>x.level==='medium').length;
+      const low=plan.filter(x=>x.level==='low').length;
+      const changed=plan.filter(x=>!x.unchanged).length;
+      const clientSource=plan.filter(x=>/clienti e progetti|progetti specifici/i.test(x.catName)).length;
+      ov.innerHTML=`<div class="v303-card">
+        <div class="v303-head"><div><h2>Ricategorizzazione v30.3 senza sovrapposizioni</h2><p>La categoria primaria viene determinata dal risultato richiesto. Cliente, canale, tecnologia e competenze secondarie restano come tag ricercabili.</p></div><button class="v303-close">✕</button></div>
+        <div class="v303-fix-note"><b>Correzione strutturale:</b> “Clienti e Progetti” viene eliminata come categoria primaria (${clientSource} prompt da redistribuire). I contenuti SEO scritti da zero vanno in Content; analisi e ottimizzazioni restano in SEO; Elementor prevale solo per attività tecniche.</div>
+        <div class="v303-summary">
+          <div class="v303-stat"><b>${plan.length}</b><span>Prompt analizzati</span></div>
+          <div class="v303-stat"><b>${changed}</b><span>Da spostare</span></div>
+          <div class="v303-stat"><b>${high}</b><span>Alta confidenza</span></div>
+          <div class="v303-stat"><b>${medium}</b><span>Da controllare</span></div>
+          <div class="v303-stat"><b>${low}</b><span>Da classificare</span></div>
+          <div class="v303-stat"><b>${V303_TAXONOMY.length}</b><span>Categorie funzionali</span></div>
+        </div>
+        <div class="v303-tools"><input data-search placeholder="Cerca prompt, origine o destinazione…" value="${v303Esc(query)}"><button data-filter="all">Tutti</button><button data-filter="changed">Spostamenti</button><button data-filter="medium">Da controllare</button><button data-filter="low">Coda</button><button data-select-all>Seleziona tutti</button><button data-select-none>Deseleziona</button></div>
+        <div class="v303-table-wrap"><table class="v303-table"><thead><tr><th>Applica</th><th>Prompt</th><th>Origine</th><th>Nuova destinazione</th><th>Confidenza</th><th>Motivazioni</th><th>Correggi</th></tr></thead><tbody></tbody></table></div>
+        <div class="v303-foot"><span class="note">Viene creato un backup prima di ogni applicazione. Il Cestino resta accessibile dalla voce dedicata e non viene duplicato tra le categorie.</span><button data-export>Esporta anteprima</button><button data-taxonomy>Tassonomia</button><button class="safe" data-selected>Applica selezionati</button><button class="primary" data-all>Applica tutto</button><button data-close>Annulla</button></div>
+      </div>`;
+
+      const tbody=ov.querySelector('tbody');
+      const q=v303Norm(query);
+      plan.forEach((row,index)=>{
+        const show=(filter==='all'||(filter==='changed'&&!row.unchanged)||(filter==='medium'&&row.level==='medium')||(filter==='low'&&row.level==='low')) &&
+          (!q||v303Norm((row.prompt?.title||'')+' '+row.current+' '+row.proposed).includes(q));
+        if(!show)return;
+        const tr=document.createElement('tr');
+        const alt=row.result.alternative?'<div class="v303-alt">Alternativa: '+v303Esc(row.result.alternative.catName+' › '+row.result.alternative.sub)+'</div>':'';
+        tr.innerHTML='<td><input type="checkbox" data-check="'+index+'" '+(row.selected?'checked':'')+'></td>'+ 
+          '<td class="v303-title">'+v303Esc(row.prompt?.title||'Senza titolo')+'</td>'+ 
+          '<td class="v303-path">'+v303Esc(row.current)+'</td>'+ 
+          '<td class="v303-dest">'+v303Esc(row.proposed)+'</td>'+ 
+          '<td><span class="v303-confidence '+row.level+'">'+row.result.confidence+'%</span></td>'+ 
+          '<td class="v303-reason">'+v303Esc((row.result.reasons||[]).join(', '))+alt+'</td>'+ 
+          '<td><button class="v303-edit" data-edit="'+index+'">Modifica</button></td>';
+        tbody.appendChild(tr);
+      });
+
+      ov.querySelector('.v303-close').onclick=()=>ov.remove();ov.querySelector('[data-close]').onclick=()=>ov.remove();
+      ov.querySelector('[data-search]').oninput=e=>{query=e.target.value;const pos=e.target.selectionStart;draw();const inp=ov.querySelector('[data-search]');inp.focus();inp.setSelectionRange(pos,pos)};
+      ov.querySelectorAll('[data-filter]').forEach(b=>{b.classList.toggle('ac',b.dataset.filter===filter);b.onclick=()=>{filter=b.dataset.filter;draw()}});
+      ov.querySelectorAll('[data-check]').forEach(ch=>ch.onchange=()=>{plan[+ch.dataset.check].selected=ch.checked});
+      ov.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>v303EditRow(plan,+b.dataset.edit,draw));
+      ov.querySelector('[data-select-all]').onclick=()=>{plan.forEach(x=>x.selected=true);draw()};
+      ov.querySelector('[data-select-none]').onclick=()=>{plan.forEach(x=>x.selected=false);draw()};
+      ov.querySelector('[data-export]').onclick=()=>v303Download('anteprima_v30_3.csv',new Blob([v303PlanCsv(plan)],{type:'text/csv;charset=utf-8'}));
+      ov.querySelector('[data-taxonomy]').onclick=v303TaxonomyOverview;
+      ov.querySelector('[data-selected]').onclick=()=>v303Apply(plan,plan.filter(x=>x.selected).map(x=>x.key),ov);
+      ov.querySelector('[data-all]').onclick=()=>v303Apply(plan,plan.map(x=>x.key),ov);
+    };
+    draw();document.body.appendChild(ov);
+  }
+
+  async function v303Open(){
+    Loader.show();
+    try{await new Promise(r=>setTimeout(r,20));v303Preview(v303BuildPlan())}
+    catch(err){console.error(err);Toast.show('Errore nell’analisi v30.3.','er',6000)}
+    finally{Loader.hide()}
+  }
+
+  function v303Status(){
+    const cats=(S.allData||[]).filter(c=>c&&!v303IsTrash(c));
+    const legacy=cats.filter(c=>!V303_CANONICAL.has(v303Norm(c.name))||v303Norm(c.name)==='clienti e progetti');
+    const prompts=v303Entries(S.allData||[]);
+    const oldVersion=prompts.filter(x=>x.prompt?.classificationVersion!==V303_CLASSIFIER).length;
+    return {applied:prompts.length>0&&legacy.length===0&&oldVersion===0,legacyCount:legacy.length,oldVersion,promptCount:prompts.length};
+  }
+
+  function v303HideTrashFromCategoryNav(){
+    const trashIds=new Set((S.allData||[]).filter(v303IsTrash).map(c=>c.id));
+    if(cS){[...cS.options].forEach(o=>{if(trashIds.has(o.value))o.remove()})}
+    document.querySelectorAll('.ps-catnav-item').forEach(item=>{if(trashIds.has(item.dataset.value))item.remove()});
+  }
+
+  function v303Refresh(){
+    v303EnsureStyle();
+    document.title='Prompt Studio '+V303_VERSION+' - categorie senza sovrapposizioni';
+    const badge=document.querySelector('.logo-badge');if(badge)badge.textContent=V303_VERSION;
+    v303HideTrashFromCategoryNav();
+
+    const header=document.getElementById('v302TaxonomyHeaderBtn');
+    if(header){
+      const status=v303Status();header.onclick=v303Open;header.classList.toggle('applied',status.applied);
+      const label=header.querySelector('.v302-label');if(label)label.textContent=status.applied?'Tassonomia v30.3':'Sistema categorie';
+      header.title=status.applied?'Controlla o ricalcola la tassonomia funzionale v30.3':'Elimina le sovrapposizioni e riclassifica per funzione';
+    }
+
+    const dash=document.querySelector('#cDash .dashboard');
+    if(dash){
+      document.getElementById('v302TaxonomyBanner')?.remove();
+      let banner=document.getElementById('v303Banner');
+      if(!banner){banner=document.createElement('div');banner.id='v303Banner';banner.className='v303-banner';dash.insertBefore(banner,dash.firstChild)}
+      const status=v303Status();banner.classList.toggle('applied',status.applied);
+      if(status.applied){
+        banner.innerHTML='<div><strong>✅ Categorie funzionali v30.3 applicate</strong><p>'+status.promptCount+' prompt organizzati senza categoria Clienti duplicata. Il contesto cliente è conservato nei tag.</p></div><button>Controlla classificazione</button>';
+      }else{
+        banner.innerHTML='<div><strong>⚠️ Rilevate sovrapposizioni della tassonomia precedente</strong><p>'+status.oldVersion+' prompt devono essere ricalcolati. La categoria Clienti verrà rimossa e SEO, Content, WordPress, Grafica e Video saranno separati in base al deliverable.</p></div><button>Sistema categorie</button>';
+      }
+      banner.querySelector('button').onclick=v303Open;
+    }
+
+    const replacements=[
+      ['v301SemanticTaxonomy',v303Open],['v301SemanticFromBackup',v303Open],
+      ['v301Rollback',v303Rollback],['v301RollbackFromBackup',v303Rollback],
+      ['v301TaxonomyOverview',v303TaxonomyOverview]
+    ];
+    replacements.forEach(([id,fn])=>{const el=$(id);if(el)el.onclick=e=>{e?.preventDefault?.();$('toM')?.classList.remove('show');fn()}});
+  }
+
+  function v303MaybeOpen(){
+    const status=v303Status();if(status.applied||status.promptCount<2)return;
+    let shown='';try{shown=localStorage.getItem(V303_PREVIEW_KEY)||''}catch(_){ }
+    if(shown===V303_CLASSIFIER)return;
+    try{localStorage.setItem(V303_PREVIEW_KEY,V303_CLASSIFIER)}catch(_){ }
+    setTimeout(()=>{if(!document.querySelector('.v303-overlay')&&!document.querySelector('.v301-overlay'))v303Open()},700);
+  }
+
+  window.PS_openSemanticRecategorization=v303Open;
+  window.PS_classifySemanticEntry=v303Classify;
+  window.PS_buildSemanticPlan=v303BuildPlan;
+  window.PS_rollbackSemanticRecategorization=v303Rollback;
+  window.PS_SEMANTIC_TAXONOMY_PATCH=V303_VERSION;
+
+  const prevSetup=typeof setup==='function'?setup:null;
+  if(prevSetup){setup=function(){prevSetup();v303Refresh();v303MaybeOpen()}}
+  const prevRender=typeof render==='function'?render:null;
+  if(prevRender){render=function(){prevRender();requestAnimationFrame(v303Refresh)}}
+  const prevRenderDD=typeof renderDD==='function'?renderDD:null;
+  if(prevRenderDD){renderDD=function(){prevRenderDD();requestAnimationFrame(v303Refresh)}}
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(v303Refresh,0),{once:true});
+  window.PS_FUNCTIONAL_TAXONOMY_PATCH=V303_VERSION;
 })();
 
 init();
