@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prompt Studio v31.3 UI colori e dropdown</title>
+<title>Prompt Studio v32.0 tassonomia separata</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
@@ -37,7 +37,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .header-actions{margin-left:auto;display:flex;align-items:center;gap:6px}.icon-btn,.text-btn{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:11px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:800}
 .icon-btn{width:42px;font-size:18px}.text-btn{padding:0 12px}.icon-btn:hover,.text-btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .text-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.text-btn.primary:hover{background:var(--accent-2)}
-.main{flex:1;min-height:0;overflow:hidden}.layout-3{height:100%;display:grid;grid-template-columns:var(--sidebar) var(--subbar) minmax(0,1fr)}.layout-2{height:100%;display:grid;grid-template-columns:400px minmax(0,1fr)}.layout-1{height:100%;display:block}
+.main{flex:1;min-height:0;overflow:hidden}.layout-3{height:100%;display:grid;grid-template-columns:minmax(420px,560px) minmax(0,1fr)}.layout-2{height:100%;display:grid;grid-template-columns:400px minmax(0,1fr)}.layout-1{height:100%;display:block}
 .panel{min-height:0;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--border);overflow:hidden}.panel:last-child{border-right:0}.detail-panel{background:var(--bg)}
 .panel-head{min-height:64px;padding:12px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--surface)}
 .panel-title{font-size:15px;text-transform:uppercase;letter-spacing:.06em;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.count{margin-left:auto;background:rgba(124,111,255,.15);color:#a69fff;border:1px solid rgba(124,111,255,.22);border-radius:99px;padding:3px 8px;font-size:12px;font-weight:900;white-space:nowrap}
@@ -87,7 +87,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .panel-title,.nav-label,.item-title{white-space:normal;overflow:visible;text-overflow:unset;line-height:1.32}
 .nav-row,.item-row{justify-content:space-between}
 .count{margin-left:8px;align-self:flex-start}
-.modern-layout{grid-template-columns:280px minmax(420px,520px) minmax(0,1fr)}
+.modern-layout{grid-template-columns:minmax(440px,560px) minmax(0,1fr)}
 .category-shell{display:flex;flex-direction:column;height:100%;min-height:0}
 .category-header{padding:20px 18px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg, rgba(59,130,246,.14), rgba(59,130,246,0))}
 .category-heading h2{margin:4px 0 6px;font-size:26px;line-height:1.15}
@@ -119,12 +119,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .title-row{flex-wrap:wrap}
 .list-item:hover .item-actions{opacity:1}
 .prompt-list .empty{padding:28px 12px}
-@media(max-width:1280px){.modern-layout{grid-template-columns:260px minmax(340px,460px) minmax(0,1fr)}}
+@media(max-width:1280px){.modern-layout{grid-template-columns:minmax(380px,500px) minmax(0,1fr)}}
 @media(max-width:1050px){.modern-layout{display:block}.category-header,.subsection-head{padding-left:16px;padding-right:16px}.subtabs,.prompt-grid{padding-left:16px;padding-right:16px}}
 @media(max-width:700px){.subtab{min-width:100%}.category-heading h2{font-size:22px}.subsection-head h3{font-size:20px}}
 
 
 /* v31.3: dropdown alfabetico, box colorati e icone editor */
+.view-jump{display:block;min-width:150px;max-width:190px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);height:42px;border-radius:11px;padding:0 10px;font-weight:800}
 .category-jump{display:block;min-width:260px;max-width:360px;background:linear-gradient(180deg,rgba(37,99,235,.22),rgba(29,78,216,.16));border-color:rgba(96,165,250,.42);font-weight:800;box-shadow:0 8px 24px rgba(2,6,23,.18)}
 .category-jump:hover,.category-jump:focus{border-color:rgba(96,165,250,.72);box-shadow:0 0 0 3px rgba(59,130,246,.14)}
 .nav-item.nav-tone-1{background:rgba(37,99,235,.16);border-color:rgba(96,165,250,.16)}
@@ -156,8 +157,16 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <body>
 <div class="app">
   <header class="header">
-    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v31.3</span></div>
+    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.0</span></div>
     <div class="header-search"><span>⌕</span><input id="globalSearch" type="search" placeholder="Cerca prompt, contenuti e tag…"><button id="clearSearch" class="clear-search" aria-label="Cancella ricerca">×</button></div>
+    <select id="viewJump" class="view-jump" aria-label="Scegli una sezione">
+      <option value="dashboard">Dashboard</option>
+      <option value="all">Tutti</option>
+      <option value="favorites">Preferiti</option>
+      <option value="recents">Recenti</option>
+      <option value="tags">Tag</option>
+      <option value="trash">Cestino</option>
+    </select>
     <select id="categoryJump" class="category-jump" aria-label="Scegli una categoria in ordine alfabetico"></select>
         <div class="header-actions">
       <button class="text-btn" data-action="nav" data-view="dashboard">Dashboard</button>
@@ -179,8 +188,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 (()=>{
 'use strict';
 
-const VERSION='31.3';
-const CLASSIFIER_VERSION='functional-taxonomy-2026-07-v31.3';
+const VERSION='32.0';
+const CLASSIFIER_VERSION='single-topic-taxonomy-2026-07-v32.0';
 const DB_NAME='PromptStudio_v22';
 const DB_VERSION=4;
 const DATA_STORE='data';
@@ -228,23 +237,33 @@ class StorageDB{
 }
 
 const TAXONOMY=[
-  {key:'ai',name:'AI e Prompt Engineering',icon:'',subs:['Creazione e struttura dei prompt','Miglioramento e controllo qualità','Agenti, GPT, GEM e chatbot','Sistemi AI, memoria e orchestrazione']},
-  {key:'seo',name:'SEO',icon:'',subs:['Keyword e search intent','SERP, competitor e content gap','Contenuti SEO e on-page','SEO tecnica e dati strutturati','Local SEO','Internal linking e topical authority','Search Console e analytics']},
-  {key:'content',name:'Copywriting e Contenuti',icon:'',subs:['Articoli e guide','Landing page e pagine servizio','Copy persuasivo e CTA','Editing e riscrittura','Email e newsletter','Storytelling e contenuti creativi']},
-  {key:'marketing',name:'Marketing e Business',icon:'',subs:['Mercato e concorrenza','Buyer persona e posizionamento','Funnel, customer journey e CRO','Offerte, pricing e monetizzazione','Business model e crescita']},
-  {key:'social',name:'Social Media',icon:'',subs:['Strategia e piano editoriale','Post, caption e hashtag','Instagram e Facebook','LinkedIn','YouTube e community','Analisi delle performance']},
-  {key:'wordpress',name:'WordPress e Web Design',icon:'',subs:['WordPress e Gutenberg','Elementor','Plugin, temi e snippet','UX, UI e responsive','Performance e Core Web Vitals','Sicurezza, manutenzione e debug']},
-  {key:'code',name:'Sviluppo Web e App',icon:'',subs:['HTML, CSS e JavaScript','Web app e software','Debug e refactoring','Database e salvataggio dati','Importazione, esportazione e API','GitHub e deployment']},
-  {key:'graphics',name:'Grafica e Immagini',icon:'',subs:['Generazione immagini AI','Editing e trasformazione immagini','Branding e identità visiva','Fotografia prodotto e food','Visual social e thumbnail','Illustrazioni e mockup']},
-  {key:'video',name:'Video e Audio',icon:'',subs:['Generazione video AI','Reel, Shorts e video brevi','Storyboard e script','Animazione e motion design','Voice-over e audio','Editing e analisi video']},
-  {key:'productivity',name:'Produttività e Dati',icon:'',subs:['Workflow, SOP e checklist','Agenda e pianificazione','Documenti e PDF','Excel, CSV e dati','Meeting e sintesi','Studio e apprendimento','Backup e gestione file']}
+  {key:'prompt',name:'Prompt Engineering',icon:'',subs:['Creazione prompt','Ottimizzazione prompt','System prompt','Controllo qualità','Variabili e template']},
+  {key:'agents',name:'Agenti AI',icon:'',subs:['Agenti autonomi','GPT personalizzati','GEM personalizzati','Chatbot','Memoria e orchestrazione']},
+  {key:'seo',name:'SEO',icon:'',subs:['Keyword research','Search intent','SERP analysis','SEO on-page','SEO tecnica','Local SEO','Internal linking','Search Console','Dati strutturati']},
+  {key:'copy',name:'Copywriting',icon:'',subs:['Copy persuasivo','Landing page','CTA e headline','Email copy','Editing e riscrittura','Storytelling']},
+  {key:'content',name:'Content Marketing',icon:'',subs:['Articoli','Guide','Piani editoriali','Newsletter','Case study','Contenuti educativi']},
+  {key:'marketing',name:'Marketing Strategico',icon:'',subs:['Posizionamento','Buyer persona','Funnel','Customer journey','CRO','Analisi competitor']},
+  {key:'business',name:'Business',icon:'',subs:['Business model','Pricing','Monetizzazione','Offerte','Validazione','Crescita']},
+  {key:'social',name:'Social Media',icon:'',subs:['Instagram','Facebook','LinkedIn','TikTok','Pinterest','YouTube','Community']},
+  {key:'wordpress',name:'WordPress',icon:'',subs:['Gutenberg','Elementor','Plugin','Temi','WooCommerce','Snippet','Sicurezza','Performance']},
+  {key:'webdesign',name:'Web Design',icon:'',subs:['UI','UX','Responsive','Accessibilità','Wireframe','Design system','Landing design']},
+  {key:'webdev',name:'Sviluppo Web',icon:'',subs:['HTML','CSS','JavaScript','PHP','API','Database','Debug','Deployment']},
+  {key:'appdev',name:'Sviluppo App',icon:'',subs:['Web app','App desktop','App mobile','Architettura','Testing','Refactoring','Distribuzione']},
+  {key:'graphics',name:'Grafica',icon:'',subs:['Branding','Logo','Infografiche','Brochure','Poster','Packaging','Mockup','Layout']},
+  {key:'images',name:'Immagini AI',icon:'',subs:['Generazione immagini','Prompt immagini','Editing immagini','Restyling immagini','Upscaling','Compositing']},
+  {key:'photo',name:'Fotografia',icon:'',subs:['Fotografia prodotto','Food photography','Ritratto','Still life','Composizione','Illuminazione']},
+  {key:'video',name:'Video',icon:'',subs:['Video AI','Reel','Shorts','Storyboard','Montaggio','Animazione','Analisi video']},
+  {key:'audio',name:'Audio',icon:'',subs:['Voice-over','Podcast','Musica','Sound design','Trascrizione','Editing audio']},
+  {key:'productivity',name:'Produttività',icon:'',subs:['Workflow','SOP','Checklist','Pianificazione','Meeting','Automazioni']},
+  {key:'data',name:'Dati',icon:'',subs:['Excel','CSV','Analisi dati','Dashboard','Database','Importazione','Esportazione']},
+  {key:'documents',name:'Documenti',icon:'',subs:['PDF','Word','Presentazioni','Sintesi','Report','Backup','Gestione file']}
 ];
 const TAX_BY_KEY=new Map(TAXONOMY.map(x=>[x.key,x]));
 const CANONICAL_CATS=new Set(TAXONOMY.map(x=>normalize(x.name)));
 
 class TaxonomyEngine{
   static clientTags(text,source=''){
-    const value=normalize(text+' '+source);const tags=[];
+    const value=normalize(text+' '+source), tags=[];
     const rules=[
       ['client:roberto-zanoni',/roberto\s*zanoni|robertozanoni\.it|tool\.zanoni/],
       ['client:galbiati-dental-group',/galbiati\s*dental/],
@@ -253,29 +272,56 @@ class TaxonomyEngine{
       ['client:trova-esperti-digitali',/trova\s*esperti\s*digitali|trovaespertidigitali/],
       ['client:zirafa',/zirafa|studiodentisticozirafa|metodo\s*sato/]
     ];
-    rules.forEach(([tag,rx])=>{if(rx.test(value))tags.push(tag)});return[...new Set(tags)];
+    rules.forEach(([tag,rx])=>{if(rx.test(value))tags.push(tag)});
+    return [...new Set(tags)];
   }
   static generatedTags(text,source=''){
-    const value=normalize(text);const tags=[];const add=(tag,rx)=>{if(rx.test(value))tags.push(tag)};
-    add('channel:instagram',/instagram|reel|storie|stories/);add('channel:linkedin',/linkedin/);add('channel:youtube',/youtube|shorts?/);add('channel:facebook',/facebook/);
-    add('tool:elementor',/elementor/);add('tool:wordpress',/wordpress|gutenberg|woocommerce/);add('tool:search-console',/search console|gsc/);add('tool:canva',/canva/);
-    add('format:html',/\bhtml\b/);add('format:json',/\bjson\b/);add('format:csv',/\bcsv\b/);add('format:excel',/excel|xlsx/);add('format:pdf',/\bpdf\b/);
-    add('task:audit',/audit|analizza|valuta|verifica/);add('task:creazione',/crea|genera|scrivi|sviluppa/);add('task:ottimizzazione',/ottimizza|migliora|correggi|riscrivi/);
-    return[...new Set([...this.clientTags(value,source),...tags])];
+    const value=normalize(text), tags=[];
+    const add=(tag,rx)=>{if(rx.test(value))tags.push(tag)};
+    add('channel:instagram',/instagram|reel|storie|stories/);
+    add('channel:linkedin',/linkedin/);
+    add('channel:youtube',/youtube|shorts?/);
+    add('channel:facebook',/facebook/);
+    add('tool:elementor',/elementor/);
+    add('tool:wordpress',/wordpress|gutenberg|woocommerce/);
+    add('tool:search-console',/search console|gsc/);
+    add('tool:canva',/canva/);
+    add('format:html',/\bhtml\b/);
+    add('format:json',/\bjson\b/);
+    add('format:csv',/\bcsv\b/);
+    add('format:excel',/excel|xlsx/);
+    add('format:pdf',/\bpdf\b/);
+    add('task:audit',/audit|analizza|valuta|verifica/);
+    add('task:creazione',/crea|genera|scrivi|sviluppa/);
+    add('task:ottimizzazione',/ottimizza|migliora|correggi|riscrivi/);
+    return [...new Set([...this.clientTags(value,source),...tags])];
   }
   static sourceKey(source){
     const s=normalize(source);
-    if(/seo|serp|keyword|search console|internal linking|topical/.test(s))return'seo';
-    if(/copy|scrittura|contenut|articol|landing|email/.test(s))return'content';
-    if(/social|instagram|facebook|linkedin|youtube|community/.test(s))return'social';
-    if(/wordpress|elementor|web design|ux web/.test(s))return'wordpress';
-    if(/codice|sviluppo|web app|software|html|javascript/.test(s))return'code';
-    if(/grafica|immagin|branding|foto|thumbnail/.test(s))return'graphics';
-    if(/video|animazione|audio|reel/.test(s))return'video';
-    if(/marketing|business|growth|funnel|buyer persona/.test(s))return'marketing';
-    if(/ai|prompt engineering|gpt|gem|chatbot/.test(s))return'ai';
-    if(/produttiv|dati|document|excel|csv|workflow|sop/.test(s))return'productivity';
-    return'';
+    const rules=[
+      ['images',/immagini ai|generazione immagini|editing immagini/],
+      ['photo',/fotografia|food photography|still life|ritratto/],
+      ['graphics',/grafica|branding|logo|infografica|brochure|packaging|mockup/],
+      ['video',/video|reel|short|storyboard|animazione|montaggio/],
+      ['audio',/audio|voice.?over|podcast|musica|sound/],
+      ['wordpress',/wordpress|elementor|gutenberg|woocommerce|plugin|tema/],
+      ['webdesign',/web design|\bui\b|\bux\b|responsive|accessibilita|wireframe/],
+      ['appdev',/sviluppo app|web app|app desktop|app mobile/],
+      ['webdev',/sviluppo web|html|css|javascript|php|api|database|deploy/],
+      ['seo',/seo|serp|keyword|search console|internal linking|topical|schema/],
+      ['copy',/copywriting|copy persuasivo|landing|cta|headline|riscrittura/],
+      ['content',/content marketing|articoli|guide|piano editoriale|newsletter/],
+      ['marketing',/marketing strategico|funnel|buyer persona|customer journey|cro|posizionamento/],
+      ['business',/business|pricing|monetizzazione|offerte|validazione|crescita/],
+      ['social',/social media|instagram|facebook|linkedin|tiktok|pinterest|youtube/],
+      ['agents',/agenti ai|gpt personalizzati|gem personalizzati|chatbot|orchestrazione/],
+      ['prompt',/prompt engineering|system prompt|meta.?prompt|ottimizzazione prompt/],
+      ['data',/dati|excel|csv|dashboard|analisi dati/],
+      ['documents',/documenti|pdf|word|presentazioni|report|backup|file/],
+      ['productivity',/produttivita|workflow|sop|checklist|pianificazione|meeting|automazioni/]
+    ];
+    for(const [key,rx] of rules) if(rx.test(s)) return key;
+    return '';
   }
   static classify(entry){
     const p=entry.prompt||{};
@@ -284,69 +330,98 @@ class TaxonomyEngine{
     const tags=(p.tags||[]).join(' ');
     const source=[entry.catName,entry.subName,p.originCategory,p.originSubcategory].filter(Boolean).join(' ');
     const text=normalize([title,body,tags].join(' '));
-    const sourceText=normalize(source);const hit=rx=>rx.test(text);const scores={};const reasons={};
+    const sourceText=normalize(source);
+    const scores={}, reasons={};
     TAXONOMY.forEach(x=>{scores[x.key]=0;reasons[x.key]=[]});
     const add=(key,points,reason)=>{scores[key]+=points;if(reason&&!reasons[key].includes(reason))reasons[key].push(reason)};
-    const sourceKey=this.sourceKey(sourceText);if(sourceKey)add(sourceKey,38,'coerenza con la categoria di origine');
+    const hit=rx=>rx.test(text);
+    const sourceKey=this.sourceKey(sourceText);
+    if(sourceKey)add(sourceKey,34,'coerenza con la categoria di origine');
 
-    const videoOutput=hit(/(?:crea|genera|realizza|trasforma|anima|monta|produci).{0,70}(?:video|reel|short|animazione|voice.?over)|(?:storyboard|script video|prompt video|video ai|google flow|veo|sora)/);
-    const imageOutput=hit(/(?:crea|genera|realizza|modifica|trasforma|ritocca).{0,70}(?:immagine|foto|fotografia|logo|thumbnail|miniatura|mockup|illustrazione|grafica|visual)|prompt immagine|still life|food photography/);
-    const wpWork=hit(/wordpress|elementor|gutenberg|woocommerce|wpcode|shortcode|functions\.php|tema wordpress|plugin wordpress|widget elementor/);
-    const codeWork=hit(/(?:crea|sviluppa|implementa|correggi|ripara|debug|refactor|audit).{0,90}(?:web app|applicazione|software|plugin|estensione|script|codice|html|css|javascript|typescript|php|python|database|api)|indexeddb|localstorage|github|deploy/);
-    const seoWork=hit(/\bseo\b|keyword|search intent|serp|content gap|competitor seo|search console|\bgsc\b|schema|dati strutturati|internal linking|link interni|topical authority|local seo|indicizzazione|crawl|canonical|robots|sitemap|core web vitals|meta description|title seo|rank math|google business profile|pagina orfana/);
-    const socialWork=hit(/social media|piano editoriale|calendario editoriale|caption|hashtag|carosello|post instagram|post facebook|post linkedin|community|instagram|facebook|linkedin|youtube channel/);
-    const marketingWork=hit(/marketing|buyer persona|segmentazione|posizionamento|proposta di valore|funnel|customer journey|pricing|monetizzazione|business model|analisi di mercato|market research|growth|validazione|cro|conversion rate|offerta commerciale|analisi concorrenza/);
-    const aiMeta=hit(/prompt engineering|meta.?prompt|migliora.{0,35}prompt|ottimizza.{0,35}prompt|crea.{0,35}(?:un )?prompt|system prompt|custom gpt|custom gem|gem personalizzat|gpt personalizzat|agente ai|chatbot|guardrail|anti.?allucinazioni|second brain|operating system ai|orchestrazione ai|istruzioni personalizzate|llm/);
-    const productivityWork=hit(/workflow|\bsop\b|procedura operativa|scadenzario|agenda|meeting|verbale|riunione|checklist|pianificazione|excel|xlsx|csv|pdf|documento|file|backup|importazione|esportazione|tabella dati|studio|apprendimento|quiz/);
-    const writingWork=hit(/(?:scrivi|crea|genera|riscrivi|correggi|migliora|umanizza).{0,75}(?:articolo|guida|landing|pagina servizio|testo|copy|email|newsletter|headline|cta|descrizione|comunicato|storia)|copywriting|storytelling|newsletter|email marketing/);
+    const rules=[
+      ['images',125,/(?:crea|genera|modifica|trasforma|ritocca|migliora).{0,80}(?:immagine|foto|visual|thumbnail|illustrazione)|prompt immagine|dall.?e|midjourney|stable diffusion|gpt image/,'il risultato richiesto è un’immagine'],
+      ['photo',118,/fotografia prodotto|food photography|still life|ritratto fotografico|set fotografico|illuminazione fotografica|composizione fotografica/,'attività fotografica specifica'],
+      ['graphics',112,/branding|identita visiva|logo|infografica|brochure|poster|packaging|mockup|layout grafico/,'progetto di grafica o branding'],
+      ['video',120,/(?:crea|genera|monta|anima|realizza).{0,80}(?:video|reel|short|animazione)|storyboard|video ai|google flow|veo|sora/,'il risultato richiesto è un video'],
+      ['audio',115,/voice.?over|podcast|sound design|editing audio|trascrizione audio|musica|narrazione vocale/,'attività audio specifica'],
+      ['wordpress',116,/wordpress|elementor|gutenberg|woocommerce|wpcode|shortcode|functions\.php|plugin wordpress|tema wordpress/,'attività WordPress'],
+      ['webdesign',106,/web design|\bui\b|\bux\b|responsive|accessibilita|wireframe|design system|interfaccia utente|layout web/,'attività di web design'],
+      ['appdev',108,/web app|app desktop|app mobile|electron|applicazione software|sviluppo app/,'sviluppo applicativo'],
+      ['webdev',102,/html|css|javascript|typescript|php|python|api|database|indexeddb|localstorage|github|deployment|debug codice|refactoring/,'sviluppo web o codice'],
+      ['seo',118,/\bseo\b|keyword|search intent|serp|content gap|search console|\bgsc\b|schema|dati strutturati|internal linking|link interni|topical authority|local seo|indicizzazione|crawl|canonical|robots|sitemap|core web vitals|meta description|title seo|rank math|google business profile|pagina orfana/,'attività SEO esplicita'],
+      ['copy',104,/copywriting|copy persuasivo|headline|cta|sales page|landing page|riscrivi|umanizza|tono di voce|email copy|storytelling/,'produzione o ottimizzazione del copy'],
+      ['content',98,/articolo|guida|contenuto editoriale|piano editoriale|newsletter|case study|contenuti educativi|blog post/,'contenuto editoriale'],
+      ['marketing',104,/marketing strategico|buyer persona|segmentazione|posizionamento|proposta di valore|funnel|customer journey|cro|analisi competitor|analisi di mercato/,'strategia marketing'],
+      ['business',100,/business model|pricing|monetizzazione|offerta commerciale|validazione|growth|crescita aziendale|piano business/,'strategia di business'],
+      ['social',106,/social media|instagram|facebook|linkedin|tiktok|pinterest|youtube|caption|hashtag|community|carosello/,'contenuto o strategia social'],
+      ['agents',112,/agente ai|agenti ai|custom gpt|gpt personalizzato|custom gem|gem personalizzato|chatbot|multi.?agent|memoria ai|orchestrazione ai|second brain/,'agente o sistema AI'],
+      ['prompt',108,/prompt engineering|meta.?prompt|system prompt|ottimizza.{0,35}prompt|migliora.{0,35}prompt|crea.{0,35}(?:un )?prompt|guardrail|anti.?allucinazioni|istruzioni personalizzate/,'progettazione di prompt'],
+      ['data',102,/excel|xlsx|csv|analisi dati|dashboard dati|data visualization|tabella dati|database|importazione dati|esportazione dati/,'gestione o analisi dei dati'],
+      ['documents',96,/\bpdf\b|documento word|presentazione|powerpoint|report|backup|gestione file|riassunto documento|sintesi documento/,'documenti o file'],
+      ['productivity',94,/workflow|\bsop\b|checklist|procedura operativa|agenda|pianificazione|meeting|verbale|automazione|produttivita/,'organizzazione e produttività']
+    ];
+    rules.forEach(([key,points,rx,reason])=>{if(hit(rx))add(key,points,reason)});
 
-    if(videoOutput)add('video',115,'il risultato richiesto è un video o contenuto audio-video');
-    if(imageOutput)add('graphics',115,'il risultato richiesto è un’immagine o una grafica');
-    if(wpWork)add('wordpress',105,'attività riferita a WordPress, Elementor o web design');
-    if(codeWork)add('code',100,'sviluppo o modifica di codice, app o software');
-    if(wpWork&&codeWork){add('wordpress',34,'il codice è destinato a WordPress o Elementor');scores.code=Math.max(0,scores.code-18)}
-    if(seoWork)add('seo',105,'argomento o attività SEO esplicita');
-    if(socialWork)add('social',92,'contenuto o strategia per social media');
-    if(marketingWork)add('marketing',88,'strategia marketing o business');
-    if(aiMeta)add('ai',90,'progettazione o controllo di prompt e sistemi AI');
-    if(productivityWork)add('productivity',82,'documenti, dati o organizzazione operativa');
-    if(writingWork)add('content',76,'produzione o riscrittura di contenuti testuali');
+    if(hit(/articolo seo|contenuto seo|landing seo|copy seo/)){add('seo',42,'finalità SEO prevalente');scores.content=Math.max(0,scores.content-18);scores.copy=Math.max(0,scores.copy-10)}
+    if(hit(/prompt (?:per|di) (?:immagine|foto)/)){add('images',44,'prompt destinato alla generazione immagini');scores.prompt=Math.max(0,scores.prompt-20)}
+    if(hit(/prompt (?:per|di) (?:video|reel|short)/)){add('video',44,'prompt destinato alla generazione video');scores.prompt=Math.max(0,scores.prompt-20)}
+    if(hit(/plugin wordpress|tema wordpress|elementor/)){add('wordpress',35,'piattaforma WordPress prevalente');scores.webdev=Math.max(0,scores.webdev-15)}
+    if(hit(/instagram|facebook|linkedin|tiktok|pinterest/) && hit(/caption|post|carosello|reel|hashtag/)){add('social',36,'canale social prevalente')}
 
-    if(hit(/articolo seo|contenuto seo|landing seo|pagina seo|copy seo/)){add('seo',35,'il contenuto ha finalità SEO');scores.content=Math.max(0,scores.content-12)}
-    if(videoOutput){scores.social=Math.max(0,scores.social-45);scores.graphics=Math.max(0,scores.graphics-20)}
-    if(imageOutput){scores.social=Math.max(0,scores.social-40);scores.content=Math.max(0,scores.content-15)}
-    if(wpWork&&seoWork&&hit(/audit|ottimizza|schema|indicizzazione|search console|seo tecnica/))add('seo',28,'la finalità prevalente è SEO');
-    if(wpWork&&writingWork&&!hit(/codice|widget|plugin|tema|debug|responsive|performance/))add('content',24,'WordPress è solo il contenitore del testo');
-
-    let ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]);let [key,score]=ranked[0];let second=ranked[1]||['',0];
+    let ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+    let [key,score]=ranked[0];
+    let second=ranked[1]||['',0];
     if(score<35){
-      if(sourceKey){key=sourceKey;score=Math.max(score,48);reasons[key].push('assegnazione basata sulla provenienza del prompt')}
-      else if(writingWork){key='content';score=45}
-      else if(productivityWork){key='productivity';score=45}
-      else if(aiMeta){key='ai';score=45}
-      else{key='content';score=36;reasons.content.push('contenuto generico assegnato alla categoria editoriale')}
-      ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]);second=ranked.find(x=>x[0]!==key)||['',0];
+      key=sourceKey||'prompt';
+      score=sourceKey?48:36;
+      reasons[key].push(sourceKey?'assegnazione basata sulla provenienza':'assegnazione generica alla progettazione prompt');
     }
-    const category=TAX_BY_KEY.get(key);const sub=this.subcategory(key,text+' '+sourceText);
-    const margin=Math.max(0,score-second[1]);let confidence=Math.round(Math.min(98,Math.max(58,58+margin*.45+Math.min(18,score/8))));
-    if(sourceKey===key)confidence=Math.min(98,confidence+6);if(margin<15)confidence=Math.min(78,confidence);
-    return{key,catName:category.name,icon:'',sub,score,confidence,level:confidence>=85?'high':confidence>=68?'medium':'low',reasons:(reasons[key]||[]).slice(0,4),alternative:second[1]>25?{key:second[0],score:second[1]}:null,tags:this.generatedTags(text,source)};
+    const category=TAX_BY_KEY.get(key);
+    const sub=this.subcategory(key,text+' '+sourceText);
+    const margin=Math.max(0,score-second[1]);
+    let confidence=Math.round(Math.min(98,Math.max(58,58+margin*.45+Math.min(18,score/8))));
+    if(sourceKey===key)confidence=Math.min(98,confidence+6);
+    if(margin<15)confidence=Math.min(78,confidence);
+    return{
+      key,catName:category.name,icon:'',sub,score,confidence,
+      level:confidence>=85?'high':confidence>=68?'medium':'low',
+      reasons:(reasons[key]||[]).slice(0,4),
+      alternative:second[1]>25?{key:second[0],score:second[1]}:null,
+      tags:this.generatedTags(text,source)
+    };
   }
   static subcategory(key,text){
     const maps={
-      ai:[[/agente|gpt|gem|chatbot/,'Agenti, GPT, GEM e chatbot'],[/qualita|verifica|guardrail|allucin/,'Miglioramento e controllo qualità'],[/memoria|second brain|orchestrazione|operating system|multi.?agent/,'Sistemi AI, memoria e orchestrazione']],
-      seo:[[/serp|competitor|content gap/,'SERP, competitor e content gap'],[/keyword|search intent/,'Keyword e search intent'],[/local seo|google business|maps|vicino|citta/,'Local SEO'],[/internal link|link interni|topical|pillar|cluster/,'Internal linking e topical authority'],[/search console|\bgsc\b|analytics/,'Search Console e analytics'],[/crawl|canonical|robots|sitemap|indicizzazione|schema|dati strutturati|core web vitals|seo tecnica/,'SEO tecnica e dati strutturati']],
-      content:[[/landing|pagina servizio|sales page/,'Landing page e pagine servizio'],[/cta|headline|persuas|vendita/,'Copy persuasivo e CTA'],[/correggi|riscrivi|editing|revisione|umanizza/,'Editing e riscrittura'],[/email|newsletter/,'Email e newsletter'],[/storytelling|storia|creativ/,'Storytelling e contenuti creativi']],
-      marketing:[[/mercato|concorrenza|competitor/,'Mercato e concorrenza'],[/buyer persona|segmentazione|posizionamento|proposta di valore/,'Buyer persona e posizionamento'],[/funnel|customer journey|cro|conversione/,'Funnel, customer journey e CRO'],[/pricing|monetizzazione|offerta/,'Offerte, pricing e monetizzazione']],
-      social:[[/piano editoriale|calendario|strategia social/,'Strategia e piano editoriale'],[/caption|hook|hashtag|post/,'Post, caption e hashtag'],[/instagram|facebook/,'Instagram e Facebook'],[/linkedin/,'LinkedIn'],[/youtube|community/,'YouTube e community']],
-      wordpress:[[/elementor/,'Elementor'],[/plugin|tema|snippet|wpcode/,'Plugin, temi e snippet'],[/ux|ui|responsive|accessibil/,'UX, UI e responsive'],[/performance|core web vitals|velocita/,'Performance e Core Web Vitals'],[/sicurezza|manutenzione|debug|errore|bug/,'Sicurezza, manutenzione e debug']],
-      code:[[/html|css|javascript|typescript/,'HTML, CSS e JavaScript'],[/web app|applicazione|software/,'Web app e software'],[/debug|bug|refactor|code review/,'Debug e refactoring'],[/database|indexeddb|localstorage|sqlite/,'Database e salvataggio dati'],[/import|export|json|csv|zip|api/,'Importazione, esportazione e API'],[/github|deploy|desktop|electron/,'GitHub e deployment']],
-      graphics:[[/modifica|ritocca|trasforma/,'Editing e trasformazione immagini'],[/brand|logo|identita visiva/,'Branding e identità visiva'],[/still life|fotografia prodotto|food|ricetta|piatto|cibo/,'Fotografia prodotto e food'],[/thumbnail|miniatura|visual social/,'Visual social e thumbnail'],[/illustrazione|personaggio|mockup/,'Illustrazioni e mockup']],
-      video:[[/reel|short|video breve/,'Reel, Shorts e video brevi'],[/storyboard|scena|script/,'Storyboard e script'],[/animazione|motion/,'Animazione e motion design'],[/voice.?over|audio|narrazione/,'Voice-over e audio'],[/editing|montaggio|analizza|migliora/,'Editing e analisi video']],
-      productivity:[[/workflow|sop|checklist|procedura/,'Workflow, SOP e checklist'],[/agenda|scaden|pianificazione|to.?do/,'Agenda e pianificazione'],[/pdf|documento|word/,'Documenti e PDF'],[/csv|excel|xlsx|tabella dati/,'Excel, CSV e dati'],[/meeting|riunione|verbale|sintesi/,'Meeting e sintesi'],[/studio|apprendimento|lezione|quiz/,'Studio e apprendimento'],[/backup|file|import|export/,'Backup e gestione file']]
+      prompt:[[/system prompt/,'System prompt'],[/ottimizza|migliora|riscrivi/,'Ottimizzazione prompt'],[/qualita|verifica|guardrail|allucin/,'Controllo qualità'],[/variabil|template/,'Variabili e template']],
+      agents:[[/gpt personalizz|custom gpt/,'GPT personalizzati'],[/gem personalizz|custom gem/,'GEM personalizzati'],[/chatbot/,'Chatbot'],[/memoria|orchestrazione|second brain|multi.?agent/,'Memoria e orchestrazione']],
+      seo:[[/keyword/,'Keyword research'],[/search intent/,'Search intent'],[/serp|competitor|content gap/,'SERP analysis'],[/local seo|google business|maps|vicino/,'Local SEO'],[/internal link|link interni|topical|pillar|cluster/,'Internal linking'],[/search console|\bgsc\b/,'Search Console'],[/schema|dati strutturati/,'Dati strutturati'],[/crawl|canonical|robots|sitemap|indicizzazione|core web vitals|seo tecnica/,'SEO tecnica']],
+      copy:[[/landing|sales page/,'Landing page'],[/cta|headline/,'CTA e headline'],[/email/,'Email copy'],[/correggi|riscrivi|editing|umanizza/,'Editing e riscrittura'],[/storytelling|storia/,'Storytelling']],
+      content:[[/piano editoriale/,'Piani editoriali'],[/newsletter/,'Newsletter'],[/case study/,'Case study'],[/guida/,'Guide'],[/educativ|didattic/,'Contenuti educativi']],
+      marketing:[[/buyer persona|segmentazione/,'Buyer persona'],[/posizionamento|proposta di valore/,'Posizionamento'],[/funnel/,'Funnel'],[/customer journey/,'Customer journey'],[/cro|conversion/,'CRO']],
+      business:[[/pricing/,'Pricing'],[/monetizzazione/,'Monetizzazione'],[/offerta/,'Offerte'],[/validazione/,'Validazione'],[/growth|crescita/,'Crescita']],
+      social:[[/instagram/,'Instagram'],[/facebook/,'Facebook'],[/linkedin/,'LinkedIn'],[/tiktok/,'TikTok'],[/pinterest/,'Pinterest'],[/youtube/,'YouTube']],
+      wordpress:[[/elementor/,'Elementor'],[/gutenberg/,'Gutenberg'],[/woocommerce/,'WooCommerce'],[/plugin/,'Plugin'],[/tema/,'Temi'],[/snippet|wpcode|functions\.php/,'Snippet'],[/sicurezza/,'Sicurezza'],[/performance|core web vitals|velocita/,'Performance']],
+      webdesign:[[/\bui\b|interfaccia/,'UI'],[/\bux\b|esperienza utente/,'UX'],[/responsive/,'Responsive'],[/accessibil/,'Accessibilità'],[/wireframe/,'Wireframe'],[/design system/,'Design system']],
+      webdev:[[/\bhtml\b/,'HTML'],[/\bcss\b/,'CSS'],[/javascript|typescript/,'JavaScript'],[/\bphp\b/,'PHP'],[/\bapi\b/,'API'],[/database|indexeddb|localstorage/,'Database'],[/debug|bug|refactor/,'Debug'],[/github|deploy/,'Deployment']],
+      appdev:[[/desktop|electron/,'App desktop'],[/mobile|android|ios/,'App mobile'],[/testing|test/,'Testing'],[/refactor/,'Refactoring'],[/architettura/,'Architettura']],
+      graphics:[[/brand|identita visiva/,'Branding'],[/logo/,'Logo'],[/infograf/,'Infografiche'],[/brochure/,'Brochure'],[/poster/,'Poster'],[/packaging/,'Packaging'],[/mockup/,'Mockup']],
+      images:[[/editing|modifica|ritocca/,'Editing immagini'],[/restyling|trasforma/,'Restyling immagini'],[/upscal|risoluzione/,'Upscaling'],[/composit/,'Compositing'],[/prompt/,'Prompt immagini']],
+      photo:[[/prodotto/,'Fotografia prodotto'],[/food|ricetta|piatto|cibo/,'Food photography'],[/ritratto/,'Ritratto'],[/still life/,'Still life'],[/composizione/,'Composizione'],[/illuminazione|luce/,'Illuminazione']],
+      video:[[/reel/,'Reel'],[/short/,'Shorts'],[/storyboard/,'Storyboard'],[/montaggio|editing/,'Montaggio'],[/animazione|motion/,'Animazione'],[/analisi/,'Analisi video']],
+      audio:[[/voice.?over|narrazione/,'Voice-over'],[/podcast/,'Podcast'],[/musica/,'Musica'],[/sound/,'Sound design'],[/trascriz/,'Trascrizione']],
+      productivity:[[/workflow/,'Workflow'],[/\bsop\b|procedura/,'SOP'],[/checklist/,'Checklist'],[/agenda|pianificazione|scaden/,'Pianificazione'],[/meeting|riunione|verbale/,'Meeting'],[/automaz/,'Automazioni']],
+      data:[[/excel|xlsx/,'Excel'],[/csv/,'CSV'],[/dashboard/,'Dashboard'],[/database/,'Database'],[/import/,'Importazione'],[/export/,'Esportazione']],
+      documents:[[/pdf/,'PDF'],[/word/,'Word'],[/presentazione|powerpoint/,'Presentazioni'],[/sintesi|riassunto/,'Sintesi'],[/report/,'Report'],[/backup/,'Backup']]
     };
-    const defaults={ai:'Creazione e struttura dei prompt',seo:'Contenuti SEO e on-page',content:'Articoli e guide',marketing:'Business model e crescita',social:'Analisi delle performance',wordpress:'WordPress e Gutenberg',code:'Web app e software',graphics:'Generazione immagini AI',video:'Generazione video AI',productivity:'Produttività e Dati'};
-    for(const [rx,value] of maps[key]||[])if(rx.test(text))return value;return defaults[key]||TAX_BY_KEY.get(key)?.subs?.[0]||'Generale';
+    const defaults={
+      prompt:'Creazione prompt',agents:'Agenti autonomi',seo:'SEO on-page',copy:'Copy persuasivo',
+      content:'Articoli',marketing:'Analisi competitor',business:'Business model',social:'Community',
+      wordpress:'Gutenberg',webdesign:'UI',webdev:'Debug',appdev:'Web app',graphics:'Layout',
+      images:'Generazione immagini',photo:'Composizione',video:'Video AI',audio:'Editing audio',
+      productivity:'Workflow',data:'Analisi dati',documents:'Gestione file'
+    };
+    for(const [rx,value] of maps[key]||[])if(rx.test(text))return value;
+    return defaults[key]||TAX_BY_KEY.get(key)?.subs?.[0]||'Generale';
   }
 }
 
@@ -405,6 +480,7 @@ class PromptStudioApp{
     $('globalSearch').addEventListener('input',e=>{this.state.search=e.target.value;this.state.view=e.target.value.trim()?'search':'all';this.state.promptId=null;this.render()});
     $('clearSearch').onclick=()=>{$('globalSearch').value='';this.state.search='';this.state.view='all';this.state.promptId=null;this.render()};
     const jump=$('categoryJump');if(jump)jump.addEventListener('change',e=>this.navigateValue(e.target.value));
+    const viewJump=$('viewJump');if(viewJump)viewJump.addEventListener('change',e=>{this.state.view=e.target.value;this.state.promptId=null;this.render()});
     window.addEventListener('beforeunload',e=>{if(this.state.editing){e.preventDefault();e.returnValue=''}});
   }
   async handleClick(e){
@@ -446,12 +522,13 @@ class PromptStudioApp{
   navigateValue(value){if(value.startsWith('view:')){this.state.view=value.slice(5);this.state.promptId=null;this.render()}else if(value.startsWith('cat:')){const id=value.slice(4);this.state.view='library';this.state.catId=id;const cat=this.findCategory(id);this.state.subId=cat?.subcategories?.[0]?.id||null;this.state.promptId=cat?.subcategories?.[0]?.prompts?.[0]?.id||null;this.render()}}
   trackRecent(id){const found=this.findPrompt(id);if(!found)return;this.recents=this.recents.filter(r=>r.promptId!==id);this.recents.unshift({promptId:id,catId:found.cat.id,subId:found.sub.id,ts:Date.now()});this.recents=this.recents.slice(0,40);this.db.put(DATA_STORE,'recents',this.recents).catch(console.error)}
   openPrompt(id){const found=this.findPrompt(id);if(!found)return;this.state.view='library';this.state.catId=found.cat.id;this.state.subId=found.sub.id;this.state.promptId=id;this.state.editing=false;this.trackRecent(id);this.render()}
-  render(){this.ensureSelection();this.renderJump();const main=$('main');if(this.state.view==='dashboard')this.renderDashboard(main);else if(this.state.view==='library')this.renderLibrary(main);else this.renderSpecial(main);}
+  render(){this.ensureSelection();this.renderViewJump();this.renderJump();const main=$('main');if(this.state.view==='dashboard')this.renderDashboard(main);else if(this.state.view==='library')this.renderLibrary(main);else this.renderSpecial(main);}
+  renderViewJump(){const select=$('viewJump');if(!select)return;select.value=['dashboard','all','favorites','recents','tags','trash'].includes(this.state.view)?this.state.view:'all'}
   renderJump(){const select=$('categoryJump');if(!select)return;const categories=this.categories();select.innerHTML='<option value="">Scegli categoria A–Z…</option>'+categories.map(c=>`<option value="cat:${c.id}">${escapeHtml(stripLeadingIcons(c.name))} · ${this.countCategory(c)} prompt</option>`).join('');select.value=this.state.view==='library'&&this.state.catId?`cat:${this.state.catId}`:''}
   quickNavHtml(){const all=this.allPrompts();const trash=this.allPrompts({trash:true}).filter(p=>this.isTrash(this.findCategory(p.catId))).length;const views=[['dashboard','Dashboard',''],['all','Tutti',all.length],['favorites','Preferiti',all.filter(p=>p.favorite).length],['recents','Recenti',this.recents.length],['tags','Tag',new Set(all.flatMap(p=>p.tags||[])).size],['trash','Cestino',trash]];return`<div class="nav-section-title">Navigazione</div>${views.map(([v,l,n],i)=>`<button class="nav-item nav-quick nav-tone-${(i%4)+1} ${this.state.view===v?'active':''}" data-action="nav" data-view="${v}"><div class="nav-row"><span class="nav-label">${l}</span>${n!==''?`<span class="count">${n}</span>`:''}</div></button>`).join('')}<div class="nav-section-title">Categorie ordinate A–Z</div>${this.categories().map((c,i)=>`<button class="nav-item category-nav-item nav-tone-${(i%4)+1} ${this.state.catId===c.id&&this.state.view==='library'?'active':''}" data-action="select-category" data-id="${c.id}"><div class="nav-row"><span class="nav-label">${escapeHtml(stripLeadingIcons(c.name))}</span><span class="count">${this.countCategory(c)}</span></div></button>`).join('')}`}
   renderLibrary(main=$('main')){
     const cat=this.findCategory(this.state.catId);const sub=this.findSub(this.state.catId,this.state.subId);const prompt=this.findPrompt(this.state.promptId)?.prompt;
-    main.className='main';main.innerHTML=`<div class="layout-3 modern-layout"><section class="panel"><div class="panel-head"><span class="panel-title">Libreria</span><button class="mini-btn primary" data-action="new-category">Nuova categoria</button></div><div class="list">${this.quickNavHtml()}</div></section><section class="panel" id="subPanel"></section><section class="panel detail-panel" id="detailPanel"></section></div>`;
+    main.className='main';main.innerHTML=`<div class="layout-3 modern-layout"><section class="panel" id="subPanel"></section><section class="panel detail-panel" id="detailPanel"></section></div>`;
     const subPanel=$('subPanel');
     if(!cat){subPanel.innerHTML=this.emptyHtml('','Nessuna categoria','Crea la prima categoria per iniziare.');$('detailPanel').innerHTML=this.emptyHtml('','Nessun prompt','Seleziona una categoria.');return}
     const subs=[...(cat.subcategories||[])].sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'}));
@@ -459,7 +536,7 @@ class PromptStudioApp{
     const promptList=[...(sub?.prompts||[])].filter(p=>!p.archived).sort((a,b)=>a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
     const q=normalize(this.state.promptFilter);const filtered=promptList.filter(p=>!q||normalize(p.title+' '+plain(p.description)+' '+(p.tags||[]).join(' ')).includes(q));
     const currentSubTitle=sub?escapeHtml(stripLeadingIcons(sub.name)):'Seleziona una sottocategoria';
-    subPanel.innerHTML=`<div class="category-shell"><div class="category-header"><div class="category-heading"><div class="eyebrow">Categoria selezionata</div><h2>${escapeHtml(stripLeadingIcons(cat.name))}</h2><p>${this.countCategory(cat)} prompt distribuiti in ${subs.length} sottocategorie.</p></div><div class="category-actions"><button class="mini-btn" data-action="rename-category">Rinomina</button><button class="mini-btn danger" data-action="delete-category">Elimina</button><button class="mini-btn primary" data-action="new-sub">Nuova sottocategoria</button></div></div><div class="subtabs">${subs.length?subs.map(s=>`<button class="subtab ${s.id===this.state.subId?'active':''}" data-action="select-sub" data-id="${s.id}"><span>${escapeHtml(stripLeadingIcons(s.name))}</span><small>${(s.prompts||[]).length} prompt</small></button>`).join(''):this.emptyHtml('','Nessuna sottocategoria','Crea una sottocategoria.')}</div>${sub?`<div class="subsection-head"><div><div class="eyebrow">Sottocategoria</div><h3>${currentSubTitle}</h3></div><div class="subsection-actions"><span class="count">${promptList.length} prompt</span><button class="mini-btn" data-action="rename-sub">Rinomina</button><button class="mini-btn danger" data-action="delete-sub">Elimina</button><button class="mini-btn primary" data-action="new-prompt">Nuovo prompt</button></div></div><div class="panel-search modern-search"><input id="promptFilter" value="${escapeHtml(this.state.promptFilter)}" placeholder="Filtra i prompt della sottocategoria…"></div><div class="prompt-list prompt-grid" id="promptList">${filtered.length?filtered.map(p=>this.promptCardHtml(p)).join(''):this.emptyHtml('','Nessun prompt','Crea il primo prompt in questa sottocategoria.')}</div>`:`<div class="empty"><strong>Seleziona una sottocategoria</strong><p>Poi potrai vedere i prompt in ordine alfabetico.</p></div>`}</div>`;
+    subPanel.innerHTML=`<div class="category-shell"><div class="category-header"><div class="category-heading"><div class="eyebrow">Categoria selezionata</div><h2>${escapeHtml(stripLeadingIcons(cat.name))}</h2><p>${this.countCategory(cat)} prompt distribuiti in ${subs.length} sottocategorie.</p></div><div class="category-actions"><button class="mini-btn primary" data-action="new-category">Nuova categoria</button><button class="mini-btn" data-action="rename-category">Rinomina</button><button class="mini-btn danger" data-action="delete-category">Elimina</button><button class="mini-btn primary" data-action="new-sub">Nuova sottocategoria</button></div></div><div class="subtabs">${subs.length?subs.map(s=>`<button class="subtab ${s.id===this.state.subId?'active':''}" data-action="select-sub" data-id="${s.id}"><span>${escapeHtml(stripLeadingIcons(s.name))}</span><small>${(s.prompts||[]).length} prompt</small></button>`).join(''):this.emptyHtml('','Nessuna sottocategoria','Crea una sottocategoria.')}</div>${sub?`<div class="subsection-head"><div><div class="eyebrow">Sottocategoria</div><h3>${currentSubTitle}</h3></div><div class="subsection-actions"><span class="count">${promptList.length} prompt</span><button class="mini-btn" data-action="rename-sub">Rinomina</button><button class="mini-btn danger" data-action="delete-sub">Elimina</button><button class="mini-btn primary" data-action="new-prompt">Nuovo prompt</button></div></div><div class="panel-search modern-search"><input id="promptFilter" value="${escapeHtml(this.state.promptFilter)}" placeholder="Filtra i prompt della sottocategoria…"></div><div class="prompt-list prompt-grid" id="promptList">${filtered.length?filtered.map(p=>this.promptCardHtml(p)).join(''):this.emptyHtml('','Nessun prompt','Crea il primo prompt in questa sottocategoria.')}</div>`:`<div class="empty"><strong>Seleziona una sottocategoria</strong><p>Poi potrai vedere i prompt in ordine alfabetico.</p></div>`}</div>`;
     if(!sub){$('detailPanel').innerHTML=this.emptyHtml('','Seleziona una sottocategoria','Poi potrai creare o aprire i prompt.');return}
     this.renderDetail($('detailPanel'),prompt);
   }
@@ -474,7 +551,7 @@ class PromptStudioApp{
   renderTagsView(main){const all=this.allPrompts();const tags=[...new Set(all.flatMap(p=>p.tags||[]))].sort();if(!this.state.tag||!tags.includes(this.state.tag))this.state.tag=tags[0]||null;const items=all.filter(p=>(p.tags||[]).includes(this.state.tag));main.className='main';main.innerHTML=`<div class="layout-2"><section class="panel"><div class="panel-head"><span class="panel-title">Tag</span><span class="count">${tags.length}</span></div><div style="padding:10px"><select id="tagFilter" class="category-jump" style="max-width:none;width:100%">${tags.map(t=>`<option ${t===this.state.tag?'selected':''}>${escapeHtml(t)}</option>`).join('')}</select></div><div class="list">${items.length?items.map(p=>this.promptCardHtml(p,`${p.catName} › ${p.subName}`)).join(''):this.emptyHtml('🏷️','Nessun prompt','Seleziona o aggiungi un tag.')}</div></section><section class="panel detail-panel" id="detailPanel"></section></div>`;if(!items.some(p=>p.id===this.state.promptId))this.state.promptId=items[0]?.id||null;this.renderDetail($('detailPanel'),this.findPrompt(this.state.promptId)?.prompt)}
   taxonomyStatus(){const entries=this.allPrompts();const legacy=this.categories().filter(c=>!CANONICAL_CATS.has(normalize(c.name)));const outdated=entries.filter(p=>p.classificationVersion!==CLASSIFIER_VERSION).length;return{applied:entries.length>0&&!legacy.length&&!outdated,legacy:legacy.length,outdated,total:entries.length}}
   renderDashboard(main){const all=this.allPrompts();const fav=all.filter(p=>p.favorite);const recent=this.recents.map(r=>{const f=this.findPrompt(r.promptId);return f?{...f.prompt,catId:f.cat.id,subId:f.sub.id,catName:f.cat.name,subName:f.sub.name,ts:r.ts}:null}).filter(Boolean);const top=all.filter(p=>p.copyCount>0).sort((a,b)=>b.copyCount-a.copyCount);const improve=all.map(p=>({...p,quality:this.promptQuality(p)})).filter(p=>p.quality<75).sort((a,b)=>a.quality-b.quality);const status=this.taxonomyStatus();const columns=[['Attivi',all,all.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))],['Preferiti',fav,fav],['Recenti',recent,recent],['Più utilizzati',top,top],['Da migliorare',improve,improve]];
-    main.className='main';main.innerHTML=`<div class="dashboard"><div class="taxonomy-banner ${status.applied?'applied':''}"><div><strong>${status.applied?'Categorie organizzate':'Categorie da riorganizzare'}</strong><p>${status.applied?`${status.total} prompt distribuiti nelle categorie funzionali.`:`${status.outdated} prompt da riclassificare e ${status.legacy} categorie precedenti da sostituire.`}</p></div><button class="text-btn primary" data-action="open-recategorize">${status.applied?'Controlla categorie':'Riorganizza adesso'}</button></div><div class="dash-hero"><div><h1>Dashboard</h1><p>Ogni prompt viene assegnato a una sola categoria principale in base all’argomento e al risultato richiesto.</p></div><div class="dash-actions"><button class="text-btn primary" data-action="new-prompt">Nuovo prompt</button><button class="text-btn" data-action="new-category">Nuova categoria</button><button class="text-btn" data-action="open-tools">Pulizia</button><button class="text-btn" data-action="open-backup">Backup</button></div></div><div class="stats-grid"><div class="stat-card"><b>${all.length}</b><span>Prompt attivi</span></div><div class="stat-card"><b>${fav.length}</b><span>Preferiti</span></div><div class="stat-card"><b>${recent.length}</b><span>Recenti</span></div><div class="stat-card"><b>${top.length}</b><span>Utilizzati</span></div><div class="stat-card"><b>${improve.length}</b><span>Da migliorare</span></div></div><div class="dashboard-grid">${columns.map(([name,items,preview])=>`<section class="dash-column"><div class="dash-column-head"><h3>${name}</h3><p>${items.length} prompt nella sezione.</p></div><div class="dash-column-list">${preview.slice(0,3).map(p=>`<article class="dash-card" data-action="open-dashboard-item" data-id="${p.id}"><strong>${escapeHtml(p.title)}</strong><p>${escapeHtml(plain(p.description).slice(0,130)||`${p.catName||''} › ${p.subName||''}`)}</p></article>`).join('')||'<div class="empty"><p>Nessun elemento.</p></div>'}</div><select data-dash-select><option value="">Apri dall’elenco…</option>${items.slice().sort((a,b)=>a.title.localeCompare(b.title,'it')).map(p=>`<option value="${p.id}">${escapeHtml(p.title)} — ${escapeHtml(p.catName||'')}</option>`).join('')}</select></section>`).join('')}</div></div>`}
+    main.className='main';main.innerHTML=`<div class="dashboard"><div class="taxonomy-banner ${status.applied?'applied':''}"><div><strong>${status.applied?'Categorie organizzate':'Categorie da riorganizzare'}</strong><p>${status.applied?`${status.total} prompt distribuiti nelle categorie tematiche separate.`:`${status.outdated} prompt da riclassificare e ${status.legacy} categorie precedenti da sostituire.`}</p></div><button class="text-btn primary" data-action="open-recategorize">${status.applied?'Controlla categorie':'Riorganizza adesso'}</button></div><div class="dash-hero"><div><h1>Dashboard</h1><p>Ogni prompt appartiene a una sola categoria tematica. Le relazioni secondarie vengono mantenute tramite tag.</p></div><div class="dash-actions"><button class="text-btn primary" data-action="new-prompt">Nuovo prompt</button><button class="text-btn" data-action="new-category">Nuova categoria</button><button class="text-btn" data-action="open-tools">Pulizia</button><button class="text-btn" data-action="open-backup">Backup</button></div></div><div class="stats-grid"><div class="stat-card"><b>${all.length}</b><span>Prompt attivi</span></div><div class="stat-card"><b>${fav.length}</b><span>Preferiti</span></div><div class="stat-card"><b>${recent.length}</b><span>Recenti</span></div><div class="stat-card"><b>${top.length}</b><span>Utilizzati</span></div><div class="stat-card"><b>${improve.length}</b><span>Da migliorare</span></div></div><div class="dashboard-grid">${columns.map(([name,items,preview])=>`<section class="dash-column"><div class="dash-column-head"><h3>${name}</h3><p>${items.length} prompt nella sezione.</p></div><div class="dash-column-list">${preview.slice(0,3).map(p=>`<article class="dash-card" data-action="open-dashboard-item" data-id="${p.id}"><strong>${escapeHtml(p.title)}</strong><p>${escapeHtml(plain(p.description).slice(0,130)||`${p.catName||''} › ${p.subName||''}`)}</p></article>`).join('')||'<div class="empty"><p>Nessun elemento.</p></div>'}</div><select data-dash-select><option value="">Apri dall’elenco…</option>${items.slice().sort((a,b)=>a.title.localeCompare(b.title,'it')).map(p=>`<option value="${p.id}">${escapeHtml(p.title)} — ${escapeHtml(p.catName||'')}</option>`).join('')}</select></section>`).join('')}</div></div>`}
   emptyHtml(icon,title,text){return`<div class="empty"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(text)}</p></div>`}
   promptQuality(p){const text=normalize(plain(p.description));let score=0;if(/agisci come|esperto|specialista|ruolo/.test(text))score+=18;if(/obiettivo|devi|crea|scrivi|analizza|ottimizza/.test(text))score+=18;if(/contesto|target|pubblico|cliente|settore/.test(text))score+=16;if(/formato|struttura|tabella|json|html|h1|h2|meta/.test(text))score+=16;if(/evita|vincoli|tono|stile|lunghezza|keyword/.test(text))score+=14;if(/\{\{|\[.+\]|\(.+\)/.test(text))score+=10;if(wordStats(p.description).words>60)score+=8;return Math.min(100,score)}
   extractVariables(html){const text=plain(html);const map=new Map();const patterns=[/\{\{\s*([^{}]+?)\s*\}\}/g,/\[\s*([^\[\]]+?)\s*\]/g,/\(\(\s*([^()]+?)\s*\)\)/g];patterns.forEach(rx=>{let m;while((m=rx.exec(text))){const raw=m[1].trim();let name=raw,options=null,defaultValue='';const idx=raw.indexOf(':');if(idx>-1){name=raw.slice(0,idx).trim();const rest=raw.slice(idx+1).trim();if(rest.includes('|'))options=rest.split('|').map(x=>x.trim()).filter(Boolean);else defaultValue=rest}if(name&&!map.has(name))map.set(name,{name,options,defaultValue})}});return[...map.values()]}
@@ -540,15 +617,15 @@ class PromptStudioApp{
     };
     draw();
   }
-  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v31.1.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
+  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.0.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
   splitLargeSubcategories(categories){for(const cat of categories){const result=[];for(const sub of cat.subcategories){if(sub.prompts.length<=50){result.push(sub);continue}const sorted=sub.prompts.slice().sort((a,b)=>a.title.localeCompare(b.title,'it'));for(let i=0;i<sorted.length;i+=35){const chunk=sorted.slice(i,i+35);const first=(normalize(chunk[0]?.title)[0]||'#').toUpperCase();const last=(normalize(chunk.at(-1)?.title)[0]||'#').toUpperCase();result.push({id:uid(),name:`${sub.name} · ${first}–${last}`,icon:sub.icon||'',prompts:chunk})}}cat.subcategories=result}}
   async applyClassification(plan){
     if(!plan.length){Toast.show('Nessun prompt da classificare.','err');return}
-    const ok=await this.confirmModal('Applica la nuova categorizzazione',`Riorganizzare tutti i ${plan.length} prompt nelle ${TAXONOMY.length} categorie funzionali e creare un backup di rollback?`,'Applica');if(!ok)return;
+    const ok=await this.confirmModal('Applica la nuova categorizzazione',`Riorganizzare tutti i ${plan.length} prompt nelle ${TAXONOMY.length} categorie tematiche separate e creare un backup di rollback?`,'Applica');if(!ok)return;
     Loading.show();
     try{
-      await this.db.put(DATA_STORE,'taxonomyRollbackV311',{data:this.data,recents:this.recents,ts:Date.now()});
-      await this.db.saveBackup(this.data,'Prima della categorizzazione v31.1');
+      await this.db.put(DATA_STORE,'taxonomyRollbackV320',{data:this.data,recents:this.recents,ts:Date.now()});
+      await this.db.saveBackup(this.data,'Prima della categorizzazione v32.0');
       const planMap=new Map(plan.map(r=>[r.promptId,r]));
       const newCats=TAXONOMY.map(t=>({id:uid(),name:t.name,icon:'',subcategories:t.subs.map(name=>({id:uid(),name,icon:'',prompts:[]}))}));
       const targetMap=new Map();newCats.forEach(c=>c.subcategories.forEach(sub=>targetMap.set(normalize(c.name)+'|'+normalize(sub.name),sub)));
@@ -566,8 +643,8 @@ class PromptStudioApp{
       this.snapshot();this.data=newCats.filter(c=>this.isTrash(c)||this.countCategory(c)>0);this.state={...this.state,view:'dashboard',catId:null,subId:null,promptId:null};await this.persist();this.closeModal();this.render();this.exportClassificationReport(plan,plan.map(r=>r.promptId));Toast.show('Categorie riorganizzate: ogni prompt è stato assegnato alla propria area.','ok',5000);
     }finally{Loading.hide()}
   }
-  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v31.1.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
-  async rollbackTaxonomy(){const rollback=await this.db.get(DATA_STORE,'taxonomyRollbackV311',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV31',null);if(!rollback?.data){Toast.show('Nessun rollback disponibile.','err');return}const ok=await this.confirmModal('Rollback tassonomia','Ripristinare i dati precedenti all’ultima ricategorizzazione?','Ripristina');if(!ok)return;this.snapshot();this.data=this.migrate(clone(rollback.data));this.recents=rollback.recents||[];await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Rollback completato.','ok')}
+  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.0.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
+  async rollbackTaxonomy(){const rollback=await this.db.get(DATA_STORE,'taxonomyRollbackV320',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV31',null);if(!rollback?.data){Toast.show('Nessun rollback disponibile.','err');return}const ok=await this.confirmModal('Rollback tassonomia','Ripristinare i dati precedenti all’ultima ricategorizzazione?','Ripristina');if(!ok)return;this.snapshot();this.data=this.migrate(clone(rollback.data));this.recents=rollback.recents||[];await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Rollback completato.','ok')}
 }
 
 const app=new PromptStudioApp();window.PromptStudio=app;app.init();
