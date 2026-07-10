@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prompt Studio v31.1 Categorie pulite</title>
+<title>Prompt Studio v31.2 UI moderna</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
@@ -78,17 +78,61 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .empty .big{display:none!important}
 .category-jump option{font-weight:700}
 @media(max-width:700px){.text-btn .btn-label{display:inline}.header-actions .text-btn{white-space:nowrap}}
+
+/* v31.2: UI moderna, categorie non duplicate e liste alfabetiche */
+.header{min-height:72px;height:auto;flex-wrap:wrap;padding:12px 16px}
+.header-search{max-width:520px;min-width:260px}
+.header-actions{flex-wrap:wrap}
+.panel-head,.detail-head{flex-wrap:wrap;align-items:flex-start}
+.panel-title,.nav-label,.item-title{white-space:normal;overflow:visible;text-overflow:unset;line-height:1.32}
+.nav-row,.item-row{justify-content:space-between}
+.count{margin-left:8px;align-self:flex-start}
+.modern-layout{grid-template-columns:280px minmax(420px,520px) minmax(0,1fr)}
+.category-shell{display:flex;flex-direction:column;height:100%;min-height:0}
+.category-header{padding:20px 18px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg, rgba(59,130,246,.14), rgba(59,130,246,0))}
+.category-heading h2{margin:4px 0 6px;font-size:26px;line-height:1.15}
+.category-heading p{margin:0;color:var(--muted)}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.10em;color:var(--faint);font-weight:900}
+.category-actions,.subsection-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.subtabs{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface)}
+.subtab{display:flex;flex-direction:column;gap:2px;align-items:flex-start;justify-content:center;padding:12px 14px;border:1px solid rgba(96,165,250,.18);background:rgba(29,78,216,.10);color:var(--text);border-radius:14px;min-width:180px;text-align:left}
+.subtab small{font-size:12px;color:var(--muted)}
+.subtab.active{background:rgba(59,130,246,.22);border-color:rgba(96,165,250,.38);box-shadow:0 0 0 1px rgba(96,165,250,.14) inset}
+.subsection-head{padding:18px 18px 12px;display:flex;justify-content:space-between;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.subsection-head h3{margin:4px 0 0;font-size:22px;line-height:1.2}
+.modern-search{padding:0 18px 10px;border-bottom:0}
+.modern-search input{height:42px}
+.prompt-grid{padding:6px 18px 18px;gap:12px}
+.prompt-grid>.prompt-card{padding:16px;border-radius:16px;border:1px solid rgba(96,165,250,.22);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.prompt-grid>.prompt-card:nth-child(odd){background:rgba(29,78,216,.22)}
+.prompt-grid>.prompt-card:nth-child(even){background:rgba(59,130,246,.12)}
+.prompt-grid>.prompt-card:hover{transform:translateY(-1px);border-color:rgba(96,165,250,.46);box-shadow:0 10px 24px rgba(2,6,23,.22)}
+.prompt-grid>.prompt-card.active{background:rgba(79,70,229,.22);border-color:rgba(129,140,248,.68);box-shadow:inset 3px 0 0 var(--accent),0 10px 24px rgba(2,6,23,.25)}
+.prompt-card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px}
+.prompt-letter{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.12);font-weight:900;flex:0 0 auto}
+.prompt-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.prompt-tools button{min-width:78px;height:32px;border:1px solid rgba(191,219,254,.16);background:rgba(9,15,30,.18);color:var(--text);border-radius:10px;font-weight:800}
+.item-desc{margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.detail-head{padding:14px 16px}
+.detail-actions{margin-left:0}
+.breadcrumb{white-space:normal;word-break:break-word;line-height:1.55}
+.title-row{flex-wrap:wrap}
+.list-item:hover .item-actions{opacity:1}
+.prompt-list .empty{padding:28px 12px}
+@media(max-width:1280px){.modern-layout{grid-template-columns:260px minmax(340px,460px) minmax(0,1fr)}}
+@media(max-width:1050px){.modern-layout{display:block}.category-header,.subsection-head{padding-left:16px;padding-right:16px}.subtabs,.prompt-grid{padding-left:16px;padding-right:16px}}
+@media(max-width:700px){.subtab{min-width:100%}.category-heading h2{font-size:22px}.subsection-head h3{font-size:20px}}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="header">
-    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v31.1</span></div>
+    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v31.2</span></div>
     <div class="header-search"><span>⌕</span><input id="globalSearch" type="search" placeholder="Cerca prompt, contenuti e tag…"><button id="clearSearch" class="clear-search" aria-label="Cancella ricerca">×</button></div>
-    <select id="categoryJump" class="category-jump" aria-label="Navigazione"></select>
-    <div class="header-actions">
+        <div class="header-actions">
       <button class="text-btn" data-action="nav" data-view="dashboard">Dashboard</button>
-      <button class="text-btn primary" data-action="open-recategorize">Riorganizza categorie</button>
+      <button class="text-btn primary" data-action="open-recategorize">Riorganizza</button>
       <button class="text-btn" data-action="open-tools">Pulizia</button>
       <button class="text-btn" data-action="open-backup">Backup</button>
       <button class="text-btn" data-action="toggle-theme">Tema</button>
@@ -106,8 +150,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 (()=>{
 'use strict';
 
-const VERSION='31.1';
-const CLASSIFIER_VERSION='functional-taxonomy-2026-07-v31.1';
+const VERSION='31.2';
+const CLASSIFIER_VERSION='functional-taxonomy-2026-07-v31.2';
 const DB_NAME='PromptStudio_v22';
 const DB_VERSION=4;
 const DATA_STORE='data';
@@ -331,7 +375,7 @@ class PromptStudioApp{
     $('fileInput').addEventListener('change',e=>this.handleFile(e));$('imageInput').addEventListener('change',e=>this.insertImage(e));
     $('globalSearch').addEventListener('input',e=>{this.state.search=e.target.value;this.state.view=e.target.value.trim()?'search':'all';this.state.promptId=null;this.render()});
     $('clearSearch').onclick=()=>{$('globalSearch').value='';this.state.search='';this.state.view='all';this.state.promptId=null;this.render()};
-    $('categoryJump').addEventListener('change',e=>this.navigateValue(e.target.value));
+    const jump=$('categoryJump');if(jump)jump.addEventListener('change',e=>this.navigateValue(e.target.value));
     window.addEventListener('beforeunload',e=>{if(this.state.editing){e.preventDefault();e.returnValue=''}});
   }
   async handleClick(e){
@@ -374,22 +418,23 @@ class PromptStudioApp{
   trackRecent(id){const found=this.findPrompt(id);if(!found)return;this.recents=this.recents.filter(r=>r.promptId!==id);this.recents.unshift({promptId:id,catId:found.cat.id,subId:found.sub.id,ts:Date.now()});this.recents=this.recents.slice(0,40);this.db.put(DATA_STORE,'recents',this.recents).catch(console.error)}
   openPrompt(id){const found=this.findPrompt(id);if(!found)return;this.state.view='library';this.state.catId=found.cat.id;this.state.subId=found.sub.id;this.state.promptId=id;this.state.editing=false;this.trackRecent(id);this.render()}
   render(){this.ensureSelection();this.renderJump();const main=$('main');if(this.state.view==='dashboard')this.renderDashboard(main);else if(this.state.view==='library')this.renderLibrary(main);else this.renderSpecial(main);}
-  renderJump(){const select=$('categoryJump');const views=[['dashboard','Dashboard'],['all','Tutti'],['favorites','Preferiti'],['recents','Recenti'],['tags','Tag'],['trash','Cestino']];select.innerHTML=views.map(([v,l])=>`<option value="view:${v}">${l}</option>`).join('')+'<option disabled>──────────</option>'+this.categories().map(c=>`<option value="cat:${c.id}">${escapeHtml(stripLeadingIcons(c.name))} · ${this.countCategory(c)} prompt</option>`).join('');select.value=this.state.view==='library'&&this.state.catId?`cat:${this.state.catId}`:`view:${this.state.view}`}
+  renderJump(){const select=$('categoryJump');if(!select)return;const views=[['dashboard','Dashboard'],['all','Tutti'],['favorites','Preferiti'],['recents','Recenti'],['tags','Tag'],['trash','Cestino']];select.innerHTML=views.map(([v,l])=>`<option value="view:${v}">${l}</option>`).join('')+'<option disabled>──────────</option>'+this.categories().map(c=>`<option value="cat:${c.id}">${escapeHtml(stripLeadingIcons(c.name))} · ${this.countCategory(c)} prompt</option>`).join('');select.value=this.state.view==='library'&&this.state.catId?`cat:${this.state.catId}`:`view:${this.state.view}`}
   quickNavHtml(){const all=this.allPrompts();const trash=this.allPrompts({trash:true}).filter(p=>this.isTrash(this.findCategory(p.catId))).length;const views=[['dashboard','Dashboard',''],['all','Tutti',all.length],['favorites','Preferiti',all.filter(p=>p.favorite).length],['recents','Recenti',this.recents.length],['tags','Tag',new Set(all.flatMap(p=>p.tags||[])).size],['trash','Cestino',trash]];return`<div class="nav-section-title">Navigazione</div>${views.map(([v,l,n])=>`<button class="nav-item ${this.state.view===v?'active':''}" data-action="nav" data-view="${v}"><div class="nav-row"><span class="nav-label">${l}</span>${n!==''?`<span class="count">${n}</span>`:''}</div></button>`).join('')}<div class="nav-section-title">Categorie ordinate A–Z</div>${this.categories().map(c=>`<button class="nav-item ${this.state.catId===c.id&&this.state.view==='library'?'active':''}" data-action="select-category" data-id="${c.id}"><div class="nav-row"><span class="nav-label">${escapeHtml(stripLeadingIcons(c.name))}</span><span class="count">${this.countCategory(c)}</span></div></button>`).join('')}`}
   renderLibrary(main=$('main')){
     const cat=this.findCategory(this.state.catId);const sub=this.findSub(this.state.catId,this.state.subId);const prompt=this.findPrompt(this.state.promptId)?.prompt;
-    main.className='main';main.innerHTML=`<div class="layout-3"><section class="panel"><div class="panel-head"><span class="panel-title">Libreria</span><button class="mini-btn primary" data-action="new-category">Nuova categoria</button></div><div class="list">${this.quickNavHtml()}</div></section><section class="panel" id="subPanel"></section><section class="panel detail-panel" id="detailPanel"></section></div>`;
+    main.className='main';main.innerHTML=`<div class="layout-3 modern-layout"><section class="panel"><div class="panel-head"><span class="panel-title">Libreria</span><button class="mini-btn primary" data-action="new-category">Nuova categoria</button></div><div class="list">${this.quickNavHtml()}</div></section><section class="panel" id="subPanel"></section><section class="panel detail-panel" id="detailPanel"></section></div>`;
     const subPanel=$('subPanel');
     if(!cat){subPanel.innerHTML=this.emptyHtml('','Nessuna categoria','Crea la prima categoria per iniziare.');$('detailPanel').innerHTML=this.emptyHtml('','Nessun prompt','Seleziona una categoria.');return}
     const subs=[...(cat.subcategories||[])].sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'}));
-    if(!sub&&subs[0]){this.state.subId=subs[0].id;this.state.promptId=subs[0].prompts?.[0]?.id||null;return this.renderLibrary(main)}
-    const promptList=[...(sub?.prompts||[])].filter(p=>!p.archived).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
+    if(!sub&&subs[0]){this.state.subId=subs[0].id;this.state.promptId=[...(subs[0].prompts||[])].sort((a,b)=>a.title.localeCompare(b.title,'it',{sensitivity:'base'}))[0]?.id||null;return this.renderLibrary(main)}
+    const promptList=[...(sub?.prompts||[])].filter(p=>!p.archived).sort((a,b)=>a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
     const q=normalize(this.state.promptFilter);const filtered=promptList.filter(p=>!q||normalize(p.title+' '+plain(p.description)+' '+(p.tags||[]).join(' ')).includes(q));
-    subPanel.innerHTML=`<div class="panel-head"><span class="panel-title">${escapeHtml(stripLeadingIcons(cat.name))}</span><span class="count">${subs.length} sottocategorie</span><button class="mini-btn" data-action="rename-category">Rinomina</button><button class="mini-btn danger" data-action="delete-category">Elimina</button><button class="mini-btn primary" data-action="new-sub">Nuova sottocategoria</button></div><div class="sub-list">${subs.length?subs.map(s=>`<button class="list-item ${s.id===this.state.subId?'active':''}" data-action="select-sub" data-id="${s.id}"><div class="item-row"><div style="min-width:0"><div class="item-title">${escapeHtml(stripLeadingIcons(s.name))}</div><div class="item-meta">${(s.prompts||[]).length} prompt</div></div></div></button>`).join(''):this.emptyHtml('','Nessuna sottocategoria','Crea una sottocategoria.')}</div>${sub?`<div class="panel-head"><span class="panel-title">${escapeHtml(stripLeadingIcons(sub.name))}</span><span class="count">${promptList.length}</span><button class="mini-btn" data-action="rename-sub">Rinomina</button><button class="mini-btn danger" data-action="delete-sub">Elimina</button><button class="mini-btn primary" data-action="new-prompt">Nuovo prompt</button></div><div class="panel-search"><input id="promptFilter" value="${escapeHtml(this.state.promptFilter)}" placeholder="Filtra prompt nella sottocategoria…"></div><div class="prompt-list" id="promptList">${filtered.length?filtered.map(p=>this.promptCardHtml(p)).join(''):this.emptyHtml('','Nessun prompt','Crea il primo prompt in questa sottocategoria.')}</div>`:''}`;
+    const currentSubTitle=sub?escapeHtml(stripLeadingIcons(sub.name)):'Seleziona una sottocategoria';
+    subPanel.innerHTML=`<div class="category-shell"><div class="category-header"><div class="category-heading"><div class="eyebrow">Categoria selezionata</div><h2>${escapeHtml(stripLeadingIcons(cat.name))}</h2><p>${this.countCategory(cat)} prompt distribuiti in ${subs.length} sottocategorie.</p></div><div class="category-actions"><button class="mini-btn" data-action="rename-category">Rinomina</button><button class="mini-btn danger" data-action="delete-category">Elimina</button><button class="mini-btn primary" data-action="new-sub">Nuova sottocategoria</button></div></div><div class="subtabs">${subs.length?subs.map(s=>`<button class="subtab ${s.id===this.state.subId?'active':''}" data-action="select-sub" data-id="${s.id}"><span>${escapeHtml(stripLeadingIcons(s.name))}</span><small>${(s.prompts||[]).length} prompt</small></button>`).join(''):this.emptyHtml('','Nessuna sottocategoria','Crea una sottocategoria.')}</div>${sub?`<div class="subsection-head"><div><div class="eyebrow">Sottocategoria</div><h3>${currentSubTitle}</h3></div><div class="subsection-actions"><span class="count">${promptList.length} prompt</span><button class="mini-btn" data-action="rename-sub">Rinomina</button><button class="mini-btn danger" data-action="delete-sub">Elimina</button><button class="mini-btn primary" data-action="new-prompt">Nuovo prompt</button></div></div><div class="panel-search modern-search"><input id="promptFilter" value="${escapeHtml(this.state.promptFilter)}" placeholder="Filtra i prompt della sottocategoria…"></div><div class="prompt-list prompt-grid" id="promptList">${filtered.length?filtered.map(p=>this.promptCardHtml(p)).join(''):this.emptyHtml('','Nessun prompt','Crea il primo prompt in questa sottocategoria.')}</div>`:`<div class="empty"><strong>Seleziona una sottocategoria</strong><p>Poi potrai vedere i prompt in ordine alfabetico.</p></div>`}</div>`;
     if(!sub){$('detailPanel').innerHTML=this.emptyHtml('','Seleziona una sottocategoria','Poi potrai creare o aprire i prompt.');return}
     this.renderDetail($('detailPanel'),prompt);
   }
-  promptCardHtml(p,path=''){const quality=this.promptQuality(p);return`<div class="list-item ${p.id===this.state.promptId?'active':''}" role="button" tabindex="0" data-action="select-prompt" data-id="${p.id}"><div class="item-row"><div style="min-width:0;flex:1"><div class="item-title">${escapeHtml(p.title)}</div>${path?`<div class="item-meta">${escapeHtml(path)}</div>`:''}${p.description?`<div class="item-desc">${escapeHtml(plain(p.description).slice(0,150))}</div>`:''}<div class="badges">${p.pinned?'<span class="badge">In evidenza</span>':''}${p.favorite?'<span class="badge">Preferito</span>':''}<span class="badge ${quality>=75?'good':quality>=55?'warn':'bad'}">Q ${quality}</span>${(p.tags||[]).slice(0,2).map(t=>`<span class="badge">${escapeHtml(t)}</span>`).join('')}</div></div><div class="item-actions"><button data-action="copy-prompt" data-id="${p.id}" title="Copia">Copia</button><button data-action="duplicate-prompt" data-id="${p.id}" title="Duplica">Duplica</button></div></div></div>`}
+  promptCardHtml(p,path=''){const quality=this.promptQuality(p);const letter=escapeHtml((p.title||'?').trim().charAt(0).toUpperCase()||'?');return`<div class="list-item prompt-card ${p.id===this.state.promptId?'active':''}" role="button" tabindex="0" data-action="select-prompt" data-id="${p.id}"><div class="prompt-card-top"><div style="min-width:0;flex:1"><div class="item-title">${escapeHtml(p.title)}</div>${path?`<div class="item-meta">${escapeHtml(path)}</div>`:''}</div><span class="prompt-letter">${letter}</span></div>${p.description?`<div class="item-desc">${escapeHtml(plain(p.description).slice(0,170))}</div>`:''}<div class="badges">${p.favorite?'<span class="badge">Preferito</span>':''}${p.pinned?'<span class="badge">In evidenza</span>':''}<span class="badge ${quality>=75?'good':quality>=55?'warn':'bad'}">Q ${quality}</span>${(p.tags||[]).slice(0,3).map(t=>`<span class="badge">${escapeHtml(t)}</span>`).join('')}</div><div class="prompt-tools"><button data-action="copy-prompt" data-id="${p.id}" title="Copia">Copia</button><button data-action="duplicate-prompt" data-id="${p.id}" title="Duplica">Duplica</button></div></div>`}
   renderDetail(panel,prompt){if(!prompt){panel.innerHTML=this.emptyHtml('📝','Seleziona un prompt','Il contenuto apparirà qui.');return}const found=this.findPrompt(prompt.id);const stats=wordStats(prompt.description);const vars=this.extractVariables(prompt.description);const inTrash=this.isTrash(found.cat);panel.innerHTML=`<div class="detail"><div class="detail-head"><h3>Dettaglio prompt</h3><div class="detail-actions"><button data-action="edit-prompt">Modifica</button><button data-action="copy-prompt">Copia</button><button data-action="duplicate-prompt">Duplica</button><button data-action="favorite-prompt">${prompt.favorite?'Preferito':'Preferito'}</button><button data-action="pin-prompt">${prompt.pinned?'In evidenza':'Pin'}</button><button data-action="move-prompt">Sposta</button>${inTrash?'<button data-action="restore-prompt">Ripristina</button>':'<button class="danger" data-action="delete-prompt">⌫ Elimina</button>'}</div></div><div class="breadcrumb"><button data-action="select-category" data-id="${found.cat.id}">${escapeHtml(found.cat.name)}</button> › <button data-action="select-sub" data-id="${found.sub.id}">${escapeHtml(found.sub.name)}</button> › ${escapeHtml(prompt.title)}</div><div class="title-row"><h1>${escapeHtml(prompt.title)}</h1><span class="spacer"></span><button class="mini-btn" data-action="rename-prompt">✎</button></div><div class="meta-row"><span class="badge">Creato ${formatDate(prompt.createdAt)}</span><span class="badge">Aggiornato ${formatDate(prompt.updatedAt)}</span><span class="badge">Copiato ${prompt.copyCount||0}×</span><span class="badge">Qualità ${this.promptQuality(prompt)}/100</span></div><div class="tags-row">${(prompt.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}<button data-action="remove-tag" data-tag="${escapeHtml(t)}">×</button></span>`).join('')}<div class="tag-input"><input id="tagInput" placeholder="Aggiungi tag…"><button class="mini-btn primary" data-action="add-tag">＋</button></div></div><div class="variables ${vars.length?'show':''}" id="variables"><h4>Variabili dinamiche</h4><div class="var-grid">${vars.map(v=>`<div class="var-field"><label>${escapeHtml(v.name)}</label>${v.options?`<select data-variable="${escapeHtml(v.name)}">${v.options.map(o=>`<option>${escapeHtml(o)}</option>`).join('')}</select>`:`<input data-variable="${escapeHtml(v.name)}" value="${escapeHtml(v.defaultValue||'')}">`}</div>`).join('')}</div></div><div class="editor-toolbar ${this.state.editing?'show':''}"><button data-action="toolbar" data-cmd="bold"><b>B</b></button><button data-action="toolbar" data-cmd="italic"><i>I</i></button><button data-action="toolbar" data-cmd="underline"><u>U</u></button><button data-action="toolbar" data-cmd="insertUnorderedList">•≡</button><button data-action="insert-link">🔗</button><button data-action="insert-image">▧</button><button class="save-edit" data-action="save-prompt">Salva</button></div><div id="editor" class="editor" contenteditable="${this.state.editing?'true':'false'}">${this.sanitize(prompt.description)}</div><div class="detail-foot"><span>${stats.words} parole · ${stats.chars} caratteri</span><span>~${stats.tokens} token</span></div></div>`}
   sanitize(html){const box=document.createElement('div');box.innerHTML=String(html||'');box.querySelectorAll('script,style,iframe,object,embed,form').forEach(x=>x.remove());box.querySelectorAll('*').forEach(el=>{[...el.attributes].forEach(a=>{if(a.name.startsWith('on'))el.removeAttribute(a.name);if(['href','src'].includes(a.name)&&/^javascript:/i.test(a.value))el.removeAttribute(a.name)})});return box.innerHTML}
   renderSpecial(main){
