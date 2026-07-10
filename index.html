@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v30.1 - tassonomia semantica e ricategorizzazione sicura</title>
+<title>Prompt Studio v30.2 - ricategorizzazione visibile e guidata</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2529,7 +2529,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v30.1</span>
+    <span class="logo-badge">v30.2</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -9977,7 +9977,7 @@ S.view = 'dashboard';
 
 /* ── PROMPT STUDIO v30.1: TASSONOMIA SEMANTICA, ANTEPRIMA, REPORT E ROLLBACK ── */
 (function(){
-  const PS_V301_VERSION='v30.1';
+  const PS_V301_VERSION='v30.2';
   const PS_V301_CLASSIFIER='semantic-taxonomy-2026-07';
   const PS_V301_ROLLBACK_KEY='taxonomyRollbackV301';
   const PS_V301_QUEUE_NAME='Da classificare';
@@ -10907,6 +10907,197 @@ S.view = 'dashboard';
   window.PS_rollbackSemanticRecategorization=v301Rollback;
   window.PS_classifySemanticEntry=v301Classify;
   window.PS_buildSemanticPlan=v301BuildPlan;
+})();
+
+
+/* ── PROMPT STUDIO v30.2: ATTIVAZIONE VISIBILE DELLA NUOVA TASSONOMIA ──
+   Correzioni:
+   - mantiene il badge v30.2 anche dopo gli override legacy;
+   - espone Ricategorizza direttamente nell'header;
+   - mostra lo stato applicata/da applicare;
+   - apre automaticamente l'anteprima una sola volta sui dati legacy;
+   - non modifica mai i dati senza conferma esplicita dell'utente.
+*/
+(function(){
+  const PS_V302_VERSION='v30.2';
+  const PS_V302_CLASSIFIER='semantic-taxonomy-2026-07';
+  const PS_V302_PROMPT_KEY='PS_V302_RECAT_PREVIEW_SHOWN';
+  const PS_V302_CANONICAL=new Set([
+    'ai e prompt engineering',
+    'seo e search marketing',
+    'content e copywriting',
+    'marketing, strategia e growth',
+    'social media e community',
+    'wordpress e siti web',
+    'codice e web app',
+    'grafica e immagini ai',
+    'video e multimedia',
+    'produttivita, dati e operations',
+    'clienti e progetti',
+    'da classificare'
+  ]);
+
+  function v302NormName(value){
+    return String(value||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/^\s*(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF]\uFE0F?\s*)+/gu,'')
+      .replace(/\s+/g,' ')
+      .trim().toLowerCase();
+  }
+
+  function v302IsTrash(cat){
+    return /cestino|🗑️/i.test(String(cat?.name||''));
+  }
+
+  function v302PromptCount(){
+    let total=0;
+    try{(S.allData||[]).forEach(c=>(c.subcategories||[]).forEach(s=>total+=(s.prompts||[]).length));}catch(_){ }
+    return total;
+  }
+
+  function v302TaxonomyStatus(){
+    const cats=(S.allData||[]).filter(c=>c&&!v302IsTrash(c));
+    const legacy=cats.filter(c=>!PS_V302_CANONICAL.has(v302NormName(c.name)));
+    const promptCount=v302PromptCount();
+    const canonicalCount=cats.length-legacy.length;
+    const applied=promptCount>0 && legacy.length===0 && canonicalCount>0;
+    return {applied,legacyCount:legacy.length,canonicalCount,promptCount};
+  }
+
+  function v302EnsureStyle(){
+    if(document.getElementById('v302VisibleTaxonomyStyle'))return;
+    const style=document.createElement('style');
+    style.id='v302VisibleTaxonomyStyle';
+    style.textContent=`
+      .v302-taxonomy-btn{
+        width:auto!important;min-width:148px!important;height:40px!important;padding:0 13px!important;
+        display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+        color:#fff!important;background:#2563eb!important;border:1px solid #60a5fa!important;
+        border-radius:13px!important;font-size:14px!important;font-weight:900!important;
+        box-shadow:0 0 0 3px rgba(37,99,235,.12),0 8px 22px rgba(37,99,235,.24)!important;
+        white-space:nowrap!important;
+      }
+      .v302-taxonomy-btn:hover{background:#1d4ed8!important;transform:translateY(-1px)!important}
+      .v302-taxonomy-btn.applied{background:#047857!important;border-color:#34d399!important;box-shadow:0 0 0 3px rgba(16,185,129,.11)!important}
+      .v302-taxonomy-btn .v302-dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;box-shadow:0 0 10px rgba(251,191,36,.75);flex:0 0 auto}
+      .v302-taxonomy-btn.applied .v302-dot{background:#86efac;box-shadow:0 0 10px rgba(134,239,172,.7)}
+      .v302-taxonomy-btn i{font-size:14px!important}
+      .v302-taxonomy-banner{
+        margin:0 0 16px;padding:15px 17px;border-radius:17px;border:1px solid rgba(96,165,250,.38);
+        background:#071a3a;color:#eff6ff;display:flex;align-items:center;justify-content:space-between;
+        gap:14px;box-shadow:0 14px 30px rgba(0,0,0,.22)
+      }
+      .v302-taxonomy-banner.applied{background:#052e2b;border-color:rgba(52,211,153,.38)}
+      .v302-taxonomy-banner strong{display:block;font-size:17px;line-height:1.2;margin-bottom:4px}
+      .v302-taxonomy-banner p{margin:0;color:#dbeafe;font-size:13px;line-height:1.45}
+      .v302-taxonomy-banner.applied p{color:#d1fae5}
+      .v302-taxonomy-banner button{
+        flex:0 0 auto;border:0;border-radius:12px;background:#2563eb;color:#fff;padding:10px 13px;
+        cursor:pointer;font-weight:900;font-family:var(--font-ui);white-space:nowrap
+      }
+      .v302-taxonomy-banner.applied button{background:#047857}
+      @media(max-width:1180px){.v302-taxonomy-btn{min-width:42px!important;width:42px!important;padding:0!important}.v302-taxonomy-btn .v302-label{display:none}}
+      @media(max-width:700px){.v302-taxonomy-banner{align-items:flex-start;flex-direction:column}.v302-taxonomy-banner button{width:100%}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function v302Open(){
+    if(typeof window.PS_openSemanticRecategorization==='function'){
+      window.PS_openSemanticRecategorization();
+    }else{
+      Toast.show('Il motore di ricategorizzazione non è disponibile.','er',5000);
+    }
+  }
+
+  function v302EnsureHeaderButton(){
+    const row=document.querySelector('.hr');
+    if(!row)return;
+    let btn=document.getElementById('v302TaxonomyHeaderBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='v302TaxonomyHeaderBtn';
+      btn.type='button';
+      btn.className='ib v302-taxonomy-btn';
+      btn.innerHTML='<span class="v302-dot"></span><i class="fa-solid fa-diagram-project"></i><span class="v302-label">Ricategorizza</span>';
+      const anchor=document.getElementById('cleanBtn')||document.getElementById('thB')||row.firstElementChild;
+      row.insertBefore(btn,anchor||null);
+      btn.onclick=v302Open;
+    }
+    const status=v302TaxonomyStatus();
+    btn.classList.toggle('applied',status.applied);
+    const label=btn.querySelector('.v302-label');
+    if(label)label.textContent=status.applied?'Tassonomia applicata':'Ricategorizza';
+    btn.title=status.applied
+      ? 'La nuova tassonomia è applicata. Clicca per ricalcolare o controllare gli spostamenti.'
+      : 'Applica la nuova tassonomia semantica ai dati già salvati.';
+  }
+
+  function v302EnsureDashboardBanner(){
+    const dash=document.querySelector('#cDash .dashboard');
+    if(!dash)return;
+    let banner=document.getElementById('v302TaxonomyBanner');
+    if(!banner){
+      banner=document.createElement('div');
+      banner.id='v302TaxonomyBanner';
+      banner.className='v302-taxonomy-banner';
+      dash.insertBefore(banner,dash.firstChild);
+    }
+    const status=v302TaxonomyStatus();
+    banner.classList.toggle('applied',status.applied);
+    if(status.applied){
+      banner.innerHTML='<div><strong>✅ Nuova tassonomia applicata</strong><p>'+status.promptCount+' prompt sono organizzati nelle categorie operative v30.2. Puoi riaprire l’analisi per controllare o aggiornare la classificazione.</p></div><button type="button">Controlla classificazione</button>';
+    }else{
+      banner.innerHTML='<div><strong>🧭 La ricategorizzazione non è ancora stata applicata</strong><p>Trovate '+status.legacyCount+' categorie precedenti su '+status.promptCount+' prompt. Apri l’anteprima, controlla confidenza e destinazioni, quindi applica la nuova struttura.</p></div><button type="button">Apri ricategorizzazione</button>';
+    }
+    banner.querySelector('button').onclick=v302Open;
+  }
+
+  function v302ForceVersion(){
+    document.title='Prompt Studio '+PS_V302_VERSION+' - ricategorizzazione visibile';
+    const badge=document.querySelector('.logo-badge');
+    if(badge)badge.textContent=PS_V302_VERSION;
+  }
+
+  function v302Refresh(){
+    v302EnsureStyle();
+    v302ForceVersion();
+    v302EnsureHeaderButton();
+    v302EnsureDashboardBanner();
+  }
+
+  function v302MaybeOpenPreview(){
+    const status=v302TaxonomyStatus();
+    if(status.applied||status.promptCount<2)return;
+    let shown='';
+    try{shown=localStorage.getItem(PS_V302_PROMPT_KEY)||'';}catch(_){ }
+    if(shown===PS_V302_CLASSIFIER)return;
+    try{localStorage.setItem(PS_V302_PROMPT_KEY,PS_V302_CLASSIFIER);}catch(_){ }
+    setTimeout(()=>{
+      if(!document.querySelector('.v301-overlay')&&!document.querySelector('.v301-taxonomy-overlay'))v302Open();
+    },650);
+  }
+
+  const previousSetup=typeof setup==='function'?setup:null;
+  if(previousSetup){
+    setup=function(){
+      previousSetup();
+      v302Refresh();
+      v302MaybeOpenPreview();
+    };
+  }
+
+  const previousRender=typeof render==='function'?render:null;
+  if(previousRender){
+    render=function(){
+      previousRender();
+      requestAnimationFrame(v302Refresh);
+    };
+  }
+
+  // Ultimo rinforzo contro gli override di versione eseguiti in coda al rendering.
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(v302Refresh,0),{once:true});
+  window.PS_VISIBLE_RECAT_PATCH=PS_V302_VERSION;
 })();
 
 init();
