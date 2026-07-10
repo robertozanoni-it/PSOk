@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prompt Studio v32.1 clienti e UI blu</title>
+<title>Prompt Studio v32.2 ricerca e assegnazione categorie</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
@@ -193,12 +193,40 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 }
 .tags-row,.tag,.tag-input{display:none!important}
 
+
+/* v32.2: ricerca semantica manuale e assegnazione multipla nella riorganizzazione */
+.bulk-route{
+  margin-bottom:16px;padding:16px;border:1px solid rgba(96,165,250,.32);
+  border-radius:16px;background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(79,70,229,.10));
+}
+.bulk-route-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:13px;flex-wrap:wrap}
+.bulk-route-head h3{margin:0;font-size:18px}.bulk-route-head p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:850px}
+.bulk-route-grid{display:grid;grid-template-columns:minmax(280px,2fr) minmax(190px,1fr) minmax(190px,1fr) auto;gap:9px;align-items:end}
+.bulk-route-field label{display:block;margin:0 0 5px;color:var(--muted);font-size:12px;font-weight:900}
+.bulk-route-field input,.bulk-route-field select{width:100%;height:42px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);border-radius:10px;padding:0 10px}
+.bulk-route-field input:focus,.bulk-route-field select:focus{border-color:rgba(96,165,250,.78);box-shadow:0 0 0 3px rgba(59,130,246,.14)}
+.bulk-assign{height:42px;border:1px solid var(--accent);background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;border-radius:10px;padding:0 14px;font-weight:900;white-space:nowrap}
+.bulk-assign:hover{filter:brightness(1.08)}
+.bulk-route-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px}
+.bulk-route-tools button{height:34px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:0 10px;font-weight:800}
+.bulk-route-tools button:hover{background:var(--surface-3)}
+.selection-pill{display:inline-flex;align-items:center;min-height:34px;padding:5px 10px;border:1px solid rgba(96,165,250,.28);border-radius:99px;background:rgba(37,99,235,.14);color:#bfdbfe;font-size:12px;font-weight:900}
+.related-results{margin-top:11px;border:1px solid var(--border);border-radius:12px;overflow:auto;max-height:300px;background:rgba(2,6,23,.14)}
+.related-results .data-table th{top:0}.related-results .data-table td{padding:8px 9px}
+.related-title{font-weight:900}.related-excerpt{margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35;max-width:640px}
+.related-empty{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+.checkbox-cell{width:42px;text-align:center!important}.checkbox-cell input{width:17px;height:17px;accent-color:var(--accent)}
+.plan-selection-note{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin:9px 0;color:var(--muted);font-size:12px}
+.plan-selection-note strong{color:var(--text)}
+@media(max-width:1050px){.bulk-route-grid{grid-template-columns:1fr 1fr}.bulk-assign{width:100%}}
+@media(max-width:700px){.bulk-route{padding:12px}.bulk-route-grid{grid-template-columns:1fr}.bulk-route-tools>*{flex:1 1 auto}.bulk-route-tools .selection-pill{flex-basis:100%}}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="header">
-    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.1</span></div>
+    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.2</span></div>
     <div class="header-search"><span>⌕</span><input id="globalSearch" type="search" placeholder="Cerca prompt, contenuti e tag…"><button id="clearSearch" class="clear-search" aria-label="Cancella ricerca">×</button></div>
     <select id="viewJump" class="view-jump" aria-label="Scegli una sezione">
       <option value="dashboard">Dashboard</option>
@@ -228,8 +256,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 (()=>{
 'use strict';
 
-const VERSION='32.1';
-const CLASSIFIER_VERSION='client-first-taxonomy-2026-07-v32.1';
+const VERSION='32.2';
+const CLASSIFIER_VERSION='client-first-taxonomy-2026-07-v32.2';
 const DB_NAME='PromptStudio_v22';
 const DB_VERSION=4;
 const DATA_STORE='data';
@@ -494,7 +522,7 @@ class PromptStudioApp{
       this.snippets=await this.db.get(DATA_STORE,'snippets',[]);
       this.presets=await this.db.get(DATA_STORE,'varPresets',{});
       this.settings={...this.settings,...(await this.db.get(DATA_STORE,'settings',{}))};
-      this.applySettings();this.ensureSelection();this.bind();this.render();this.startAutoBackup();try{const status=this.taxonomyStatus();if(this.data.length&&!status.applied&&!sessionStorage.getItem('ps-v311-plan-shown')){sessionStorage.setItem('ps-v311-plan-shown','1');setTimeout(()=>this.openRecategorize(),250)}}catch(_){}
+      this.applySettings();this.ensureSelection();this.bind();this.render();this.startAutoBackup();try{const status=this.taxonomyStatus();if(this.data.length&&!status.applied&&!sessionStorage.getItem('ps-v322-plan-shown')){sessionStorage.setItem('ps-v322-plan-shown','1');setTimeout(()=>this.openRecategorize(),250)}}catch(_){}
     }catch(error){console.error(error);Toast.show('Errore durante il caricamento dei dati.','err',6000)}finally{Loading.hide()}
   }
   migrate(data){
@@ -635,7 +663,7 @@ class PromptStudioApp{
   formModal(title,fields,options={}){return new Promise(resolve=>{const html=fields.map(f=>`<div class="form-row"><label>${escapeHtml(f.label)}</label>${f.type==='select'?`<select data-field="${f.name}">${(f.options||[]).map(o=>`<option ${o===(f.value||'')?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`:`<input data-field="${f.name}" value="${escapeHtml(f.value||'')}" ${f.required?'required':''}>`}</div>`).join('');const modal=this.openModal({title,body:`<div class="form-grid">${html}</div>`,buttons:[{label:'Annulla',onClick:()=>{this.closeModal();resolve(null)}},{label:'Conferma',className:'primary',onClick:()=>{const result={};modal.querySelectorAll('[data-field]').forEach(el=>result[el.dataset.field]=el.value.trim());this.closeModal();resolve(result)}}]});if(options.dynamicCategories){const catSel=modal.querySelector('[data-field="category"]');const subSel=modal.querySelector('[data-field="subcategory"]');const update=()=>{const cat=options.dynamicCategories.find(c=>c.name===catSel.value);subSel.innerHTML=(cat?.subcategories||[]).map(s=>`<option>${escapeHtml(s.name)}</option>`).join('')};catSel.onchange=update;update()}})}
   openSettings(){const body=`<div class="form-grid"><div class="form-row"><label>Tema</label><select id="setTheme"><option value="dark" ${this.settings.theme==='dark'?'selected':''}>Scuro</option><option value="light" ${this.settings.theme==='light'?'selected':''}>Chiaro</option></select></div><div class="form-row"><label>Densità</label><select id="setDensity"><option value="compact" ${this.settings.density==='compact'?'selected':''}>Compatta</option><option value="normal" ${this.settings.density==='normal'?'selected':''}>Normale</option><option value="comfortable" ${this.settings.density==='comfortable'?'selected':''}>Comoda</option></select></div><div class="form-row"><label>Dimensione font</label><input id="setFont" type="number" min="13" max="26" value="${this.settings.fontSize}"></div><div class="form-row"><label>Backup automatico ogni minuti</label><input id="setBackup" type="number" min="2" max="120" value="${this.settings.autoBackupMinutes}"></div></div>`;this.openModal({title:'Impostazioni',body,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()},{label:'Salva',className:'primary',onClick:async()=>{this.settings.theme=$('setTheme').value;this.settings.density=$('setDensity').value;this.settings.fontSize=Math.max(13,Math.min(26,Number($('setFont').value)||16));this.settings.autoBackupMinutes=Math.max(2,Number($('setBackup').value)||10);await this.db.put(DATA_STORE,'settings',this.settings);this.applySettings();this.startAutoBackup();this.closeModal();this.render();Toast.show('Impostazioni salvate.','ok')}}]})}
   toggleTheme(){this.settings.theme=this.settings.theme==='dark'?'light':'dark';this.applySettings();this.db.put(DATA_STORE,'settings',this.settings);}
-  openBackup(){this.db.all(BACKUP_STORE).then(backups=>{const rows=backups.sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,10).map(b=>`<tr><td>${escapeHtml(b.label||'Backup')}</td><td>${formatDate(b.ts)}</td><td>${Array.isArray(b.data)?b.data.length:0} categorie</td><td><button class="mini-btn" data-restore-backup="${b.id}">Ripristina</button></td></tr>`).join('');const body=`<div class="toolbar-row"><button data-action="export-full">Scarica backup completo</button><button data-action="import-full">Importa JSON</button><button data-action="export-category">Esporta categoria</button><button data-action="export-categories-zip">ZIP categorie</button><button data-action="import-category">Importa categoria</button><button data-action="export-markdown">Export Markdown</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Backup</th><th>Data</th><th>Contenuto</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nessun backup automatico.</td></tr>'}</tbody></table></div>`;const modal=this.openModal({title:'Backup, importazione ed esportazione',subtitle:'Il formato v31 resta compatibile con i dati salvati nelle versioni precedenti.',body,large:true,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]});modal.querySelectorAll('[data-restore-backup]').forEach(btn=>btn.onclick=async()=>{const ok=await this.confirmModal('Ripristina backup','Sostituire tutti i dati correnti con questo backup?','Ripristina');if(!ok)return;const data=await this.db.get(BACKUP_STORE,btn.dataset.restoreBackup,[]);this.snapshot();this.data=this.migrate(clone(data));await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Backup ripristinato.','ok')})})}
+  openBackup(){this.db.all(BACKUP_STORE).then(backups=>{const rows=backups.sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,10).map(b=>`<tr><td>${escapeHtml(b.label||'Backup')}</td><td>${formatDate(b.ts)}</td><td>${Array.isArray(b.data)?b.data.length:0} categorie</td><td><button class="mini-btn" data-restore-backup="${b.id}">Ripristina</button></td></tr>`).join('');const body=`<div class="toolbar-row"><button data-action="export-full">Scarica backup completo</button><button data-action="import-full">Importa JSON</button><button data-action="export-category">Esporta categoria</button><button data-action="export-categories-zip">ZIP categorie</button><button data-action="import-category">Importa categoria</button><button data-action="export-markdown">Export Markdown</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Backup</th><th>Data</th><th>Contenuto</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nessun backup automatico.</td></tr>'}</tbody></table></div>`;const modal=this.openModal({title:'Backup, importazione ed esportazione',subtitle:'Il formato v32.2 resta compatibile con i dati salvati nelle versioni precedenti.',body,large:true,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]});modal.querySelectorAll('[data-restore-backup]').forEach(btn=>btn.onclick=async()=>{const ok=await this.confirmModal('Ripristina backup','Sostituire tutti i dati correnti con questo backup?','Ripristina');if(!ok)return;const data=await this.db.get(BACKUP_STORE,btn.dataset.restoreBackup,[]);this.snapshot();this.data=this.migrate(clone(data));await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Backup ripristinato.','ok')})})}
   exportFull(){const payload={type:'prompt-studio-backup',version:VERSION,exportedAt:new Date().toISOString(),data:this.data,recents:this.recents,settings:this.settings,snippets:this.snippets,varPresets:this.presets};download(`prompt-studio-backup-${new Date().toISOString().slice(0,10)}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));Toast.show('Backup completo scaricato.','ok')}
   exportCategory(){const cat=this.findCategory(this.state.catId)||this.categories()[0];if(!cat){Toast.show('Nessuna categoria da esportare.','err');return}download(`categoria-${slug(cat.name)}.json`,new Blob([JSON.stringify({type:'prompt-studio-category',version:VERSION,category:cat},null,2)],{type:'application/json'}));Toast.show('Categoria esportata.','ok')}
   exportCategoriesZip(){if(typeof JSZip==='undefined'){Toast.show('Libreria ZIP non disponibile. Controlla la connessione.','err');return}const zip=new JSZip();const folder=zip.folder('prompt-studio-categorie');const manifest=[];this.categories().forEach((cat,index)=>{const name=String(index+1).padStart(2,'0')+'-categoria-'+slug(cat.name)+'.json';folder.file(name,JSON.stringify({type:'prompt-studio-category',version:VERSION,category:cat},null,2));manifest.push({name:cat.name,file:name,prompts:this.countCategory(cat)})});folder.file('manifest.json',JSON.stringify({version:VERSION,exportedAt:new Date().toISOString(),categories:manifest},null,2));zip.generateAsync({type:'blob'}).then(blob=>{download(`prompt-studio-categorie-${new Date().toISOString().slice(0,10)}.zip`,blob);Toast.show('ZIP categorie scaricato.','ok')}).catch(err=>{console.error(err);Toast.show('Errore creazione ZIP.','err')})}
@@ -650,33 +678,160 @@ class PromptStudioApp{
   openTools(){const body=`<div class="form-grid"><div class="form-row"><label>1. Deduplica nomi categorie e sottocategorie</label><p class="help">Unisce soltanto contenitori con lo stesso nome normalizzato. Non riclassifica semanticamente.</p><button class="text-btn" id="runMergeNames">Analizza e unisci</button></div><div class="form-row"><label>2. Trova prompt duplicati o simili</label><p class="help">Mostra le coppie sospette senza eliminazioni automatiche.</p><button class="text-btn" id="runFindDuplicates">Analizza duplicati</button></div><div class="form-row"><label>3. Ricategorizzazione semantica</label><p class="help">Classifica i prompt in base al risultato richiesto e conserva cliente, canale e tecnologia come tag.</p><button class="text-btn primary" id="runRecategorize">Apri anteprima</button></div><div class="form-row"><label>Rollback ultima ricategorizzazione</label><button class="text-btn" id="runRollback">Ripristina snapshot precedente</button></div></div>`;const modal=this.openModal({title:'Pulizia e organizzazione',subtitle:'Le operazioni sono separate per evitare modifiche opache.',body,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]});modal.querySelector('#runMergeNames').onclick=()=>this.mergeDuplicateContainers();modal.querySelector('#runFindDuplicates').onclick=()=>this.findDuplicates();modal.querySelector('#runRecategorize').onclick=()=>this.openRecategorize();modal.querySelector('#runRollback').onclick=()=>this.rollbackTaxonomy()}
   async mergeDuplicateContainers(){const draft=clone(this.data);let mergedCats=0,mergedSubs=0,mergedPrompts=0;const catMap=new Map();for(const cat of [...draft]){if(this.isTrash(cat))continue;const key=normalize(cat.name).replace(/\s*\((?:importata|copia|\d+)\)\s*$/,'');if(!catMap.has(key)){catMap.set(key,cat);continue}const target=catMap.get(key);cat.subcategories.forEach(sub=>target.subcategories.push(sub));draft.splice(draft.indexOf(cat),1);mergedCats++}for(const cat of draft){const subMap=new Map();for(const sub of [...cat.subcategories]){const key=normalize(sub.name).replace(/\s*\((?:importata|copia|\d+)\)\s*$/,'');if(!subMap.has(key)){subMap.set(key,sub);continue}subMap.get(key).prompts.push(...sub.prompts);cat.subcategories.splice(cat.subcategories.indexOf(sub),1);mergedSubs++}for(const sub of cat.subcategories){const seen=new Map();for(const p of [...sub.prompts]){const key=normalize(p.title)+'|'+normalize(plain(p.description));if(!seen.has(key)){seen.set(key,p);continue}const keep=seen.get(key);keep.tags=[...new Set([...(keep.tags||[]),...(p.tags||[])])];keep.copyCount=(keep.copyCount||0)+(p.copyCount||0);keep.favorite=keep.favorite||p.favorite;sub.prompts.splice(sub.prompts.indexOf(p),1);mergedPrompts++}}}const ok=await this.confirmModal('Deduplica contenitori',`Trovate ${mergedCats} categorie duplicate, ${mergedSubs} sottocategorie duplicate e ${mergedPrompts} prompt esatti. Applicare l’unione?`,'Applica');if(!ok)return;this.snapshot();this.data=draft;await this.persist({backup:true});this.closeModal();this.render();Toast.show('Deduplica completata.','ok')}
   findDuplicates(){const all=this.allPrompts();const pairs=[];for(let i=0;i<all.length;i++){for(let j=i+1;j<all.length&&pairs.length<100;j++){const a=all[i],b=all[j];const exact=normalize(a.title)===normalize(b.title)&&normalize(plain(a.description))===normalize(plain(b.description));const score=Math.max(similarity(a.title,b.title),similarity(a.title+' '+plain(a.description).slice(0,500),b.title+' '+plain(b.description).slice(0,500)));if(exact||score>=.78)pairs.push({a,b,score:exact?1:score})}}const rows=pairs.map((p,i)=>`<tr><td>${i+1}</td><td><b>${escapeHtml(p.a.title)}</b><br><small>${escapeHtml(p.a.catName)} › ${escapeHtml(p.a.subName)}</small></td><td><b>${escapeHtml(p.b.title)}</b><br><small>${escapeHtml(p.b.catName)} › ${escapeHtml(p.b.subName)}</small></td><td>${Math.round(p.score*100)}%</td><td><button class="mini-btn" data-open-dup="${p.a.id}">Apri A</button> <button class="mini-btn" data-open-dup="${p.b.id}">Apri B</button></td></tr>`).join('');const modal=this.openModal({title:'Prompt duplicati o simili',subtitle:'Nessun prompt viene eliminato automaticamente.',body:`<div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Prompt A</th><th>Prompt B</th><th>Somiglianza</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nessun duplicato evidente.</td></tr>'}</tbody></table></div>`,large:true,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]});modal.querySelectorAll('[data-open-dup]').forEach(btn=>btn.onclick=()=>{this.closeModal();this.openPrompt(btn.dataset.openDup)})}
-  buildClassificationPlan(){return this.allPrompts().map(p=>{const entry={catName:p.catName,subName:p.subName,prompt:p};const result=TaxonomyEngine.classify(entry);return{promptId:p.id,title:p.title,current:`${p.catName} › ${p.subName}`,catName:p.catName,subName:p.subName,result,selected:true,proposedCat:result.catName,proposedSub:result.sub}})}
+  buildClassificationPlan(){
+    return this.allPrompts().map(p=>{
+      const entry={catName:p.catName,subName:p.subName,prompt:p};
+      const result=TaxonomyEngine.classify(entry);
+      const content=plain(p.description||'');
+      const tagText=(p.tags||[]).join(' ');
+      const current=`${p.catName} › ${p.subName}`;
+      const searchText=normalize([
+        p.title,content,tagText,current,result.catName,result.sub,(result.reasons||[]).join(' ')
+      ].join(' '));
+      return{
+        promptId:p.id,title:p.title,current,catName:p.catName,subName:p.subName,
+        excerpt:content.slice(0,260),searchText,result,selected:false,
+        proposedCat:result.catName,proposedSub:result.sub
+      };
+    });
+  }
   openRecategorize(){this.closeModal();Loading.show();setTimeout(()=>{try{this.showClassificationPlan(this.buildClassificationPlan())}finally{Loading.hide()}},20)}
   showClassificationPlan(plan){
-    let filter='changed',query='';
-    const modal=this.openModal({title:'Riorganizzazione completa delle categorie',subtitle:'Tutti i prompt vengono distribuiti per argomento. Clienti, canali e strumenti restano tag ricercabili.',body:'<div id="classificationPlanBody"></div>',large:true,buttons:[{label:'Esporta anteprima CSV',onClick:()=>this.exportPlanCsv(plan)},{label:'Applica la nuova categorizzazione',className:'primary',onClick:()=>this.applyClassification(plan)},{label:'Annulla',onClick:()=>this.closeModal()}]});
+    let filter='changed',query='',relatedQuery='';
+    let bulkCat=TAXONOMY[0]?.name||'',bulkSub=TAXONOMY[0]?.subs?.[0]||'';
+    const modal=this.openModal({
+      title:'Riorganizzazione completa delle categorie',
+      subtitle:'Cerca i prompt per parole chiave, seleziona quelli pertinenti e indirizzali insieme nella categoria corretta.',
+      body:'<div id="classificationPlanBody"></div>',large:true,
+      buttons:[
+        {label:'Esporta anteprima CSV',onClick:()=>this.exportPlanCsv(plan)},
+        {label:'Applica la nuova categorizzazione',className:'primary',onClick:()=>this.applyClassification(plan)},
+        {label:'Annulla',onClick:()=>this.closeModal()}
+      ]
+    });
     const bodyRoot=modal.querySelector('#classificationPlanBody');
+    const getTax=name=>TAXONOMY.find(x=>x.name===name)||TAXONOMY[0];
+    const selectedRows=()=>plan.filter(r=>r.selected);
+    const relatedMatches=()=>{
+      const phrase=normalize(relatedQuery);
+      const terms=phrase.split(/\s+/).filter(term=>term.length>1);
+      if(!terms.length)return[];
+      return plan.map((r,i)=>{
+        const hay=r.searchText||normalize([r.title,r.excerpt,r.current,r.proposedCat,r.proposedSub].join(' '));
+        if(!terms.every(term=>hay.includes(term)))return null;
+        const title=normalize(r.title),excerpt=normalize(r.excerpt),current=normalize(r.current),destination=normalize(`${r.proposedCat} ${r.proposedSub}`);
+        let score=0;
+        if(title.includes(phrase))score+=140;
+        if(excerpt.includes(phrase))score+=65;
+        if(current.includes(phrase))score+=35;
+        terms.forEach(term=>{
+          if(title.includes(term))score+=24;
+          if(excerpt.includes(term))score+=8;
+          if(current.includes(term))score+=5;
+          if(destination.includes(term))score+=4;
+        });
+        return{r,i,score};
+      }).filter(Boolean).sort((a,b)=>b.score-a.score||a.r.title.localeCompare(b.r.title,'it',{sensitivity:'base'}));
+    };
+    const renderRelatedResults=()=>{
+      const root=bodyRoot.querySelector('#relatedResults');
+      const summary=bodyRoot.querySelector('#relatedSummary');
+      const selectedSummary=bodyRoot.querySelector('#selectedSummary');
+      if(!root||!summary||!selectedSummary)return;
+      const phrase=normalize(relatedQuery);
+      if(phrase.length<2){
+        summary.textContent='Inserisci almeno 2 caratteri';
+        selectedSummary.textContent=`${selectedRows().length} selezionati`;
+        root.innerHTML='<div class="related-empty">Scrivi una parola chiave o una frase, ad esempio “yoga”, “Search Console”, “ricetta Instagram” o “plugin WordPress”. La ricerca controlla titolo e contenuto completo.</div>';
+        return;
+      }
+      const matches=relatedMatches();
+      const shown=matches.slice(0,250);
+      summary.textContent=`${matches.length} prompt trovati${matches.length>shown.length?` · primi ${shown.length} mostrati`:''}`;
+      selectedSummary.textContent=`${selectedRows().length} selezionati`;
+      root.innerHTML=shown.length?`<table class="data-table"><thead><tr><th class="checkbox-cell"><input id="selectAllRelatedCheck" type="checkbox" aria-label="Seleziona tutti i risultati visibili"></th><th>Prompt individuato</th><th>Posizione attuale</th><th>Destinazione proposta</th></tr></thead><tbody>${shown.map(({r,i})=>`<tr><td class="checkbox-cell"><input type="checkbox" data-related-select="${i}" ${r.selected?'checked':''} aria-label="Seleziona ${escapeHtml(r.title)}"></td><td><div class="related-title">${escapeHtml(r.title)}</div>${r.excerpt?`<div class="related-excerpt">${escapeHtml(r.excerpt)}</div>`:''}</td><td>${escapeHtml(r.current)}</td><td>${escapeHtml(r.proposedCat)} › ${escapeHtml(r.proposedSub)}</td></tr>`).join('')}</tbody></table>`:'<div class="related-empty">Nessun prompt contiene tutte le parole cercate. Prova con termini più brevi o meno specifici.</div>';
+      root.querySelectorAll('[data-related-select]').forEach(check=>check.onchange=()=>{
+        plan[+check.dataset.relatedSelect].selected=check.checked;
+        selectedSummary.textContent=`${selectedRows().length} selezionati`;
+        const allCheck=root.querySelector('#selectAllRelatedCheck');
+        if(allCheck)allCheck.checked=shown.length>0&&shown.every(({r})=>r.selected);
+      });
+      const allCheck=root.querySelector('#selectAllRelatedCheck');
+      if(allCheck){
+        allCheck.checked=shown.length>0&&shown.every(({r})=>r.selected);
+        allCheck.onchange=()=>{
+          shown.forEach(({r})=>r.selected=allCheck.checked);
+          draw();
+        };
+      }
+    };
     const draw=()=>{
       const changed=plan.filter(r=>normalize(r.current)!==normalize(`${r.proposedCat} › ${r.proposedSub}`)).length;
-      const high=plan.filter(r=>r.result.level==='high').length;const medium=plan.filter(r=>r.result.level==='medium').length;const low=plan.filter(r=>r.result.level==='low').length;
-      const visible=plan.map((r,i)=>({r,i})).filter(({r})=>(filter==='all'||(filter==='changed'&&normalize(r.current)!==normalize(`${r.proposedCat} › ${r.proposedSub}`))||(filter==='high'&&r.result.level==='high')||(filter==='medium'&&r.result.level!=='high'))&&(!query||normalize(r.title+' '+r.current+' '+r.proposedCat+' '+r.proposedSub).includes(normalize(query))));
-      bodyRoot.innerHTML=`<div class="summary-grid"><div class="summary-box"><b>${plan.length}</b><span>Prompt analizzati</span></div><div class="summary-box"><b>${changed}</b><span>Da spostare</span></div><div class="summary-box"><b>${high}</b><span>Alta confidenza</span></div><div class="summary-box"><b>${medium}</b><span>Da controllare</span></div><div class="summary-box"><b>${low}</b><span>Confidenza bassa</span></div><div class="summary-box"><b>${TAXONOMY.length}</b><span>Categorie finali</span></div></div><div class="toolbar-row"><input id="planSearch" placeholder="Cerca prompt, origine o destinazione…" value="${escapeHtml(query)}"><button data-plan-filter="all">Tutti</button><button data-plan-filter="changed">Spostamenti</button><button data-plan-filter="high">Alta confidenza</button><button data-plan-filter="medium">Da controllare</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Prompt</th><th>Origine</th><th>Categoria finale</th><th>Sottocategoria</th><th>Confidenza</th><th>Motivazioni</th></tr></thead><tbody>${visible.map(({r,i})=>{const tax=TAXONOMY.find(x=>x.name===r.proposedCat)||TAXONOMY[0];return`<tr><td><b>${escapeHtml(r.title)}</b></td><td>${escapeHtml(r.current)}</td><td><select data-plan-cat="${i}">${TAXONOMY.map(x=>`<option ${x.name===r.proposedCat?'selected':''}>${escapeHtml(x.name)}</option>`).join('')}</select></td><td><select data-plan-sub="${i}">${tax.subs.map(x=>`<option ${x===r.proposedSub?'selected':''}>${escapeHtml(x)}</option>`).join('')}</select></td><td><span class="confidence ${r.result.level}">${r.result.confidence}%</span></td><td>${escapeHtml(r.result.reasons.join(', ')||'classificazione per argomento e provenienza')}</td></tr>`}).join('')}</tbody></table></div>`;
-      const search=bodyRoot.querySelector('#planSearch');search.oninput=e=>{query=e.target.value;draw()};
+      const high=plan.filter(r=>r.result.level==='high').length;
+      const medium=plan.filter(r=>r.result.level==='medium').length;
+      const low=plan.filter(r=>r.result.level==='low').length;
+      const normalizedQuery=normalize(query);
+      const visible=plan.map((r,i)=>({r,i})).filter(({r})=>
+        (filter==='all'||
+          (filter==='changed'&&normalize(r.current)!==normalize(`${r.proposedCat} › ${r.proposedSub}`))||
+          (filter==='high'&&r.result.level==='high')||
+          (filter==='medium'&&r.result.level!=='high'))&&
+        (!normalizedQuery||(r.searchText||normalize([r.title,r.excerpt,r.current,r.proposedCat,r.proposedSub].join(' '))).includes(normalizedQuery))
+      );
+      const bulkTax=getTax(bulkCat);if(!bulkTax.subs.includes(bulkSub))bulkSub=bulkTax.subs[0];
+      bodyRoot.innerHTML=`<section class="bulk-route"><div class="bulk-route-head"><div><h3>Trova prompt correlati e assegnali a una categoria</h3><p>La ricerca analizza titolo, testo completo, categoria di origine e classificazione proposta. Seleziona i risultati realmente pertinenti, scegli la destinazione e applicala all’anteprima.</p></div><span class="selection-pill" id="selectedSummary">${selectedRows().length} selezionati</span></div><div class="bulk-route-grid"><div class="bulk-route-field"><label for="relatedPromptSearch">Parole chiave o frase da cercare</label><input id="relatedPromptSearch" type="search" value="${escapeHtml(relatedQuery)}" placeholder="Es. SEO locale yoga, ricette Instagram, plugin WordPress"></div><div class="bulk-route-field"><label for="bulkPlanCategory">Categoria destinazione</label><select id="bulkPlanCategory">${TAXONOMY.map(x=>`<option ${x.name===bulkCat?'selected':''}>${escapeHtml(x.name)}</option>`).join('')}</select></div><div class="bulk-route-field"><label for="bulkPlanSubcategory">Sottocategoria destinazione</label><select id="bulkPlanSubcategory">${bulkTax.subs.map(x=>`<option ${x===bulkSub?'selected':''}>${escapeHtml(x)}</option>`).join('')}</select></div><button class="bulk-assign" id="assignRelatedPrompts">Assegna selezionati</button></div><div class="bulk-route-tools"><span class="selection-pill" id="relatedSummary">Inserisci almeno 2 caratteri</span><button id="selectAllRelated">Seleziona tutti i risultati</button><button id="clearRelatedSelection">Deseleziona tutti</button><span class="help">L’assegnazione modifica l’anteprima. Per salvare definitivamente usa “Applica la nuova categorizzazione”.</span></div><div class="related-results" id="relatedResults"></div></section><div class="summary-grid"><div class="summary-box"><b>${plan.length}</b><span>Prompt analizzati</span></div><div class="summary-box"><b>${changed}</b><span>Da spostare</span></div><div class="summary-box"><b>${high}</b><span>Alta confidenza</span></div><div class="summary-box"><b>${medium}</b><span>Da controllare</span></div><div class="summary-box"><b>${low}</b><span>Confidenza bassa</span></div><div class="summary-box"><b>${TAXONOMY.length}</b><span>Categorie finali</span></div></div><div class="toolbar-row"><input id="planSearch" placeholder="Filtra l’anteprima anche nel contenuto dei prompt…" value="${escapeHtml(query)}"><button data-plan-filter="all">Tutti</button><button data-plan-filter="changed">Spostamenti</button><button data-plan-filter="high">Alta confidenza</button><button data-plan-filter="medium">Da controllare</button></div><div class="plan-selection-note"><span><strong>${visible.length}</strong> righe visibili · <strong>${selectedRows().length}</strong> selezionate per l’assegnazione multipla</span><button class="mini-btn" id="selectVisiblePlanRows">Seleziona righe visibili</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th class="checkbox-cell"><input id="selectVisiblePlanCheck" type="checkbox" aria-label="Seleziona tutte le righe visibili"></th><th>Prompt</th><th>Origine</th><th>Categoria finale</th><th>Sottocategoria</th><th>Confidenza</th><th>Motivazioni</th></tr></thead><tbody>${visible.map(({r,i})=>{const tax=getTax(r.proposedCat);return`<tr><td class="checkbox-cell"><input type="checkbox" data-plan-select="${i}" ${r.selected?'checked':''} aria-label="Seleziona ${escapeHtml(r.title)}"></td><td><b>${escapeHtml(r.title)}</b>${r.excerpt?`<div class="related-excerpt">${escapeHtml(r.excerpt.slice(0,150))}</div>`:''}</td><td>${escapeHtml(r.current)}</td><td><select data-plan-cat="${i}">${TAXONOMY.map(x=>`<option ${x.name===r.proposedCat?'selected':''}>${escapeHtml(x.name)}</option>`).join('')}</select></td><td><select data-plan-sub="${i}">${tax.subs.map(x=>`<option ${x===r.proposedSub?'selected':''}>${escapeHtml(x)}</option>`).join('')}</select></td><td><span class="confidence ${r.result.level}">${r.result.confidence}%</span></td><td>${escapeHtml(r.result.reasons.join(', ')||'classificazione per argomento e provenienza')}</td></tr>`}).join('')}</tbody></table></div>`;
+
+      const relatedInput=bodyRoot.querySelector('#relatedPromptSearch');
+      relatedInput.oninput=e=>{relatedQuery=e.target.value;renderRelatedResults()};
+      const categorySelect=bodyRoot.querySelector('#bulkPlanCategory');
+      const subSelect=bodyRoot.querySelector('#bulkPlanSubcategory');
+      categorySelect.onchange=()=>{
+        bulkCat=categorySelect.value;const tax=getTax(bulkCat);bulkSub=tax.subs[0];
+        subSelect.innerHTML=tax.subs.map(x=>`<option>${escapeHtml(x)}</option>`).join('');subSelect.value=bulkSub;
+      };
+      subSelect.onchange=()=>{bulkSub=subSelect.value};
+      bodyRoot.querySelector('#selectAllRelated').onclick=()=>{
+        const matches=relatedMatches();
+        if(!matches.length){Toast.show('Nessun risultato da selezionare.','err');return}
+        matches.forEach(({r})=>r.selected=true);draw();
+      };
+      bodyRoot.querySelector('#clearRelatedSelection').onclick=()=>{plan.forEach(r=>r.selected=false);draw()};
+      bodyRoot.querySelector('#assignRelatedPrompts').onclick=()=>{
+        const selected=selectedRows();
+        if(!selected.length){Toast.show('Seleziona almeno un prompt individuato dalla ricerca.','err');return}
+        const tax=getTax(bulkCat);const destinationSub=tax.subs.includes(bulkSub)?bulkSub:tax.subs[0];
+        selected.forEach(r=>{r.proposedCat=tax.name;r.proposedSub=destinationSub;r.selected=false;r.searchText=normalize([r.searchText,tax.name,destinationSub].join(' '))});
+        Toast.show(`${selected.length} prompt indirizzati in ${tax.name} › ${destinationSub}.`,'ok',4500);draw();
+      };
+      const search=bodyRoot.querySelector('#planSearch');
+      search.oninput=e=>{
+        query=e.target.value;
+        const caret=e.target.selectionStart??query.length;
+        draw();
+        requestAnimationFrame(()=>{const next=bodyRoot.querySelector('#planSearch');if(next){next.focus();try{next.setSelectionRange(caret,caret)}catch(_){}}});
+      };
       bodyRoot.querySelectorAll('[data-plan-filter]').forEach(btn=>{btn.classList.toggle('active',btn.dataset.planFilter===filter);btn.onclick=()=>{filter=btn.dataset.planFilter;draw()}});
-      bodyRoot.querySelectorAll('[data-plan-cat]').forEach(sel=>sel.onchange=()=>{const row=plan[+sel.dataset.planCat];row.proposedCat=sel.value;const tax=TAXONOMY.find(x=>x.name===sel.value)||TAXONOMY[0];row.proposedSub=tax.subs[0];draw()});
-      bodyRoot.querySelectorAll('[data-plan-sub]').forEach(sel=>sel.onchange=()=>{plan[+sel.dataset.planSub].proposedSub=sel.value});
+      bodyRoot.querySelectorAll('[data-plan-cat]').forEach(sel=>sel.onchange=()=>{const row=plan[+sel.dataset.planCat];row.proposedCat=sel.value;const tax=getTax(sel.value);row.proposedSub=tax.subs[0];row.searchText=normalize([row.searchText,tax.name,row.proposedSub].join(' '));draw()});
+      bodyRoot.querySelectorAll('[data-plan-sub]').forEach(sel=>sel.onchange=()=>{const row=plan[+sel.dataset.planSub];row.proposedSub=sel.value;row.searchText=normalize([row.searchText,row.proposedSub].join(' ') )});
+      bodyRoot.querySelectorAll('[data-plan-select]').forEach(check=>check.onchange=()=>{plan[+check.dataset.planSelect].selected=check.checked;const note=bodyRoot.querySelector('.plan-selection-note span');if(note)note.innerHTML=`<strong>${visible.length}</strong> righe visibili · <strong>${selectedRows().length}</strong> selezionate per l’assegnazione multipla`;const selectedSummary=bodyRoot.querySelector('#selectedSummary');if(selectedSummary)selectedSummary.textContent=`${selectedRows().length} selezionati`;const all=bodyRoot.querySelector('#selectVisiblePlanCheck');if(all)all.checked=visible.length>0&&visible.every(({r})=>r.selected);renderRelatedResults()});
+      const selectVisible=checked=>{visible.forEach(({r})=>r.selected=checked);draw()};
+      const selectVisibleCheck=bodyRoot.querySelector('#selectVisiblePlanCheck');
+      selectVisibleCheck.checked=visible.length>0&&visible.every(({r})=>r.selected);
+      selectVisibleCheck.onchange=()=>selectVisible(selectVisibleCheck.checked);
+      bodyRoot.querySelector('#selectVisiblePlanRows').onclick=()=>selectVisible(true);
+      renderRelatedResults();
     };
     draw();
   }
-  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.1.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
+  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.2.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
   splitLargeSubcategories(categories){for(const cat of categories){const result=[];for(const sub of cat.subcategories){if(sub.prompts.length<=50){result.push(sub);continue}const sorted=sub.prompts.slice().sort((a,b)=>a.title.localeCompare(b.title,'it'));for(let i=0;i<sorted.length;i+=35){const chunk=sorted.slice(i,i+35);const first=(normalize(chunk[0]?.title)[0]||'#').toUpperCase();const last=(normalize(chunk.at(-1)?.title)[0]||'#').toUpperCase();result.push({id:uid(),name:`${sub.name} · ${first}–${last}`,icon:sub.icon||'',prompts:chunk})}}cat.subcategories=result}}
   async applyClassification(plan){
     if(!plan.length){Toast.show('Nessun prompt da classificare.','err');return}
     const ok=await this.confirmModal('Applica la nuova categorizzazione',`Riorganizzare tutti i ${plan.length} prompt nelle ${TAXONOMY.length} categorie tematiche separate e creare un backup di rollback?`,'Applica');if(!ok)return;
     Loading.show();
     try{
-      await this.db.put(DATA_STORE,'taxonomyRollbackV320',{data:this.data,recents:this.recents,ts:Date.now()});
-      await this.db.saveBackup(this.data,'Prima della categorizzazione v32.1');
+      await this.db.put(DATA_STORE,'taxonomyRollbackV322',{data:this.data,recents:this.recents,ts:Date.now()});
+      await this.db.saveBackup(this.data,'Prima della categorizzazione v32.2');
       const planMap=new Map(plan.map(r=>[r.promptId,r]));
       const newCats=TAXONOMY.map(t=>({id:uid(),name:t.name,icon:'',subcategories:t.subs.map(name=>({id:uid(),name,icon:'',prompts:[]}))}));
       const targetMap=new Map();newCats.forEach(c=>c.subcategories.forEach(sub=>targetMap.set(normalize(c.name)+'|'+normalize(sub.name),sub)));
@@ -694,8 +849,8 @@ class PromptStudioApp{
       this.snapshot();this.data=newCats.filter(c=>this.isTrash(c)||this.countCategory(c)>0);this.state={...this.state,view:'dashboard',catId:null,subId:null,promptId:null};await this.persist();this.closeModal();this.render();this.exportClassificationReport(plan,plan.map(r=>r.promptId));Toast.show('Categorie riorganizzate: ogni prompt è stato assegnato alla propria area.','ok',5000);
     }finally{Loading.hide()}
   }
-  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.1.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
-  async rollbackTaxonomy(){const rollback=await this.db.get(DATA_STORE,'taxonomyRollbackV320',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV31',null);if(!rollback?.data){Toast.show('Nessun rollback disponibile.','err');return}const ok=await this.confirmModal('Rollback tassonomia','Ripristinare i dati precedenti all’ultima ricategorizzazione?','Ripristina');if(!ok)return;this.snapshot();this.data=this.migrate(clone(rollback.data));this.recents=rollback.recents||[];await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Rollback completato.','ok')}
+  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.2.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
+  async rollbackTaxonomy(){const rollback=await this.db.get(DATA_STORE,'taxonomyRollbackV322',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV320',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV31',null);if(!rollback?.data){Toast.show('Nessun rollback disponibile.','err');return}const ok=await this.confirmModal('Rollback tassonomia','Ripristinare i dati precedenti all’ultima ricategorizzazione?','Ripristina');if(!ok)return;this.snapshot();this.data=this.migrate(clone(rollback.data));this.recents=rollback.recents||[];await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Rollback completato.','ok')}
 }
 
 const app=new PromptStudioApp();window.PromptStudio=app;app.init();
