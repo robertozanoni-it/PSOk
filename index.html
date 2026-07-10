@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prompt Studio v32.3 categorie alfabetiche e nuova categoria</title>
+<title>Prompt Studio v32.4 spostamento multiplo semplificato</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
@@ -230,12 +230,40 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 @media(max-width:600px){.new-category-box{grid-template-columns:1fr}}
 
 
+
+/* v32.4: riorganizzazione semplificata e spostamento reale dei selezionati */
+.simple-organizer{display:grid;gap:14px}
+.simple-organizer-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid rgba(96,165,250,.28);background:rgba(37,99,235,.12);border-radius:14px}
+.simple-organizer-intro h3{margin:0;font-size:19px}.simple-organizer-intro p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:820px}
+.simple-counter{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 11px;border-radius:99px;background:rgba(124,111,255,.18);border:1px solid rgba(167,139,250,.30);font-weight:900;white-space:nowrap}
+.simple-fields{display:grid;grid-template-columns:minmax(280px,2fr) minmax(210px,1fr) minmax(210px,1fr) auto;gap:10px;align-items:end}
+.simple-field label{display:block;margin:0 0 5px;color:var(--muted);font-size:12px;font-weight:900}
+.simple-field input,.simple-field select{width:100%;height:43px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);border-radius:10px;padding:0 11px}
+.simple-field input:focus,.simple-field select:focus{border-color:rgba(96,165,250,.82);box-shadow:0 0 0 3px rgba(59,130,246,.14)}
+.simple-add-category{height:43px;border:1px solid rgba(96,165,250,.48);background:rgba(37,99,235,.20);color:var(--text);border-radius:10px;padding:0 13px;font-weight:900;white-space:nowrap}
+.simple-add-category:hover{background:rgba(59,130,246,.34)}
+.simple-create-category{display:grid;grid-template-columns:1fr 1fr auto auto;gap:9px;align-items:end;padding:12px;border:1px solid rgba(96,165,250,.30);background:rgba(15,23,42,.26);border-radius:12px}
+.simple-create-category.hidden{display:none!important}.simple-create-category button{height:42px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:10px;padding:0 12px;font-weight:900}
+.simple-create-category .confirm{background:var(--success);border-color:var(--success);color:#fff}
+.simple-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.simple-actions button{height:38px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:0 11px;font-weight:900}
+.simple-actions button:hover{background:var(--surface-3)}
+.simple-actions .move-selected{margin-left:auto;min-height:44px;height:auto;background:linear-gradient(135deg,#2563eb,#4f46e5);border-color:#4f46e5;color:#fff;padding:10px 17px;font-size:14px}
+.simple-actions .move-selected:hover{filter:brightness(1.08)}.simple-actions .move-selected:disabled{filter:none;opacity:.45}
+.simple-results{border:1px solid var(--border);border-radius:13px;overflow:auto;max-height:50vh;background:rgba(2,6,23,.12)}
+.simple-results .data-table th{top:0}.simple-results .data-table td{padding:9px 10px}
+.simple-result-title{font-weight:900}.simple-result-excerpt{margin-top:4px;color:var(--muted);font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:680px}
+.simple-empty{padding:30px 18px;text-align:center;color:var(--muted)}
+.simple-help{color:var(--muted);font-size:12px}
+@media(max-width:1050px){.simple-fields{grid-template-columns:1fr 1fr}.simple-add-category{width:100%}.simple-create-category{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.simple-fields,.simple-create-category{grid-template-columns:1fr}.simple-actions .move-selected{width:100%;margin-left:0}.simple-results{max-height:56vh}}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="header">
-    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.3</span></div>
+    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.4</span></div>
     <div class="header-search"><span>⌕</span><input id="globalSearch" type="search" placeholder="Cerca prompt, contenuti e tag…"><button id="clearSearch" class="clear-search" aria-label="Cancella ricerca">×</button></div>
     <select id="viewJump" class="view-jump" aria-label="Scegli una sezione">
       <option value="dashboard">Dashboard</option>
@@ -265,7 +293,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 (()=>{
 'use strict';
 
-const VERSION='32.3';
+const VERSION='32.4';
 const CLASSIFIER_VERSION='client-first-taxonomy-2026-07-v32.2';
 const DB_NAME='PromptStudio_v22';
 const DB_VERSION=4;
@@ -697,7 +725,7 @@ class PromptStudioApp{
   formModal(title,fields,options={}){return new Promise(resolve=>{const html=fields.map(f=>`<div class="form-row"><label>${escapeHtml(f.label)}</label>${f.type==='select'?`<select data-field="${f.name}">${(f.options||[]).map(o=>`<option ${o===(f.value||'')?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`:`<input data-field="${f.name}" value="${escapeHtml(f.value||'')}" ${f.required?'required':''}>`}</div>`).join('');const modal=this.openModal({title,body:`<div class="form-grid">${html}</div>`,buttons:[{label:'Annulla',onClick:()=>{this.closeModal();resolve(null)}},{label:'Conferma',className:'primary',onClick:()=>{const result={};modal.querySelectorAll('[data-field]').forEach(el=>result[el.dataset.field]=el.value.trim());this.closeModal();resolve(result)}}]});if(options.dynamicCategories){const catSel=modal.querySelector('[data-field="category"]');const subSel=modal.querySelector('[data-field="subcategory"]');const update=()=>{const cat=options.dynamicCategories.find(c=>c.name===catSel.value);subSel.innerHTML=(cat?.subcategories||[]).map(s=>`<option>${escapeHtml(s.name)}</option>`).join('')};catSel.onchange=update;update()}})}
   openSettings(){const body=`<div class="form-grid"><div class="form-row"><label>Tema</label><select id="setTheme"><option value="dark" ${this.settings.theme==='dark'?'selected':''}>Scuro</option><option value="light" ${this.settings.theme==='light'?'selected':''}>Chiaro</option></select></div><div class="form-row"><label>Densità</label><select id="setDensity"><option value="compact" ${this.settings.density==='compact'?'selected':''}>Compatta</option><option value="normal" ${this.settings.density==='normal'?'selected':''}>Normale</option><option value="comfortable" ${this.settings.density==='comfortable'?'selected':''}>Comoda</option></select></div><div class="form-row"><label>Dimensione font</label><input id="setFont" type="number" min="13" max="26" value="${this.settings.fontSize}"></div><div class="form-row"><label>Backup automatico ogni minuti</label><input id="setBackup" type="number" min="2" max="120" value="${this.settings.autoBackupMinutes}"></div></div>`;this.openModal({title:'Impostazioni',body,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()},{label:'Salva',className:'primary',onClick:async()=>{this.settings.theme=$('setTheme').value;this.settings.density=$('setDensity').value;this.settings.fontSize=Math.max(13,Math.min(26,Number($('setFont').value)||16));this.settings.autoBackupMinutes=Math.max(2,Number($('setBackup').value)||10);await this.db.put(DATA_STORE,'settings',this.settings);this.applySettings();this.startAutoBackup();this.closeModal();this.render();Toast.show('Impostazioni salvate.','ok')}}]})}
   toggleTheme(){this.settings.theme=this.settings.theme==='dark'?'light':'dark';this.applySettings();this.db.put(DATA_STORE,'settings',this.settings);}
-  openBackup(){this.db.all(BACKUP_STORE).then(backups=>{const rows=backups.sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,10).map(b=>`<tr><td>${escapeHtml(b.label||'Backup')}</td><td>${formatDate(b.ts)}</td><td>${Array.isArray(b.data)?b.data.length:0} categorie</td><td><button class="mini-btn" data-restore-backup="${b.id}">Ripristina</button></td></tr>`).join('');const body=`<div class="toolbar-row"><button data-action="export-full">Scarica backup completo</button><button data-action="import-full">Importa JSON</button><button data-action="export-category">Esporta categoria</button><button data-action="export-categories-zip">ZIP categorie</button><button data-action="import-category">Importa categoria</button><button data-action="export-markdown">Export Markdown</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Backup</th><th>Data</th><th>Contenuto</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nessun backup automatico.</td></tr>'}</tbody></table></div>`;const modal=this.openModal({title:'Backup, importazione ed esportazione',subtitle:'Il formato v32.3 resta compatibile con i dati salvati nelle versioni precedenti.',body,large:true,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]});modal.querySelectorAll('[data-restore-backup]').forEach(btn=>btn.onclick=async()=>{const ok=await this.confirmModal('Ripristina backup','Sostituire tutti i dati correnti con questo backup?','Ripristina');if(!ok)return;const data=await this.db.get(BACKUP_STORE,btn.dataset.restoreBackup,[]);this.snapshot();this.data=this.migrate(clone(data));await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Backup ripristinato.','ok')})})}
+  openBackup(){this.db.all(BACKUP_STORE).then(backups=>{const rows=backups.sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,10).map(b=>`<tr><td>${escapeHtml(b.label||'Backup')}</td><td>${formatDate(b.ts)}</td><td>${Array.isArray(b.data)?b.data.length:0} categorie</td><td><button class="mini-btn" data-restore-backup="${b.id}">Ripristina</button></td></tr>`).join('');const body=`<div class="toolbar-row"><button data-action="export-full">Scarica backup completo</button><button data-action="import-full">Importa JSON</button><button data-action="export-category">Esporta categoria</button><button data-action="export-categories-zip">ZIP categorie</button><button data-action="import-category">Importa categoria</button><button data-action="export-markdown">Export Markdown</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Backup</th><th>Data</th><th>Contenuto</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="4">Nessun backup automatico.</td></tr>'}</tbody></table></div>`;const modal=this.openModal({title:'Backup, importazione ed esportazione',subtitle:'Il formato v32.4 resta compatibile con i dati salvati nelle versioni precedenti.',body,large:true,buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]});modal.querySelectorAll('[data-restore-backup]').forEach(btn=>btn.onclick=async()=>{const ok=await this.confirmModal('Ripristina backup','Sostituire tutti i dati correnti con questo backup?','Ripristina');if(!ok)return;const data=await this.db.get(BACKUP_STORE,btn.dataset.restoreBackup,[]);this.snapshot();this.data=this.migrate(clone(data));await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Backup ripristinato.','ok')})})}
   exportFull(){const payload={type:'prompt-studio-backup',version:VERSION,exportedAt:new Date().toISOString(),data:this.data,recents:this.recents,settings:this.settings,snippets:this.snippets,varPresets:this.presets,customTaxonomy:this.customTaxonomy};download(`prompt-studio-backup-${new Date().toISOString().slice(0,10)}.json`,new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));Toast.show('Backup completo scaricato.','ok')}
   exportCategory(){const cat=this.findCategory(this.state.catId)||this.categories()[0];if(!cat){Toast.show('Nessuna categoria da esportare.','err');return}download(`categoria-${slug(cat.name)}.json`,new Blob([JSON.stringify({type:'prompt-studio-category',version:VERSION,category:cat},null,2)],{type:'application/json'}));Toast.show('Categoria esportata.','ok')}
   exportCategoriesZip(){if(typeof JSZip==='undefined'){Toast.show('Libreria ZIP non disponibile. Controlla la connessione.','err');return}const zip=new JSZip();const folder=zip.folder('prompt-studio-categorie');const manifest=[];this.categories().forEach((cat,index)=>{const name=String(index+1).padStart(2,'0')+'-categoria-'+slug(cat.name)+'.json';folder.file(name,JSON.stringify({type:'prompt-studio-category',version:VERSION,category:cat},null,2));manifest.push({name:cat.name,file:name,prompts:this.countCategory(cat)})});folder.file('manifest.json',JSON.stringify({version:VERSION,exportedAt:new Date().toISOString(),categories:manifest},null,2));zip.generateAsync({type:'blob'}).then(blob=>{download(`prompt-studio-categorie-${new Date().toISOString().slice(0,10)}.zip`,blob);Toast.show('ZIP categorie scaricato.','ok')}).catch(err=>{console.error(err);Toast.show('Errore creazione ZIP.','err')})}
@@ -731,145 +759,167 @@ class PromptStudioApp{
   }
   openRecategorize(){this.closeModal();Loading.show();setTimeout(()=>{try{this.showClassificationPlan(this.buildClassificationPlan())}finally{Loading.hide()}},20)}
   showClassificationPlan(plan){
-    let filter='changed',query='',relatedQuery='',addingCategory=false;
-    let initialTaxonomy=this.taxonomyOptions();
-    let bulkCat=initialTaxonomy[0]?.name||'',bulkSub=initialTaxonomy[0]?.subs?.[0]||'Generale';
+    let searchQuery='',addingCategory=false;
+    let taxonomyList=this.taxonomyOptions();
+    let targetCategory=taxonomyList[0]?.name||'';
+    let targetSubcategory=taxonomyList[0]?.subs?.[0]||'Generale';
+    plan.forEach(row=>row.selected=false);
+
     const modal=this.openModal({
       title:'Riorganizzazione completa delle categorie',
-      subtitle:'Cerca i prompt per parole chiave, seleziona quelli pertinenti e indirizzali insieme nella categoria corretta.',
-      body:'<div id="classificationPlanBody"></div>',large:true,
-      buttons:[
-        {label:'Esporta anteprima CSV',onClick:()=>this.exportPlanCsv(plan)},
-        {label:'Applica la nuova categorizzazione',className:'primary',onClick:()=>this.applyClassification(plan)},
-        {label:'Annulla',onClick:()=>this.closeModal()}
-      ]
+      subtitle:'Cerca i prompt, selezionali e spostali subito nella categoria scelta.',
+      body:'<div id="simpleClassificationBody"></div>',
+      large:true,
+      buttons:[{label:'Chiudi',onClick:()=>this.closeModal()}]
     });
-    const bodyRoot=modal.querySelector('#classificationPlanBody');
+    const root=modal.querySelector('#simpleClassificationBody');
     const taxonomy=()=>this.taxonomyOptions();
-    const getTax=name=>taxonomy().find(x=>x.name===name)||taxonomy()[0]||{name:'Generale',subs:['Generale']};
-    const categoryOptions=selected=>taxonomy().map(x=>`<option ${x.name===selected?'selected':''}>${escapeHtml(x.name)}</option>`).join('');
-    const selectedRows=()=>plan.filter(r=>r.selected);
-    const relatedMatches=()=>{
-      const phrase=normalize(relatedQuery);
+    const getTax=name=>taxonomy().find(item=>normalize(item.name)===normalize(name))||taxonomy()[0]||{name:'Generale',subs:['Generale'],custom:true};
+    const categoryOptions=selected=>taxonomy().map(item=>`<option value="${escapeHtml(item.name)}" ${normalize(item.name)===normalize(selected)?'selected':''}>${escapeHtml(item.name)}</option>`).join('');
+    const selectedRows=()=>plan.filter(row=>row.selected);
+    const matchingRows=()=>{
+      const phrase=normalize(searchQuery);
       const terms=phrase.split(/\s+/).filter(term=>term.length>1);
-      if(!terms.length)return[];
-      return plan.map((r,i)=>{
-        const hay=r.searchText||normalize([r.title,r.excerpt,r.current,r.proposedCat,r.proposedSub].join(' '));
-        if(!terms.every(term=>hay.includes(term)))return null;
-        const title=normalize(r.title),excerpt=normalize(r.excerpt),current=normalize(r.current),destination=normalize(`${r.proposedCat} ${r.proposedSub}`);
-        let score=0;
-        if(title.includes(phrase))score+=140;
-        if(excerpt.includes(phrase))score+=65;
-        if(current.includes(phrase))score+=35;
-        terms.forEach(term=>{
-          if(title.includes(term))score+=24;
-          if(excerpt.includes(term))score+=8;
-          if(current.includes(term))score+=5;
-          if(destination.includes(term))score+=4;
-        });
-        return{r,i,score};
-      }).filter(Boolean).sort((a,b)=>b.score-a.score||a.r.title.localeCompare(b.r.title,'it',{sensitivity:'base'}));
+      return plan.map((row,index)=>({row,index})).filter(({row})=>{
+        if(!terms.length)return true;
+        const haystack=row.searchText||normalize([row.title,row.excerpt,row.current,row.proposedCat,row.proposedSub].join(' '));
+        return terms.every(term=>haystack.includes(term));
+      }).sort((a,b)=>a.row.title.localeCompare(b.row.title,'it',{sensitivity:'base'}));
     };
-    const renderRelatedResults=()=>{
-      const root=bodyRoot.querySelector('#relatedResults');
-      const summary=bodyRoot.querySelector('#relatedSummary');
-      const selectedSummary=bodyRoot.querySelector('#selectedSummary');
-      if(!root||!summary||!selectedSummary)return;
-      const phrase=normalize(relatedQuery);
-      if(phrase.length<2){
-        summary.textContent='Inserisci almeno 2 caratteri';
-        selectedSummary.textContent=`${selectedRows().length} selezionati`;
-        root.innerHTML='<div class="related-empty">Scrivi una parola chiave o una frase, ad esempio “yoga”, “Search Console”, “ricetta Instagram” o “plugin WordPress”. La ricerca controlla titolo e contenuto completo.</div>';
-        return;
-      }
-      const matches=relatedMatches();
-      const shown=matches.slice(0,250);
-      summary.textContent=`${matches.length} prompt trovati${matches.length>shown.length?` · primi ${shown.length} mostrati`:''}`;
-      selectedSummary.textContent=`${selectedRows().length} selezionati`;
-      root.innerHTML=shown.length?`<table class="data-table"><thead><tr><th class="checkbox-cell"><input id="selectAllRelatedCheck" type="checkbox" aria-label="Seleziona tutti i risultati visibili"></th><th>Prompt individuato</th><th>Posizione attuale</th><th>Destinazione proposta</th></tr></thead><tbody>${shown.map(({r,i})=>`<tr><td class="checkbox-cell"><input type="checkbox" data-related-select="${i}" ${r.selected?'checked':''} aria-label="Seleziona ${escapeHtml(r.title)}"></td><td><div class="related-title">${escapeHtml(r.title)}</div>${r.excerpt?`<div class="related-excerpt">${escapeHtml(r.excerpt)}</div>`:''}</td><td>${escapeHtml(r.current)}</td><td>${escapeHtml(r.proposedCat)} › ${escapeHtml(r.proposedSub)}</td></tr>`).join('')}</tbody></table>`:'<div class="related-empty">Nessun prompt contiene tutte le parole cercate. Prova con termini più brevi o meno specifici.</div>';
-      root.querySelectorAll('[data-related-select]').forEach(check=>check.onchange=()=>{
-        plan[+check.dataset.relatedSelect].selected=check.checked;
-        selectedSummary.textContent=`${selectedRows().length} selezionati`;
-        const allCheck=root.querySelector('#selectAllRelatedCheck');
-        if(allCheck)allCheck.checked=shown.length>0&&shown.every(({r})=>r.selected);
-      });
-      const allCheck=root.querySelector('#selectAllRelatedCheck');
-      if(allCheck){
-        allCheck.checked=shown.length>0&&shown.every(({r})=>r.selected);
-        allCheck.onchange=()=>{shown.forEach(({r})=>r.selected=allCheck.checked);draw()};
-      }
+    const updateSelectionUi=()=>{
+      const selected=selectedRows().length;
+      const counter=root.querySelector('#simpleSelectedCounter');
+      const moveButton=root.querySelector('#moveSelectedNow');
+      if(counter)counter.textContent=`${selected} selezionati`;
+      if(moveButton)moveButton.disabled=selected===0;
+      const visible=matchingRows();
+      const selectAll=root.querySelector('#simpleSelectAllCheck');
+      if(selectAll)selectAll.checked=visible.length>0&&visible.every(({row})=>row.selected);
     };
-    const draw=()=>{
-      const taxonomyList=taxonomy();
-      if(!taxonomyList.some(x=>x.name===bulkCat)){bulkCat=taxonomyList[0]?.name||'';bulkSub=taxonomyList[0]?.subs?.[0]||'Generale'}
-      const changed=plan.filter(r=>normalize(r.current)!==normalize(`${r.proposedCat} › ${r.proposedSub}`)).length;
-      const high=plan.filter(r=>r.result.level==='high').length;
-      const medium=plan.filter(r=>r.result.level==='medium').length;
-      const low=plan.filter(r=>r.result.level==='low').length;
-      const normalizedQuery=normalize(query);
-      const visible=plan.map((r,i)=>({r,i})).filter(({r})=>
-        (filter==='all'||
-          (filter==='changed'&&normalize(r.current)!==normalize(`${r.proposedCat} › ${r.proposedSub}`))||
-          (filter==='high'&&r.result.level==='high')||
-          (filter==='medium'&&r.result.level!=='high'))&&
-        (!normalizedQuery||(r.searchText||normalize([r.title,r.excerpt,r.current,r.proposedCat,r.proposedSub].join(' '))).includes(normalizedQuery))
-      );
-      const bulkTax=getTax(bulkCat);if(!bulkTax.subs.includes(bulkSub))bulkSub=bulkTax.subs[0]||'Generale';
-      bodyRoot.innerHTML=`<section class="bulk-route"><div class="bulk-route-head"><div><h3>Trova prompt correlati e assegnali a una categoria</h3><p>La ricerca analizza titolo, testo completo, categoria di origine e classificazione proposta. Seleziona i risultati realmente pertinenti, scegli la destinazione e applicala all’anteprima.</p></div><span class="selection-pill" id="selectedSummary">${selectedRows().length} selezionati</span></div><div class="bulk-route-grid"><div class="bulk-route-field"><label for="relatedPromptSearch">Parole chiave o frase da cercare</label><input id="relatedPromptSearch" type="search" value="${escapeHtml(relatedQuery)}" placeholder="Es. SEO locale yoga, ricette Instagram, plugin WordPress"></div><div class="bulk-route-field"><label for="bulkPlanCategory">Categoria di destinazione A–Z</label><select id="bulkPlanCategory">${categoryOptions(bulkCat)}</select></div><div class="bulk-route-field"><label for="bulkPlanSubcategory">Sottocategoria destinazione</label><select id="bulkPlanSubcategory">${bulkTax.subs.map(x=>`<option ${x===bulkSub?'selected':''}>${escapeHtml(x)}</option>`).join('')}</select></div><button class="bulk-assign" id="assignRelatedPrompts">Assegna selezionati</button></div><div class="bulk-route-tools"><button class="add-destination-category" id="addPlanCategory">+ Aggiungi categoria</button><span class="selection-pill" id="relatedSummary">Inserisci almeno 2 caratteri</span><button id="selectAllRelated">Seleziona tutti i risultati</button><button id="clearRelatedSelection">Deseleziona tutti</button><span class="help">L’assegnazione modifica l’anteprima. Per salvare definitivamente usa “Applica la nuova categorizzazione”.</span></div><div class="new-category-box ${addingCategory?'':'hidden'}" id="newCategoryBox"><div class="bulk-route-field"><label for="newPlanCategoryName">Nome nuova categoria</label><input id="newPlanCategoryName" maxlength="80" placeholder="Es. E-commerce"></div><div class="bulk-route-field"><label for="newPlanSubcategoryName">Sottocategoria iniziale</label><input id="newPlanSubcategoryName" maxlength="80" value="Generale"></div><button class="create-category-confirm" id="saveNewPlanCategory">Crea categoria</button><button id="cancelNewPlanCategory">Annulla</button></div><div class="related-results" id="relatedResults"></div></section><div class="summary-grid"><div class="summary-box"><b>${plan.length}</b><span>Prompt analizzati</span></div><div class="summary-box"><b>${changed}</b><span>Da spostare</span></div><div class="summary-box"><b>${high}</b><span>Alta confidenza</span></div><div class="summary-box"><b>${medium}</b><span>Da controllare</span></div><div class="summary-box"><b>${low}</b><span>Confidenza bassa</span></div><div class="summary-box"><b>${taxonomyList.length}</b><span>Categorie finali</span></div></div><div class="toolbar-row"><input id="planSearch" placeholder="Filtra l’anteprima anche nel contenuto dei prompt…" value="${escapeHtml(query)}"><button data-plan-filter="all">Tutti</button><button data-plan-filter="changed">Spostamenti</button><button data-plan-filter="high">Alta confidenza</button><button data-plan-filter="medium">Da controllare</button></div><div class="plan-selection-note"><span><strong>${visible.length}</strong> righe visibili · <strong>${selectedRows().length}</strong> selezionate per l’assegnazione multipla</span><button class="mini-btn" id="selectVisiblePlanRows">Seleziona righe visibili</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th class="checkbox-cell"><input id="selectVisiblePlanCheck" type="checkbox" aria-label="Seleziona tutte le righe visibili"></th><th>Prompt</th><th>Origine</th><th>Categoria finale A–Z</th><th>Sottocategoria</th><th>Confidenza</th><th>Motivazioni</th></tr></thead><tbody>${visible.map(({r,i})=>{const tax=getTax(r.proposedCat);return`<tr><td class="checkbox-cell"><input type="checkbox" data-plan-select="${i}" ${r.selected?'checked':''} aria-label="Seleziona ${escapeHtml(r.title)}"></td><td><b>${escapeHtml(r.title)}</b>${r.excerpt?`<div class="related-excerpt">${escapeHtml(r.excerpt.slice(0,150))}</div>`:''}</td><td>${escapeHtml(r.current)}</td><td><select data-plan-cat="${i}">${categoryOptions(r.proposedCat)}</select></td><td><select data-plan-sub="${i}">${tax.subs.map(x=>`<option ${x===r.proposedSub?'selected':''}>${escapeHtml(x)}</option>`).join('')}</select></td><td><span class="confidence ${r.result.level}">${r.result.confidence}%</span></td><td>${escapeHtml(r.result.reasons.join(', ')||'classificazione per argomento e provenienza')}</td></tr>`}).join('')}</tbody></table></div>`;
+    const render=()=>{
+      taxonomyList=taxonomy();
+      if(!taxonomyList.some(item=>normalize(item.name)===normalize(targetCategory))){
+        targetCategory=taxonomyList[0]?.name||'';
+        targetSubcategory=taxonomyList[0]?.subs?.[0]||'Generale';
+      }
+      const targetTax=getTax(targetCategory);
+      if(!targetTax.subs.some(name=>normalize(name)===normalize(targetSubcategory)))targetSubcategory=targetTax.subs[0]||'Generale';
+      const matches=matchingRows();
+      const shown=matches.slice(0,500);
+      root.innerHTML=`<div class="simple-organizer">
+        <div class="simple-organizer-intro">
+          <div><h3>Sposta più prompt insieme</h3><p>1. Cerca i prompt. 2. Selezionali. 3. Scegli la destinazione. 4. Premi il pulsante blu. Lo spostamento viene salvato immediatamente.</p></div>
+          <span class="simple-counter" id="simpleSelectedCounter">${selectedRows().length} selezionati</span>
+        </div>
+        <div class="simple-fields">
+          <div class="simple-field"><label for="simplePromptSearch">Cerca nei titoli e nei contenuti</label><input id="simplePromptSearch" type="search" value="${escapeHtml(searchQuery)}" placeholder="Es. yoga, SEO locale, ricette Instagram"></div>
+          <div class="simple-field"><label for="simpleTargetCategory">Categoria di destinazione A–Z</label><select id="simpleTargetCategory">${categoryOptions(targetCategory)}</select></div>
+          <div class="simple-field"><label for="simpleTargetSubcategory">Sottocategoria</label><select id="simpleTargetSubcategory">${targetTax.subs.map(name=>`<option ${normalize(name)===normalize(targetSubcategory)?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></div>
+          <button class="simple-add-category" id="simpleAddCategory">+ Aggiungi categoria</button>
+        </div>
+        <div class="simple-create-category ${addingCategory?'':'hidden'}" id="simpleCreateCategory">
+          <div class="simple-field"><label for="simpleNewCategory">Nome categoria</label><input id="simpleNewCategory" maxlength="80" placeholder="Es. E-commerce"></div>
+          <div class="simple-field"><label for="simpleNewSubcategory">Prima sottocategoria</label><input id="simpleNewSubcategory" maxlength="80" value="Generale"></div>
+          <button class="confirm" id="simpleSaveCategory">Crea</button>
+          <button id="simpleCancelCategory">Annulla</button>
+        </div>
+        <div class="simple-actions">
+          <button id="simpleSelectResults">Seleziona tutti i risultati</button>
+          <button id="simpleClearSelection">Deseleziona tutti</button>
+          <span class="simple-help">${matches.length} prompt trovati${matches.length>shown.length?` · primi ${shown.length} mostrati`:''}</span>
+          <button class="move-selected" id="moveSelectedNow" ${selectedRows().length?'':'disabled'}>Sposta i selezionati nella categoria assegnata</button>
+        </div>
+        <div class="simple-results" id="simpleResults">${shown.length?`<table class="data-table"><thead><tr><th class="checkbox-cell"><input id="simpleSelectAllCheck" type="checkbox" aria-label="Seleziona tutti i risultati"></th><th>Prompt</th><th>Categoria attuale</th></tr></thead><tbody>${shown.map(({row,index})=>`<tr><td class="checkbox-cell"><input type="checkbox" data-simple-select="${index}" ${row.selected?'checked':''} aria-label="Seleziona ${escapeHtml(row.title)}"></td><td><div class="simple-result-title">${escapeHtml(row.title)}</div>${row.excerpt?`<div class="simple-result-excerpt">${escapeHtml(row.excerpt)}</div>`:''}</td><td>${escapeHtml(row.current)}</td></tr>`).join('')}</tbody></table>`:'<div class="simple-empty">Nessun prompt trovato. Prova con una parola più breve o diversa.</div>'}</div>
+      </div>`;
 
-      const relatedInput=bodyRoot.querySelector('#relatedPromptSearch');
-      relatedInput.oninput=e=>{relatedQuery=e.target.value;renderRelatedResults()};
-      const categorySelect=bodyRoot.querySelector('#bulkPlanCategory');
-      const subSelect=bodyRoot.querySelector('#bulkPlanSubcategory');
+      const search=root.querySelector('#simplePromptSearch');
+      search.oninput=event=>{
+        searchQuery=event.target.value;
+        const caret=event.target.selectionStart??searchQuery.length;
+        render();
+        requestAnimationFrame(()=>{const next=root.querySelector('#simplePromptSearch');if(next){next.focus();try{next.setSelectionRange(caret,caret)}catch(_){}}});
+      };
+      const categorySelect=root.querySelector('#simpleTargetCategory');
+      const subcategorySelect=root.querySelector('#simpleTargetSubcategory');
       categorySelect.onchange=()=>{
-        bulkCat=categorySelect.value;const tax=getTax(bulkCat);bulkSub=tax.subs[0]||'Generale';
-        subSelect.innerHTML=tax.subs.map(x=>`<option>${escapeHtml(x)}</option>`).join('');subSelect.value=bulkSub;
+        targetCategory=categorySelect.value;
+        const currentTax=getTax(targetCategory);
+        targetSubcategory=currentTax.subs[0]||'Generale';
+        subcategorySelect.innerHTML=currentTax.subs.map(name=>`<option>${escapeHtml(name)}</option>`).join('');
+        subcategorySelect.value=targetSubcategory;
       };
-      subSelect.onchange=()=>{bulkSub=subSelect.value};
-      bodyRoot.querySelector('#addPlanCategory').onclick=()=>{addingCategory=!addingCategory;draw();if(addingCategory)setTimeout(()=>bodyRoot.querySelector('#newPlanCategoryName')?.focus(),30)};
-      bodyRoot.querySelector('#cancelNewPlanCategory').onclick=()=>{addingCategory=false;draw()};
-      bodyRoot.querySelector('#saveNewPlanCategory').onclick=async()=>{
-        const name=stripLeadingIcons(bodyRoot.querySelector('#newPlanCategoryName')?.value||'').trim();
-        const subName=stripLeadingIcons(bodyRoot.querySelector('#newPlanSubcategoryName')?.value||'Generale').trim()||'Generale';
-        if(!name){Toast.show('Inserisci il nome della nuova categoria.','err');bodyRoot.querySelector('#newPlanCategoryName')?.focus();return}
-        const existing=taxonomy().find(x=>normalize(x.name)===normalize(name));
-        if(existing){bulkCat=existing.name;bulkSub=existing.subs[0]||'Generale';addingCategory=false;Toast.show('La categoria esiste già ed è stata selezionata.','ok');draw();return}
+      subcategorySelect.onchange=()=>{targetSubcategory=subcategorySelect.value};
+      root.querySelector('#simpleAddCategory').onclick=()=>{addingCategory=!addingCategory;render();if(addingCategory)setTimeout(()=>root.querySelector('#simpleNewCategory')?.focus(),30)};
+      root.querySelector('#simpleCancelCategory').onclick=()=>{addingCategory=false;render()};
+      root.querySelector('#simpleSaveCategory').onclick=async()=>{
+        const name=stripLeadingIcons(root.querySelector('#simpleNewCategory')?.value||'').trim();
+        const subName=stripLeadingIcons(root.querySelector('#simpleNewSubcategory')?.value||'Generale').trim()||'Generale';
+        if(!name){Toast.show('Inserisci il nome della categoria.','err');root.querySelector('#simpleNewCategory')?.focus();return}
+        const existing=taxonomy().find(item=>normalize(item.name)===normalize(name));
+        if(existing){targetCategory=existing.name;targetSubcategory=existing.subs[0]||'Generale';addingCategory=false;Toast.show('La categoria esiste già ed è stata selezionata.','ok');render();return}
         this.customTaxonomy=this.mergeCustomTaxonomy([...this.customTaxonomy,{key:`custom_${slug(name)}`,name,icon:'',subs:[subName],custom:true}]);
-        await this.saveCustomTaxonomy();bulkCat=name;bulkSub=subName;addingCategory=false;
-        Toast.show(`Categoria “${name}” aggiunta e selezionata.`,'ok',4200);draw();
+        await this.saveCustomTaxonomy();
+        targetCategory=name;targetSubcategory=subName;addingCategory=false;
+        Toast.show(`Categoria “${name}” creata e selezionata.`,'ok');render();
       };
-      bodyRoot.querySelector('#selectAllRelated').onclick=()=>{
-        const matches=relatedMatches();
-        if(!matches.length){Toast.show('Nessun risultato da selezionare.','err');return}
-        matches.forEach(({r})=>r.selected=true);draw();
-      };
-      bodyRoot.querySelector('#clearRelatedSelection').onclick=()=>{plan.forEach(r=>r.selected=false);draw()};
-      bodyRoot.querySelector('#assignRelatedPrompts').onclick=()=>{
+      root.querySelectorAll('[data-simple-select]').forEach(check=>check.onchange=()=>{plan[+check.dataset.simpleSelect].selected=check.checked;updateSelectionUi()});
+      const allCheck=root.querySelector('#simpleSelectAllCheck');
+      if(allCheck){allCheck.checked=matches.length>0&&matches.every(({row})=>row.selected);allCheck.onchange=()=>{matches.forEach(({row})=>row.selected=allCheck.checked);render()}};
+      root.querySelector('#simpleSelectResults').onclick=()=>{if(!matches.length){Toast.show('Nessun risultato da selezionare.','err');return}matches.forEach(({row})=>row.selected=true);render()};
+      root.querySelector('#simpleClearSelection').onclick=()=>{plan.forEach(row=>row.selected=false);render()};
+      root.querySelector('#moveSelectedNow').onclick=async event=>{
         const selected=selectedRows();
-        if(!selected.length){Toast.show('Seleziona almeno un prompt individuato dalla ricerca.','err');return}
-        const tax=getTax(bulkCat);const destinationSub=tax.subs.includes(bulkSub)?bulkSub:tax.subs[0];
-        selected.forEach(r=>{r.proposedCat=tax.name;r.proposedSub=destinationSub;r.selected=false;r.searchText=normalize([r.searchText,tax.name,destinationSub].join(' '))});
-        Toast.show(`${selected.length} prompt indirizzati in ${tax.name} › ${destinationSub}.`,'ok',4500);draw();
+        if(!selected.length){Toast.show('Seleziona almeno un prompt.','err');return}
+        const button=event.currentTarget;button.disabled=true;button.textContent='Spostamento in corso…';
+        Loading.show();
+        try{
+          const moved=await this.moveSelectedPromptsToCategory(selected.map(row=>row.promptId),targetCategory,targetSubcategory);
+          if(!moved){Toast.show('I prompt selezionati sono già nella categoria scelta.','err');return}
+          plan=this.buildClassificationPlan();
+          this.render();
+          Toast.show(`${moved} prompt spostati in ${targetCategory} › ${targetSubcategory}.`,'ok',5000);
+          render();
+        }catch(error){console.error(error);Toast.show('Errore durante lo spostamento dei prompt.','err',6000);render()}
+        finally{Loading.hide()}
       };
-      const search=bodyRoot.querySelector('#planSearch');
-      search.oninput=e=>{
-        query=e.target.value;const caret=e.target.selectionStart??query.length;draw();
-        requestAnimationFrame(()=>{const next=bodyRoot.querySelector('#planSearch');if(next){next.focus();try{next.setSelectionRange(caret,caret)}catch(_){}}});
-      };
-      bodyRoot.querySelectorAll('[data-plan-filter]').forEach(btn=>{btn.classList.toggle('active',btn.dataset.planFilter===filter);btn.onclick=()=>{filter=btn.dataset.planFilter;draw()}});
-      bodyRoot.querySelectorAll('[data-plan-cat]').forEach(sel=>sel.onchange=()=>{const row=plan[+sel.dataset.planCat];row.proposedCat=sel.value;const tax=getTax(sel.value);row.proposedSub=tax.subs[0]||'Generale';row.searchText=normalize([row.searchText,tax.name,row.proposedSub].join(' '));draw()});
-      bodyRoot.querySelectorAll('[data-plan-sub]').forEach(sel=>sel.onchange=()=>{const row=plan[+sel.dataset.planSub];row.proposedSub=sel.value;row.searchText=normalize([row.searchText,row.proposedSub].join(' '))});
-      bodyRoot.querySelectorAll('[data-plan-select]').forEach(check=>check.onchange=()=>{plan[+check.dataset.planSelect].selected=check.checked;const note=bodyRoot.querySelector('.plan-selection-note span');if(note)note.innerHTML=`<strong>${visible.length}</strong> righe visibili · <strong>${selectedRows().length}</strong> selezionate per l’assegnazione multipla`;const selectedSummary=bodyRoot.querySelector('#selectedSummary');if(selectedSummary)selectedSummary.textContent=`${selectedRows().length} selezionati`;const all=bodyRoot.querySelector('#selectVisiblePlanCheck');if(all)all.checked=visible.length>0&&visible.every(({r})=>r.selected);renderRelatedResults()});
-      const selectVisible=checked=>{visible.forEach(({r})=>r.selected=checked);draw()};
-      const selectVisibleCheck=bodyRoot.querySelector('#selectVisiblePlanCheck');
-      selectVisibleCheck.checked=visible.length>0&&visible.every(({r})=>r.selected);
-      selectVisibleCheck.onchange=()=>selectVisible(selectVisibleCheck.checked);
-      bodyRoot.querySelector('#selectVisiblePlanRows').onclick=()=>selectVisible(true);
-      renderRelatedResults();
+      updateSelectionUi();
     };
-    draw();
+    render();
   }
-  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.3.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
+  async moveSelectedPromptsToCategory(promptIds,categoryName,subcategoryName){
+    const ids=[...new Set((promptIds||[]).filter(Boolean))];
+    if(!ids.length)return 0;
+    const tax=this.taxonomyOptions().find(item=>normalize(item.name)===normalize(categoryName));
+    const cleanCategory=stripLeadingIcons(tax?.name||categoryName||'').trim();
+    const cleanSubcategory=stripLeadingIcons(subcategoryName||tax?.subs?.[0]||'Generale').trim()||'Generale';
+    if(!cleanCategory)throw new Error('Categoria di destinazione non valida');
+    await this.db.saveBackup(this.data,`Prima dello spostamento di ${ids.length} prompt`);
+    let moved=0;
+    await this.commit(draft=>{
+      let targetCat=draft.find(cat=>!this.isTrash(cat)&&normalize(cat.name)===normalize(cleanCategory));
+      if(!targetCat){targetCat={id:uid(),name:cleanCategory,icon:'',customTaxonomy:!!tax?.custom,subcategories:[]};draft.push(targetCat)}
+      let targetSub=(targetCat.subcategories||[]).find(sub=>normalize(sub.name)===normalize(cleanSubcategory));
+      if(!targetSub){targetSub={id:uid(),name:cleanSubcategory,icon:'',prompts:[]};targetCat.subcategories.push(targetSub)}
+      ids.forEach(id=>{
+        const found=this.findPrompt(id,draft);
+        if(!found||this.isTrash(found.cat))return;
+        if(found.cat.id===targetCat.id&&found.sub.id===targetSub.id)return;
+        const index=found.sub.prompts.findIndex(prompt=>prompt.id===id);if(index<0)return;
+        const [prompt]=found.sub.prompts.splice(index,1);
+        prompt.originHistory=Array.isArray(prompt.originHistory)?prompt.originHistory:[];
+        prompt.originHistory.push({category:stripLeadingIcons(found.cat.name),subcategory:stripLeadingIcons(found.sub.name),at:Date.now(),action:'manual-move'});
+        prompt.classificationVersion=CLASSIFIER_VERSION;
+        prompt.classificationScore=100;
+        prompt.classificationReasons=['spostamento manuale nella categoria assegnata'];
+        prompt.classifiedAt=Date.now();
+        prompt.updatedAt=Date.now();
+        targetSub.prompts.push(prompt);moved++;
+      });
+    },{render:false});
+    return moved;
+  }
+
+  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.4.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
   splitLargeSubcategories(categories){for(const cat of categories){const result=[];for(const sub of cat.subcategories){if(sub.prompts.length<=50){result.push(sub);continue}const sorted=sub.prompts.slice().sort((a,b)=>a.title.localeCompare(b.title,'it'));for(let i=0;i<sorted.length;i+=35){const chunk=sorted.slice(i,i+35);const first=(normalize(chunk[0]?.title)[0]||'#').toUpperCase();const last=(normalize(chunk.at(-1)?.title)[0]||'#').toUpperCase();result.push({id:uid(),name:`${sub.name} · ${first}–${last}`,icon:sub.icon||'',prompts:chunk})}}cat.subcategories=result}}
   async applyClassification(plan){
     if(!plan.length){Toast.show('Nessun prompt da classificare.','err');return}
@@ -895,7 +945,7 @@ class PromptStudioApp{
       this.snapshot();this.data=newCats.filter(c=>this.isTrash(c)||this.countCategory(c)>0);this.state={...this.state,view:'dashboard',catId:null,subId:null,promptId:null};await this.persist();this.closeModal();this.render();this.exportClassificationReport(plan,plan.map(r=>r.promptId));Toast.show('Categorie riorganizzate: ogni prompt è stato assegnato alla propria area.','ok',5000);
     }finally{Loading.hide()}
   }
-  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.3.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
+  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.4.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
   async rollbackTaxonomy(){const rollback=await this.db.get(DATA_STORE,'taxonomyRollbackV323',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV322',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV320',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV31',null);if(!rollback?.data){Toast.show('Nessun rollback disponibile.','err');return}const ok=await this.confirmModal('Rollback tassonomia','Ripristinare i dati precedenti all’ultima ricategorizzazione?','Ripristina');if(!ok)return;this.snapshot();this.data=this.migrate(clone(rollback.data));this.recents=rollback.recents||[];this.customTaxonomy=this.mergeCustomTaxonomy(rollback.customTaxonomy||this.data.filter(cat=>cat.customTaxonomy).map(cat=>({name:cat.name,subs:(cat.subcategories||[]).map(sub=>sub.name),custom:true})));await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Rollback completato.','ok')}
 }
 
