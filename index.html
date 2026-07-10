@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prompt Studio v32.0 tassonomia separata</title>
+<title>Prompt Studio v32.1 clienti e UI blu</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
@@ -152,19 +152,59 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 @media(max-width:1120px){.category-jump{order:2;flex:1 1 280px;max-width:none}.header-search{order:1;flex:1 1 360px}.header-actions{order:3;width:100%}}
 @media(max-width:700px){.category-jump{min-width:100%;width:100%}.detail-actions button span{display:none}.detail-actions button{min-width:40px;justify-content:center}.editor-toolbar .save-edit span{display:inline}}
 
+
+/* v32.1: sidebar blu, card alternate e interfaccia senza tag */
+.modern-layout > .panel:first-child{
+  background:linear-gradient(180deg,#0b2f67 0%,#0b3978 48%,#0a2b5d 100%);
+  border-right:1px solid rgba(147,197,253,.35);
+}
+.modern-layout > .panel:first-child .category-header,
+.modern-layout > .panel:first-child .subtabs,
+.modern-layout > .panel:first-child .subsection-head,
+.modern-layout > .panel:first-child .panel-search{
+  background:transparent;
+}
+.modern-layout > .panel:first-child .category-header{
+  background:linear-gradient(180deg,rgba(59,130,246,.30),rgba(30,64,175,.08));
+}
+.modern-layout > .panel:first-child .subtab{
+  background:rgba(30,64,175,.46);
+  border-color:rgba(147,197,253,.24);
+}
+.modern-layout > .panel:first-child .subtab.active{
+  background:rgba(96,165,250,.34);
+  border-color:rgba(191,219,254,.62);
+}
+.prompt-grid>.prompt-card:nth-child(odd){
+  background:#123d7a;
+  border-color:rgba(147,197,253,.30);
+}
+.prompt-grid>.prompt-card:nth-child(even){
+  background:#1d4f91;
+  border-color:rgba(191,219,254,.30);
+}
+.prompt-grid>.prompt-card:hover{
+  background:#245ca5;
+  border-color:rgba(219,234,254,.60);
+}
+.prompt-grid>.prompt-card.active{
+  background:#2f5fc4;
+  border-color:#a5b4fc;
+}
+.tags-row,.tag,.tag-input{display:none!important}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="header">
-    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.0</span></div>
+    <div class="brand"><span class="brand-dot"></span>Prompt Studio <span class="version">v32.1</span></div>
     <div class="header-search"><span>⌕</span><input id="globalSearch" type="search" placeholder="Cerca prompt, contenuti e tag…"><button id="clearSearch" class="clear-search" aria-label="Cancella ricerca">×</button></div>
     <select id="viewJump" class="view-jump" aria-label="Scegli una sezione">
       <option value="dashboard">Dashboard</option>
       <option value="all">Tutti</option>
       <option value="favorites">Preferiti</option>
       <option value="recents">Recenti</option>
-      <option value="tags">Tag</option>
       <option value="trash">Cestino</option>
     </select>
     <select id="categoryJump" class="category-jump" aria-label="Scegli una categoria in ordine alfabetico"></select>
@@ -188,8 +228,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 (()=>{
 'use strict';
 
-const VERSION='32.0';
-const CLASSIFIER_VERSION='single-topic-taxonomy-2026-07-v32.0';
+const VERSION='32.1';
+const CLASSIFIER_VERSION='client-first-taxonomy-2026-07-v32.1';
 const DB_NAME='PromptStudio_v22';
 const DB_VERSION=4;
 const DATA_STORE='data';
@@ -237,6 +277,12 @@ class StorageDB{
 }
 
 const TAXONOMY=[
+  {key:'client_zanoni',name:'Roberto Zanoni',icon:'',subs:['SEO e contenuti','Sito e portfolio','Marketing e business','Social media','Strumenti e workflow']},
+  {key:'client_zirafa',name:'Studio Dentistico Zirafa',icon:'',subs:['SEO locale','Ortodonzia','Metodo Sato','Contenuti odontoiatrici','Sito e conversioni']},
+  {key:'client_buonisani',name:'I Buoni Sani',icon:'',subs:['Ricette','SEO e contenuti','Social media','Sito e conversioni','Immagini food']},
+  {key:'client_yoga',name:'Yoga Buena Onda',icon:'',subs:['SEO locale','Corsi yoga','Contenuti yoga','Sito e conversioni','Social media']},
+  {key:'client_pilates',name:'Pilates Buena Onda',icon:'',subs:['SEO locale','Corsi pilates','Contenuti pilates','Sito e conversioni','Social media']},
+  {key:'client_dare',name:'DARE',icon:'',subs:['SEO e contenuti','Marketing','Social media','Sito e conversioni','Materiali operativi']},
   {key:'prompt',name:'Prompt Engineering',icon:'',subs:['Creazione prompt','Ottimizzazione prompt','System prompt','Controllo qualità','Variabili e template']},
   {key:'agents',name:'Agenti AI',icon:'',subs:['Agenti autonomi','GPT personalizzati','GEM personalizzati','Chatbot','Memoria e orchestrazione']},
   {key:'seo',name:'SEO',icon:'',subs:['Keyword research','Search intent','SERP analysis','SEO on-page','SEO tecnica','Local SEO','Internal linking','Search Console','Dati strutturati']},
@@ -275,30 +321,16 @@ class TaxonomyEngine{
     rules.forEach(([tag,rx])=>{if(rx.test(value))tags.push(tag)});
     return [...new Set(tags)];
   }
-  static generatedTags(text,source=''){
-    const value=normalize(text), tags=[];
-    const add=(tag,rx)=>{if(rx.test(value))tags.push(tag)};
-    add('channel:instagram',/instagram|reel|storie|stories/);
-    add('channel:linkedin',/linkedin/);
-    add('channel:youtube',/youtube|shorts?/);
-    add('channel:facebook',/facebook/);
-    add('tool:elementor',/elementor/);
-    add('tool:wordpress',/wordpress|gutenberg|woocommerce/);
-    add('tool:search-console',/search console|gsc/);
-    add('tool:canva',/canva/);
-    add('format:html',/\bhtml\b/);
-    add('format:json',/\bjson\b/);
-    add('format:csv',/\bcsv\b/);
-    add('format:excel',/excel|xlsx/);
-    add('format:pdf',/\bpdf\b/);
-    add('task:audit',/audit|analizza|valuta|verifica/);
-    add('task:creazione',/crea|genera|scrivi|sviluppa/);
-    add('task:ottimizzazione',/ottimizza|migliora|correggi|riscrivi/);
-    return [...new Set([...this.clientTags(value,source),...tags])];
-  }
+  static generatedTags(){return[]}
   static sourceKey(source){
     const s=normalize(source);
     const rules=[
+      ['client_zanoni',/roberto\s*zanoni|robertozanoni\.it|tool\.zanoni/],
+      ['client_zirafa',/zirafa|studiodentisticozirafa|metodo\s*sato/],
+      ['client_buonisani',/i\s*buoni\s*sani|ibuonisani|sano\s*in\s*tavola|sanointavola/],
+      ['client_yoga',/yoga\s*buena\s*onda|yogabuenaonda|corso\s*yoga\s*cinisello/],
+      ['client_pilates',/pilates\s*buena\s*onda|pilatesbuenaonda/],
+      ['client_dare',/(?:^|\s)dare(?:\s|$)|client[:\s-]*dare/],
       ['images',/immagini ai|generazione immagini|editing immagini/],
       ['photo',/fotografia|food photography|still life|ritratto/],
       ['graphics',/grafica|branding|logo|infografica|brochure|packaging|mockup/],
@@ -337,6 +369,17 @@ class TaxonomyEngine{
     const hit=rx=>rx.test(text);
     const sourceKey=this.sourceKey(sourceText);
     if(sourceKey)add(sourceKey,34,'coerenza con la categoria di origine');
+    const clientRules=[
+      ['client_zanoni',/roberto\s*zanoni|robertozanoni\.it|tool\.zanoni/],
+      ['client_zirafa',/zirafa|studiodentisticozirafa|metodo\s*sato/],
+      ['client_buonisani',/i\s*buoni\s*sani|ibuonisani|sano\s*in\s*tavola|sanointavola/],
+      ['client_yoga',/yoga\s*buena\s*onda|yogabuenaonda|corso\s*yoga\s*cinisello/],
+      ['client_pilates',/pilates\s*buena\s*onda|pilatesbuenaonda/],
+      ['client_dare',/client[:\s-]*dare|progetto\s+dare|brand\s+dare/]
+    ];
+    for(const [clientKey,rx] of clientRules){
+      if(rx.test(text+' '+sourceText))add(clientKey,220,'prompt associato direttamente al cliente');
+    }
 
     const rules=[
       ['images',125,/(?:crea|genera|modifica|trasforma|ritocca|migliora).{0,80}(?:immagine|foto|visual|thumbnail|illustrazione)|prompt immagine|dall.?e|midjourney|stable diffusion|gpt image/,'il risultato richiesto è un’immagine'],
@@ -392,6 +435,12 @@ class TaxonomyEngine{
   }
   static subcategory(key,text){
     const maps={
+      client_zanoni:[[/seo|serp|keyword|search console/,'SEO e contenuti'],[/portfolio|robertozanoni\.it|sito personale/,'Sito e portfolio'],[/marketing|business|offerta|pricing/,'Marketing e business'],[/social|instagram|linkedin|facebook/,'Social media']],
+      client_zirafa:[[/local seo|bergamo|google business/,'SEO locale'],[/ortodonz/,'Ortodonzia'],[/metodo sato/,'Metodo Sato'],[/articolo|contenuto|copy/,'Contenuti odontoiatrici']],
+      client_buonisani:[[/ricetta|piatto|ingredient|cucina/,'Ricette'],[/seo|serp|keyword/,'SEO e contenuti'],[/social|instagram|reel|caption/,'Social media'],[/immagine|foto|food photography/,'Immagini food']],
+      client_yoga:[[/local seo|cinisello|google business/,'SEO locale'],[/corso|hatha|vinyasa|power yoga/,'Corsi yoga'],[/articolo|contenuto|benefici|postura|schiena/,'Contenuti yoga'],[/social|instagram|reel/,'Social media']],
+      client_pilates:[[/local seo|cinisello|google business/,'SEO locale'],[/corso|reformer|matwork|tower|cadillac/,'Corsi pilates'],[/articolo|contenuto|benefici/,'Contenuti pilates'],[/social|instagram|reel/,'Social media']],
+      client_dare:[[/seo|serp|keyword/,'SEO e contenuti'],[/marketing|funnel|posizionamento/,'Marketing'],[/social|instagram|linkedin|facebook/,'Social media'],[/sito|landing|conversion/,'Sito e conversioni']],
       prompt:[[/system prompt/,'System prompt'],[/ottimizza|migliora|riscrivi/,'Ottimizzazione prompt'],[/qualita|verifica|guardrail|allucin/,'Controllo qualità'],[/variabil|template/,'Variabili e template']],
       agents:[[/gpt personalizz|custom gpt/,'GPT personalizzati'],[/gem personalizz|custom gem/,'GEM personalizzati'],[/chatbot/,'Chatbot'],[/memoria|orchestrazione|second brain|multi.?agent/,'Memoria e orchestrazione']],
       seo:[[/keyword/,'Keyword research'],[/search intent/,'Search intent'],[/serp|competitor|content gap/,'SERP analysis'],[/local seo|google business|maps|vicino/,'Local SEO'],[/internal link|link interni|topical|pillar|cluster/,'Internal linking'],[/search console|\bgsc\b/,'Search Console'],[/schema|dati strutturati/,'Dati strutturati'],[/crawl|canonical|robots|sitemap|indicizzazione|core web vitals|seo tecnica/,'SEO tecnica']],
@@ -414,6 +463,9 @@ class TaxonomyEngine{
       documents:[[/pdf/,'PDF'],[/word/,'Word'],[/presentazione|powerpoint/,'Presentazioni'],[/sintesi|riassunto/,'Sintesi'],[/report/,'Report'],[/backup/,'Backup']]
     };
     const defaults={
+      client_zanoni:'Strumenti e workflow',client_zirafa:'Sito e conversioni',
+      client_buonisani:'Sito e conversioni',client_yoga:'Sito e conversioni',
+      client_pilates:'Sito e conversioni',client_dare:'Materiali operativi',
       prompt:'Creazione prompt',agents:'Agenti autonomi',seo:'SEO on-page',copy:'Copy persuasivo',
       content:'Articoli',marketing:'Analisi competitor',business:'Business model',social:'Community',
       wordpress:'Gutenberg',webdesign:'UI',webdev:'Debug',appdev:'Web app',graphics:'Layout',
@@ -453,7 +505,7 @@ class PromptStudioApp{
       cat.subcategories.forEach(sub=>{sub.id=sub.id||uid();sub.name=stripLeadingIcons(sub.name||'Generale')||'Generale';sub.icon='';sub.prompts=Array.isArray(sub.prompts)?sub.prompts:[];sub.prompts.forEach(p=>this.normalizePrompt(p))});
     });return data;
   }
-  normalizePrompt(p){p.id=p.id||uid();p.title=String(p.title||p.name||'Prompt');p.description=typeof p.description==='string'?p.description:String(p.description||p.text||p.plainText||'');p.tags=Array.isArray(p.tags)?p.tags:(p.tags?[String(p.tags)]:[]);p.favorite=!!p.favorite;p.pinned=!!p.pinned;p.copyCount=Number(p.copyCount)||0;p.versions=Array.isArray(p.versions)?p.versions:[];p.related=Array.isArray(p.related)?p.related:[];p.createdAt=Number(p.createdAt)||Date.now();p.updatedAt=Number(p.updatedAt)||Date.now();return p}
+  normalizePrompt(p){p.id=p.id||uid();p.title=String(p.title||p.name||'Prompt');p.description=typeof p.description==='string'?p.description:String(p.description||p.text||p.plainText||'');p.tags=[];p.favorite=!!p.favorite;p.pinned=!!p.pinned;p.copyCount=Number(p.copyCount)||0;p.versions=Array.isArray(p.versions)?p.versions:[];p.related=Array.isArray(p.related)?p.related:[];p.createdAt=Number(p.createdAt)||Date.now();p.updatedAt=Number(p.updatedAt)||Date.now();return p}
   isTrash(cat){return /cestino|🗑️/i.test(String(cat?.name||''))}
   categories(){return this.data.filter(c=>!this.isTrash(c)).sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'}))}
   allPrompts({trash=false,archived=false}={}){const out=[];this.data.forEach(cat=>{if(!trash&&this.isTrash(cat))return;(cat.subcategories||[]).forEach(sub=>(sub.prompts||[]).forEach(prompt=>{if(!archived&&prompt.archived)return;out.push({...prompt,catId:cat.id,subId:sub.id,catName:cat.name,subName:sub.name})}))});return out}
@@ -496,7 +548,6 @@ class PromptStudioApp{
       'copy-prompt':()=>this.copyPrompt(el.dataset.id||this.state.promptId),'duplicate-prompt':()=>this.duplicatePrompt(el.dataset.id||this.state.promptId),
       'favorite-prompt':()=>this.togglePromptFlag('favorite',el.dataset.id||this.state.promptId),'pin-prompt':()=>this.togglePromptFlag('pinned',this.state.promptId),
       'delete-prompt':()=>this.deletePrompt(),'restore-prompt':()=>this.restorePrompt(),'move-prompt':()=>this.movePrompt(),
-      'remove-tag':()=>this.removeTag(el.dataset.tag),'add-tag':()=>this.addTag(),
       'open-recategorize':()=>this.openRecategorize(),'open-tools':()=>this.openTools(),'open-backup':()=>this.openBackup(),'open-settings':()=>this.openSettings(),
       'toggle-theme':()=>this.toggleTheme(),'undo':()=>this.undoAction(),'redo':()=>this.redoAction(),
       'export-full':()=>this.exportFull(),'export-category':()=>this.exportCategory(),'export-categories-zip':()=>this.exportCategoriesZip(),'export-markdown':()=>this.exportMarkdown(),
@@ -523,9 +574,9 @@ class PromptStudioApp{
   trackRecent(id){const found=this.findPrompt(id);if(!found)return;this.recents=this.recents.filter(r=>r.promptId!==id);this.recents.unshift({promptId:id,catId:found.cat.id,subId:found.sub.id,ts:Date.now()});this.recents=this.recents.slice(0,40);this.db.put(DATA_STORE,'recents',this.recents).catch(console.error)}
   openPrompt(id){const found=this.findPrompt(id);if(!found)return;this.state.view='library';this.state.catId=found.cat.id;this.state.subId=found.sub.id;this.state.promptId=id;this.state.editing=false;this.trackRecent(id);this.render()}
   render(){this.ensureSelection();this.renderViewJump();this.renderJump();const main=$('main');if(this.state.view==='dashboard')this.renderDashboard(main);else if(this.state.view==='library')this.renderLibrary(main);else this.renderSpecial(main);}
-  renderViewJump(){const select=$('viewJump');if(!select)return;select.value=['dashboard','all','favorites','recents','tags','trash'].includes(this.state.view)?this.state.view:'all'}
+  renderViewJump(){const select=$('viewJump');if(!select)return;select.value=['dashboard','all','favorites','recents','trash'].includes(this.state.view)?this.state.view:'all'}
   renderJump(){const select=$('categoryJump');if(!select)return;const categories=this.categories();select.innerHTML='<option value="">Scegli categoria A–Z…</option>'+categories.map(c=>`<option value="cat:${c.id}">${escapeHtml(stripLeadingIcons(c.name))} · ${this.countCategory(c)} prompt</option>`).join('');select.value=this.state.view==='library'&&this.state.catId?`cat:${this.state.catId}`:''}
-  quickNavHtml(){const all=this.allPrompts();const trash=this.allPrompts({trash:true}).filter(p=>this.isTrash(this.findCategory(p.catId))).length;const views=[['dashboard','Dashboard',''],['all','Tutti',all.length],['favorites','Preferiti',all.filter(p=>p.favorite).length],['recents','Recenti',this.recents.length],['tags','Tag',new Set(all.flatMap(p=>p.tags||[])).size],['trash','Cestino',trash]];return`<div class="nav-section-title">Navigazione</div>${views.map(([v,l,n],i)=>`<button class="nav-item nav-quick nav-tone-${(i%4)+1} ${this.state.view===v?'active':''}" data-action="nav" data-view="${v}"><div class="nav-row"><span class="nav-label">${l}</span>${n!==''?`<span class="count">${n}</span>`:''}</div></button>`).join('')}<div class="nav-section-title">Categorie ordinate A–Z</div>${this.categories().map((c,i)=>`<button class="nav-item category-nav-item nav-tone-${(i%4)+1} ${this.state.catId===c.id&&this.state.view==='library'?'active':''}" data-action="select-category" data-id="${c.id}"><div class="nav-row"><span class="nav-label">${escapeHtml(stripLeadingIcons(c.name))}</span><span class="count">${this.countCategory(c)}</span></div></button>`).join('')}`}
+  quickNavHtml(){const all=this.allPrompts();const trash=this.allPrompts({trash:true}).filter(p=>this.isTrash(this.findCategory(p.catId))).length;const views=[['dashboard','Dashboard',''],['all','Tutti',all.length],['favorites','Preferiti',all.filter(p=>p.favorite).length],['recents','Recenti',this.recents.length],['trash','Cestino',trash]];return`<div class="nav-section-title">Navigazione</div>${views.map(([v,l,n],i)=>`<button class="nav-item nav-quick nav-tone-${(i%4)+1} ${this.state.view===v?'active':''}" data-action="nav" data-view="${v}"><div class="nav-row"><span class="nav-label">${l}</span>${n!==''?`<span class="count">${n}</span>`:''}</div></button>`).join('')}<div class="nav-section-title">Categorie ordinate A–Z</div>${this.categories().map((c,i)=>`<button class="nav-item category-nav-item nav-tone-${(i%4)+1} ${this.state.catId===c.id&&this.state.view==='library'?'active':''}" data-action="select-category" data-id="${c.id}"><div class="nav-row"><span class="nav-label">${escapeHtml(stripLeadingIcons(c.name))}</span><span class="count">${this.countCategory(c)}</span></div></button>`).join('')}`}
   renderLibrary(main=$('main')){
     const cat=this.findCategory(this.state.catId);const sub=this.findSub(this.state.catId,this.state.subId);const prompt=this.findPrompt(this.state.promptId)?.prompt;
     main.className='main';main.innerHTML=`<div class="layout-3 modern-layout"><section class="panel" id="subPanel"></section><section class="panel detail-panel" id="detailPanel"></section></div>`;
@@ -534,17 +585,17 @@ class PromptStudioApp{
     const subs=[...(cat.subcategories||[])].sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'}));
     if(!sub&&subs[0]){this.state.subId=subs[0].id;this.state.promptId=[...(subs[0].prompts||[])].sort((a,b)=>a.title.localeCompare(b.title,'it',{sensitivity:'base'}))[0]?.id||null;return this.renderLibrary(main)}
     const promptList=[...(sub?.prompts||[])].filter(p=>!p.archived).sort((a,b)=>a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
-    const q=normalize(this.state.promptFilter);const filtered=promptList.filter(p=>!q||normalize(p.title+' '+plain(p.description)+' '+(p.tags||[]).join(' ')).includes(q));
+    const q=normalize(this.state.promptFilter);const filtered=promptList.filter(p=>!q||normalize(p.title+' '+plain(p.description)).includes(q));
     const currentSubTitle=sub?escapeHtml(stripLeadingIcons(sub.name)):'Seleziona una sottocategoria';
     subPanel.innerHTML=`<div class="category-shell"><div class="category-header"><div class="category-heading"><div class="eyebrow">Categoria selezionata</div><h2>${escapeHtml(stripLeadingIcons(cat.name))}</h2><p>${this.countCategory(cat)} prompt distribuiti in ${subs.length} sottocategorie.</p></div><div class="category-actions"><button class="mini-btn primary" data-action="new-category">Nuova categoria</button><button class="mini-btn" data-action="rename-category">Rinomina</button><button class="mini-btn danger" data-action="delete-category">Elimina</button><button class="mini-btn primary" data-action="new-sub">Nuova sottocategoria</button></div></div><div class="subtabs">${subs.length?subs.map(s=>`<button class="subtab ${s.id===this.state.subId?'active':''}" data-action="select-sub" data-id="${s.id}"><span>${escapeHtml(stripLeadingIcons(s.name))}</span><small>${(s.prompts||[]).length} prompt</small></button>`).join(''):this.emptyHtml('','Nessuna sottocategoria','Crea una sottocategoria.')}</div>${sub?`<div class="subsection-head"><div><div class="eyebrow">Sottocategoria</div><h3>${currentSubTitle}</h3></div><div class="subsection-actions"><span class="count">${promptList.length} prompt</span><button class="mini-btn" data-action="rename-sub">Rinomina</button><button class="mini-btn danger" data-action="delete-sub">Elimina</button><button class="mini-btn primary" data-action="new-prompt">Nuovo prompt</button></div></div><div class="panel-search modern-search"><input id="promptFilter" value="${escapeHtml(this.state.promptFilter)}" placeholder="Filtra i prompt della sottocategoria…"></div><div class="prompt-list prompt-grid" id="promptList">${filtered.length?filtered.map(p=>this.promptCardHtml(p)).join(''):this.emptyHtml('','Nessun prompt','Crea il primo prompt in questa sottocategoria.')}</div>`:`<div class="empty"><strong>Seleziona una sottocategoria</strong><p>Poi potrai vedere i prompt in ordine alfabetico.</p></div>`}</div>`;
     if(!sub){$('detailPanel').innerHTML=this.emptyHtml('','Seleziona una sottocategoria','Poi potrai creare o aprire i prompt.');return}
     this.renderDetail($('detailPanel'),prompt);
   }
-  promptCardHtml(p,path=''){const quality=this.promptQuality(p);const letter=escapeHtml((p.title||'?').trim().charAt(0).toUpperCase()||'?');return`<div class="list-item prompt-card ${p.id===this.state.promptId?'active':''}" role="button" tabindex="0" data-action="select-prompt" data-id="${p.id}"><div class="prompt-card-top"><div style="min-width:0;flex:1"><div class="item-title">${escapeHtml(p.title)}</div>${path?`<div class="item-meta">${escapeHtml(path)}</div>`:''}</div><span class="prompt-letter">${letter}</span></div>${p.description?`<div class="item-desc">${escapeHtml(plain(p.description).slice(0,170))}</div>`:''}<div class="badges">${p.favorite?'<span class="badge">Preferito</span>':''}${p.pinned?'<span class="badge">In evidenza</span>':''}<span class="badge ${quality>=75?'good':quality>=55?'warn':'bad'}">Q ${quality}</span>${(p.tags||[]).slice(0,3).map(t=>`<span class="badge">${escapeHtml(t)}</span>`).join('')}</div><div class="prompt-tools"><button data-action="copy-prompt" data-id="${p.id}" title="Copia">Copia</button><button data-action="duplicate-prompt" data-id="${p.id}" title="Duplica">Duplica</button></div></div>`}
-  renderDetail(panel,prompt){if(!prompt){panel.innerHTML=this.emptyHtml('📝','Seleziona un prompt','Il contenuto apparirà qui.');return}const found=this.findPrompt(prompt.id);const stats=wordStats(prompt.description);const vars=this.extractVariables(prompt.description);const inTrash=this.isTrash(found.cat);panel.innerHTML=`<div class="detail"><div class="detail-head"><h3>Dettaglio prompt</h3><div class="detail-actions"><button data-action="edit-prompt" title="Modifica prompt" aria-label="Modifica prompt">✏️ <span>Modifica</span></button><button data-action="copy-prompt" title="Copia prompt" aria-label="Copia prompt">📋 <span>Copia</span></button><button data-action="duplicate-prompt" title="Duplica prompt" aria-label="Duplica prompt">⧉ <span>Duplica</span></button><button data-action="favorite-prompt" title="Aggiungi o rimuovi dai preferiti" aria-label="Preferito">⭐ <span>Preferito</span></button><button data-action="pin-prompt" title="Metti in evidenza" aria-label="Metti in evidenza">📌 <span>${prompt.pinned?'In evidenza':'Pin'}</span></button><button data-action="move-prompt" title="Sposta prompt" aria-label="Sposta prompt">↔️ <span>Sposta</span></button>${inTrash?'<button data-action="restore-prompt" title="Ripristina prompt" aria-label="Ripristina prompt">↩️ <span>Ripristina</span></button>':'<button class="danger" data-action="delete-prompt" title="Elimina prompt" aria-label="Elimina prompt">🗑️ <span>Elimina</span></button>'}</div></div><div class="breadcrumb"><button data-action="select-category" data-id="${found.cat.id}">${escapeHtml(found.cat.name)}</button> › <button data-action="select-sub" data-id="${found.sub.id}">${escapeHtml(found.sub.name)}</button> › ${escapeHtml(prompt.title)}</div><div class="title-row"><h1>${escapeHtml(prompt.title)}</h1><span class="spacer"></span><button class="mini-btn" data-action="rename-prompt" title="Rinomina prompt" aria-label="Rinomina prompt">✏️</button></div><div class="meta-row"><span class="badge">Creato ${formatDate(prompt.createdAt)}</span><span class="badge">Aggiornato ${formatDate(prompt.updatedAt)}</span><span class="badge">Copiato ${prompt.copyCount||0}×</span><span class="badge">Qualità ${this.promptQuality(prompt)}/100</span></div><div class="tags-row">${(prompt.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}<button data-action="remove-tag" data-tag="${escapeHtml(t)}">×</button></span>`).join('')}<div class="tag-input"><input id="tagInput" placeholder="Aggiungi tag…"><button class="mini-btn primary" data-action="add-tag">＋</button></div></div><div class="variables ${vars.length?'show':''}" id="variables"><h4>Variabili dinamiche</h4><div class="var-grid">${vars.map(v=>`<div class="var-field"><label>${escapeHtml(v.name)}</label>${v.options?`<select data-variable="${escapeHtml(v.name)}">${v.options.map(o=>`<option>${escapeHtml(o)}</option>`).join('')}</select>`:`<input data-variable="${escapeHtml(v.name)}" value="${escapeHtml(v.defaultValue||'')}">`}</div>`).join('')}</div></div><div class="editor-toolbar ${this.state.editing?'show':''}"><button data-action="toolbar" data-cmd="bold" title="Grassetto" aria-label="Grassetto">𝐁</button><button data-action="toolbar" data-cmd="italic" title="Corsivo" aria-label="Corsivo">𝐼</button><button data-action="toolbar" data-cmd="underline" title="Sottolineato" aria-label="Sottolineato">U̲</button><button data-action="toolbar" data-cmd="insertUnorderedList" title="Elenco puntato" aria-label="Elenco puntato">☷</button><button data-action="insert-link" title="Inserisci link" aria-label="Inserisci link">🔗</button><button data-action="insert-image" title="Inserisci immagine" aria-label="Inserisci immagine">🖼️</button><button class="save-edit" data-action="save-prompt" title="Salva prompt" aria-label="Salva prompt">💾 <span>Salva</span></button></div><div id="editor" class="editor" contenteditable="${this.state.editing?'true':'false'}">${this.sanitize(prompt.description)}</div><div class="detail-foot"><span>${stats.words} parole · ${stats.chars} caratteri</span><span>~${stats.tokens} token</span></div></div>`}
+  promptCardHtml(p,path=''){const quality=this.promptQuality(p);const letter=escapeHtml((p.title||'?').trim().charAt(0).toUpperCase()||'?');return`<div class="list-item prompt-card ${p.id===this.state.promptId?'active':''}" role="button" tabindex="0" data-action="select-prompt" data-id="${p.id}"><div class="prompt-card-top"><div style="min-width:0;flex:1"><div class="item-title">${escapeHtml(p.title)}</div>${path?`<div class="item-meta">${escapeHtml(path)}</div>`:''}</div><span class="prompt-letter">${letter}</span></div>${p.description?`<div class="item-desc">${escapeHtml(plain(p.description).slice(0,170))}</div>`:''}<div class="badges">${p.favorite?'<span class="badge">Preferito</span>':''}${p.pinned?'<span class="badge">In evidenza</span>':''}<span class="badge ${quality>=75?'good':quality>=55?'warn':'bad'}">Q ${quality}</span></div><div class="prompt-tools"><button data-action="copy-prompt" data-id="${p.id}" title="Copia">Copia</button><button data-action="duplicate-prompt" data-id="${p.id}" title="Duplica">Duplica</button></div></div>`}
+  renderDetail(panel,prompt){if(!prompt){panel.innerHTML=this.emptyHtml('📝','Seleziona un prompt','Il contenuto apparirà qui.');return}const found=this.findPrompt(prompt.id);const stats=wordStats(prompt.description);const vars=this.extractVariables(prompt.description);const inTrash=this.isTrash(found.cat);panel.innerHTML=`<div class="detail"><div class="detail-head"><h3>Dettaglio prompt</h3><div class="detail-actions"><button data-action="edit-prompt" title="Modifica prompt" aria-label="Modifica prompt">✏️ <span>Modifica</span></button><button data-action="copy-prompt" title="Copia prompt" aria-label="Copia prompt">📋 <span>Copia</span></button><button data-action="duplicate-prompt" title="Duplica prompt" aria-label="Duplica prompt">⧉ <span>Duplica</span></button><button data-action="favorite-prompt" title="Aggiungi o rimuovi dai preferiti" aria-label="Preferito">⭐ <span>Preferito</span></button><button data-action="pin-prompt" title="Metti in evidenza" aria-label="Metti in evidenza">📌 <span>${prompt.pinned?'In evidenza':'Pin'}</span></button><button data-action="move-prompt" title="Sposta prompt" aria-label="Sposta prompt">↔️ <span>Sposta</span></button>${inTrash?'<button data-action="restore-prompt" title="Ripristina prompt" aria-label="Ripristina prompt">↩️ <span>Ripristina</span></button>':'<button class="danger" data-action="delete-prompt" title="Elimina prompt" aria-label="Elimina prompt">🗑️ <span>Elimina</span></button>'}</div></div><div class="breadcrumb"><button data-action="select-category" data-id="${found.cat.id}">${escapeHtml(found.cat.name)}</button> › <button data-action="select-sub" data-id="${found.sub.id}">${escapeHtml(found.sub.name)}</button> › ${escapeHtml(prompt.title)}</div><div class="title-row"><h1>${escapeHtml(prompt.title)}</h1><span class="spacer"></span><button class="mini-btn" data-action="rename-prompt" title="Rinomina prompt" aria-label="Rinomina prompt">✏️</button></div><div class="meta-row"><span class="badge">Creato ${formatDate(prompt.createdAt)}</span><span class="badge">Aggiornato ${formatDate(prompt.updatedAt)}</span><span class="badge">Copiato ${prompt.copyCount||0}×</span><span class="badge">Qualità ${this.promptQuality(prompt)}/100</span></div><div class="variables ${vars.length?'show':''}" id="variables"><h4>Variabili dinamiche</h4><div class="var-grid">${vars.map(v=>`<div class="var-field"><label>${escapeHtml(v.name)}</label>${v.options?`<select data-variable="${escapeHtml(v.name)}">${v.options.map(o=>`<option>${escapeHtml(o)}</option>`).join('')}</select>`:`<input data-variable="${escapeHtml(v.name)}" value="${escapeHtml(v.defaultValue||'')}">`}</div>`).join('')}</div></div><div class="editor-toolbar ${this.state.editing?'show':''}"><button data-action="toolbar" data-cmd="bold" title="Grassetto" aria-label="Grassetto">𝐁</button><button data-action="toolbar" data-cmd="italic" title="Corsivo" aria-label="Corsivo">𝐼</button><button data-action="toolbar" data-cmd="underline" title="Sottolineato" aria-label="Sottolineato">U̲</button><button data-action="toolbar" data-cmd="insertUnorderedList" title="Elenco puntato" aria-label="Elenco puntato">☷</button><button data-action="insert-link" title="Inserisci link" aria-label="Inserisci link">🔗</button><button data-action="insert-image" title="Inserisci immagine" aria-label="Inserisci immagine">🖼️</button><button class="save-edit" data-action="save-prompt" title="Salva prompt" aria-label="Salva prompt">💾 <span>Salva</span></button></div><div id="editor" class="editor" contenteditable="${this.state.editing?'true':'false'}">${this.sanitize(prompt.description)}</div><div class="detail-foot"><span>${stats.words} parole · ${stats.chars} caratteri</span><span>~${stats.tokens} token</span></div></div>`}
   sanitize(html){const box=document.createElement('div');box.innerHTML=String(html||'');box.querySelectorAll('script,style,iframe,object,embed,form').forEach(x=>x.remove());box.querySelectorAll('*').forEach(el=>{[...el.attributes].forEach(a=>{if(a.name.startsWith('on'))el.removeAttribute(a.name);if(['href','src'].includes(a.name)&&/^javascript:/i.test(a.value))el.removeAttribute(a.name)})});return box.innerHTML}
   renderSpecial(main){
-    let title='Tutti i prompt',items=this.allPrompts();if(this.state.view==='favorites'){title='Preferiti';items=items.filter(p=>p.favorite)}else if(this.state.view==='recents'){title='Recenti';items=this.recents.map(r=>{const f=this.findPrompt(r.promptId);return f?{...f.prompt,catId:f.cat.id,subId:f.sub.id,catName:f.cat.name,subName:f.sub.name,ts:r.ts}:null}).filter(Boolean)}else if(this.state.view==='trash'){title='Cestino';const trashCat=this.data.find(c=>this.isTrash(c));items=trashCat?this.allPrompts({trash:true}).filter(p=>p.catId===trashCat.id):[]}else if(this.state.view==='search'){title=`Risultati per “${this.state.search}”`;const q=normalize(this.state.search);items=items.filter(p=>normalize(p.title+' '+plain(p.description)+' '+(p.tags||[]).join(' ')).includes(q))}else if(this.state.view==='tags'){this.renderTagsView(main);return}
+    let title='Tutti i prompt',items=this.allPrompts();if(this.state.view==='favorites'){title='Preferiti';items=items.filter(p=>p.favorite)}else if(this.state.view==='recents'){title='Recenti';items=this.recents.map(r=>{const f=this.findPrompt(r.promptId);return f?{...f.prompt,catId:f.cat.id,subId:f.sub.id,catName:f.cat.name,subName:f.sub.name,ts:r.ts}:null}).filter(Boolean)}else if(this.state.view==='trash'){title='Cestino';const trashCat=this.data.find(c=>this.isTrash(c));items=trashCat?this.allPrompts({trash:true}).filter(p=>p.catId===trashCat.id):[]}else if(this.state.view==='search'){title=`Risultati per “${this.state.search}”`;const q=normalize(this.state.search);items=items.filter(p=>normalize(p.title+' '+plain(p.description)).includes(q))}
     items.sort((a,b)=>this.state.view==='recents'?(b.ts||0)-(a.ts||0):a.title.localeCompare(b.title,'it',{sensitivity:'base'}));if(!items.some(p=>p.id===this.state.promptId))this.state.promptId=items[0]?.id||null;
     main.className='main';main.innerHTML=`<div class="layout-2"><section class="panel"><div class="panel-head"><span class="panel-title">${escapeHtml(title)}</span><span class="count">${items.length}</span></div><div class="list">${items.length?items.map(p=>this.promptCardHtml(p,`${p.catName} › ${p.subName}`)).join(''):this.emptyHtml('⌕','Nessun elemento','Non ci sono prompt in questa sezione.')}</div></section><section class="panel detail-panel" id="detailPanel"></section></div>`;this.renderDetail($('detailPanel'),this.findPrompt(this.state.promptId)?.prompt)
   }
@@ -617,7 +668,7 @@ class PromptStudioApp{
     };
     draw();
   }
-  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.0.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
+  exportPlanCsv(plan){const header=['Prompt','Origine','Categoria proposta','Sottocategoria proposta','Confidenza','Motivazioni'];const rows=plan.map(r=>[r.title,r.current,r.proposedCat,r.proposedSub,r.result.confidence,(r.result.reasons||[]).join('; ')]);download('anteprima-categorizzazione-v32.1.csv',new Blob([[header,...rows].map(row=>row.map(csv).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}))}
   splitLargeSubcategories(categories){for(const cat of categories){const result=[];for(const sub of cat.subcategories){if(sub.prompts.length<=50){result.push(sub);continue}const sorted=sub.prompts.slice().sort((a,b)=>a.title.localeCompare(b.title,'it'));for(let i=0;i<sorted.length;i+=35){const chunk=sorted.slice(i,i+35);const first=(normalize(chunk[0]?.title)[0]||'#').toUpperCase();const last=(normalize(chunk.at(-1)?.title)[0]||'#').toUpperCase();result.push({id:uid(),name:`${sub.name} · ${first}–${last}`,icon:sub.icon||'',prompts:chunk})}}cat.subcategories=result}}
   async applyClassification(plan){
     if(!plan.length){Toast.show('Nessun prompt da classificare.','err');return}
@@ -625,7 +676,7 @@ class PromptStudioApp{
     Loading.show();
     try{
       await this.db.put(DATA_STORE,'taxonomyRollbackV320',{data:this.data,recents:this.recents,ts:Date.now()});
-      await this.db.saveBackup(this.data,'Prima della categorizzazione v32.0');
+      await this.db.saveBackup(this.data,'Prima della categorizzazione v32.1');
       const planMap=new Map(plan.map(r=>[r.promptId,r]));
       const newCats=TAXONOMY.map(t=>({id:uid(),name:t.name,icon:'',subcategories:t.subs.map(name=>({id:uid(),name,icon:'',prompts:[]}))}));
       const targetMap=new Map();newCats.forEach(c=>c.subcategories.forEach(sub=>targetMap.set(normalize(c.name)+'|'+normalize(sub.name),sub)));
@@ -635,7 +686,7 @@ class PromptStudioApp{
         const tax=TAXONOMY.find(x=>x.name===row.proposedCat)||TAXONOMY.find(x=>x.key===row.result.key)||TAXONOMY[0];
         const subName=tax.subs.includes(row.proposedSub)?row.proposedSub:tax.subs[0];
         const target=targetMap.get(normalize(tax.name)+'|'+normalize(subName));
-        const p=clone(entry.prompt);p.originCategory=p.originCategory||stripLeadingIcons(entry.cat.name);p.originSubcategory=p.originSubcategory||stripLeadingIcons(entry.sub.name);p.originHistory=Array.isArray(p.originHistory)?p.originHistory:[];p.originHistory.push({category:stripLeadingIcons(entry.cat.name),subcategory:stripLeadingIcons(entry.sub.name),at:Date.now()});p.classificationVersion=CLASSIFIER_VERSION;p.classificationScore=row.result.confidence;p.classificationReasons=row.result.reasons;p.classifiedAt=Date.now();p.tags=[...new Set([...(p.tags||[]),...(row.result.tags||[]),`origin:${slug(entry.cat.name)}`])];target.prompts.push(p);
+        const p=clone(entry.prompt);p.originCategory=p.originCategory||stripLeadingIcons(entry.cat.name);p.originSubcategory=p.originSubcategory||stripLeadingIcons(entry.sub.name);p.originHistory=Array.isArray(p.originHistory)?p.originHistory:[];p.originHistory.push({category:stripLeadingIcons(entry.cat.name),subcategory:stripLeadingIcons(entry.sub.name),at:Date.now()});p.classificationVersion=CLASSIFIER_VERSION;p.classificationScore=row.result.confidence;p.classificationReasons=row.result.reasons;p.classifiedAt=Date.now();p.tags=[];target.prompts.push(p);
       }
       newCats.forEach(cat=>cat.subcategories.forEach(sub=>{const seen=new Map();sub.prompts=sub.prompts.filter(p=>{const key=normalize(p.title)+'|'+normalize(plain(p.description));if(!seen.has(key)){seen.set(key,p);return true}const keep=seen.get(key);keep.tags=[...new Set([...(keep.tags||[]),...(p.tags||[])])];keep.copyCount=(keep.copyCount||0)+(p.copyCount||0);keep.favorite=keep.favorite||p.favorite;keep.pinned=keep.pinned||p.pinned;return false})}));
       newCats.forEach(cat=>cat.subcategories=cat.subcategories.filter(sub=>sub.prompts.length));
@@ -643,7 +694,7 @@ class PromptStudioApp{
       this.snapshot();this.data=newCats.filter(c=>this.isTrash(c)||this.countCategory(c)>0);this.state={...this.state,view:'dashboard',catId:null,subId:null,promptId:null};await this.persist();this.closeModal();this.render();this.exportClassificationReport(plan,plan.map(r=>r.promptId));Toast.show('Categorie riorganizzate: ogni prompt è stato assegnato alla propria area.','ok',5000);
     }finally{Loading.hide()}
   }
-  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.0.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
+  exportClassificationReport(plan,ids){const set=new Set(ids);const rows=plan.filter(r=>set.has(r.promptId)).map(r=>[r.title,r.current,`${r.proposedCat} › ${r.proposedSub}`,r.result.confidence,(r.result.reasons||[]).join('; ')]);const text=[['Prompt','Origine','Destinazione','Confidenza','Motivazioni'],...rows].map(row=>row.map(csv).join(',')).join('\n');download('report-categorizzazione-v32.1.csv',new Blob([text],{type:'text/csv;charset=utf-8'}))}
   async rollbackTaxonomy(){const rollback=await this.db.get(DATA_STORE,'taxonomyRollbackV320',null)||await this.db.get(DATA_STORE,'taxonomyRollbackV31',null);if(!rollback?.data){Toast.show('Nessun rollback disponibile.','err');return}const ok=await this.confirmModal('Rollback tassonomia','Ripristinare i dati precedenti all’ultima ricategorizzazione?','Ripristina');if(!ok)return;this.snapshot();this.data=this.migrate(clone(rollback.data));this.recents=rollback.recents||[];await this.persist();this.closeModal();this.state.view='dashboard';this.render();Toast.show('Rollback completato.','ok')}
 }
 
