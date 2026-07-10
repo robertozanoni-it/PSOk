@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prompt Studio v29.8 - categorie ordinate senza doppioni</title>
+<title>Prompt Studio v30.1 - tassonomia semantica e ricategorizzazione sicura</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -2529,7 +2529,7 @@ textarea,
   <div class="logo">
     <div class="logo-dot"></div>
     Prompt Studio
-    <span class="logo-badge">v29.6</span>
+    <span class="logo-badge">v30.1</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:560px">
     <div class="search-wrap">
@@ -9973,6 +9973,940 @@ S.view = 'dashboard';
   }
 
   window.PS_CLICKABLE_CATEGORY_LIST_PATCH='v30.0';
+})();
+
+/* ── PROMPT STUDIO v30.1: TASSONOMIA SEMANTICA, ANTEPRIMA, REPORT E ROLLBACK ── */
+(function(){
+  const PS_V301_VERSION='v30.1';
+  const PS_V301_CLASSIFIER='semantic-taxonomy-2026-07';
+  const PS_V301_ROLLBACK_KEY='taxonomyRollbackV301';
+  const PS_V301_QUEUE_NAME='Da classificare';
+
+  const V301_TAXONOMY=[
+    {
+      key:'ai',name:'AI e Prompt Engineering',icon:'🤖',
+      terms:[['prompt engineering',10],['meta prompt',10],['custom gpt',10],['gem personalizzato',10],['agente ai',8],['chatbot',7],['allucinazioni',8],['second brain',9]],
+      subs:[
+        {name:'Prompt design e template',terms:[['prompt design',13],['prompt engineering',13],['template prompt',12],['meta prompt',12],['crea un prompt',8],['genera prompt',8],['istruzioni personalizzate',7]]},
+        {name:'Miglioramento dei prompt',terms:[['migliora prompt',14],['ottimizza prompt',14],['riscrivi prompt',12],['refine prompt',11],['prompt optimizer',11],['valuta prompt',8]]},
+        {name:'Qualità, verifica e anti-allucinazioni',terms:[['allucinazioni',15],['anti allucinazioni',15],['fact check',12],['verifica fonti',11],['controllo qualita',11],['qualita e limiti',12],['guardrail',11],['accuratezza',7]]},
+        {name:'Agenti, GPT, GEM e chatbot',terms:[['gem personalizzato',16],['custom gem',16],['custom gpt',16],['gpt personalizzato',16],['agente ai',13],['assistente ai',11],['chatbot',12],['bot conversazionale',10]]},
+        {name:'AI Operating System e orchestrazione',terms:[['ai marketing operating system',22],['operating system ai',20],['sistema operativo ai',20],['orchestrator',18],['orchestrazione',16],['multi agent',16],['control tower',15],['agenti coordinati',14],['agentic workflow',14]]},
+        {name:'Memoria, contesto e Second Brain',terms:[['second brain',18],['memoria ai',15],['context window',13],['gestione contesto',13],['knowledge base',11],['memoria persistente',15],['contesto persistente',14]]},
+        {name:'Ricerca e aggiornamenti AI',terms:[['ricerca funzioni recenti ai',20],['ultime funzioni ai',16],['aggiornamenti ai',14],['novita ai',13],['confronta modelli ai',11],['ricerca ai',8]]},
+        {name:'Comandi rapidi e micro-prompt',terms:[['comando rapido',15],['micro prompt',15],['shortcut prompt',13],['prompt breve',10],['one liner',9]]}
+      ]
+    },
+    {
+      key:'seo',name:'SEO e Search Marketing',icon:'🔎',
+      terms:[['seo',5],['serp',8],['search console',9],['indicizzazione',8],['keyword',7],['schema',6],['link interni',7]],
+      subs:[
+        {name:'Keyword research e search intent',terms:[['keyword research',16],['ricerca keyword',16],['search intent',15],['intento di ricerca',15],['keyword gap',12],['volume di ricerca',10],['parole chiave',8],['long tail',10]]},
+        {name:'SERP, competitor e content gap',terms:[['analisi serp',17],['serp competitor',16],['content gap',16],['gap contenuti',14],['primi 10 risultati',13],['competitor seo',13],['confronta serp',13]]},
+        {name:'SEO on-page',terms:[['seo on page',16],['title seo',12],['meta description',12],['h1 h2',9],['ottimizzazione articolo',10],['keyword density',9],['slug',8]]},
+        {name:'SEO tecnica',terms:[['seo tecnica',17],['crawl',12],['robots txt',14],['sitemap',13],['canonical',13],['redirect 301',13],['status code',11],['indicizzazione',10],['core web vitals seo',11]]},
+        {name:'Local SEO',terms:[['local seo',18],['seo locale',18],['google business profile',15],['google maps',12],['near me',11],['citta',5],['bergamo',6],['cinisello balsamo',7]]},
+        {name:'Internal linking e topical authority',terms:[['internal linking',18],['link interni',17],['pagina orfana',14],['anchor text',13],['topical authority',16],['cluster',11],['pagina pillar',13],['link equity',13]]},
+        {name:'Schema e dati strutturati',terms:[['schema markup',18],['dati strutturati',17],['json ld',17],['schema faq',14],['localbusiness',14],['rich result',13],['schema org',12]]},
+        {name:'Google Search Console e analytics SEO',terms:[['google search console',18],['search console',17],['gsc',12],['query performance',12],['click impression',11],['ctr organico',12],['ga4 seo',9]]},
+        {name:'Audit e monitoraggio SEO',terms:[['audit seo',18],['monitoraggio seo',15],['report seo',13],['errori seo',11],['priorita seo',12],['checklist seo',10],['diagnosi seo',12]]}
+      ]
+    },
+    {
+      key:'content',name:'Content e Copywriting',icon:'✍️',
+      terms:[['copywriting',8],['articolo',6],['landing page',8],['cta',7],['email',5],['newsletter',7],['riscrivi',6]],
+      subs:[
+        {name:'Articoli, guide e contenuti editoriali',terms:[['articolo',13],['blog post',13],['guida completa',12],['contenuto editoriale',12],['post blog',11],['ricetta',9],['introduzione articolo',8]]},
+        {name:'Landing page e pagine servizio',terms:[['landing page',17],['pagina servizio',16],['sales page',14],['pagina corso',12],['hero section',10],['pagina web',8],['pagina locale',8]]},
+        {name:'Copy persuasivo e CTA',terms:[['copy persuasivo',17],['cta',13],['call to action',13],['headline',12],['benefici',7],['testo vendita',12],['conversion copy',14],['persuasione',12]]},
+        {name:'Editing, correzione e riscrittura',terms:[['riscrivi',15],['correggi testo',15],['editing',13],['revisione testo',13],['proofreading',13],['scrivi meglio',14],['semplifica testo',12]]},
+        {name:'Umanizzazione dei testi',terms:[['umanizza',18],['humanize',17],['tono naturale',13],['sembrare umano',14],['anti ai detector',12],['testo naturale',10]]},
+        {name:'Email e newsletter',terms:[['newsletter',17],['email marketing',15],['scrivi email',14],['oggetto email',13],['sequenza email',14],['cold email',13],['posta elettronica',8]]},
+        {name:'Outline e brief editoriali',terms:[['outline',17],['brief editoriale',16],['scaletta articolo',15],['content brief',16],['struttura contenuto',11],['piano articolo',11]]},
+        {name:'Storytelling e creatività',terms:[['storytelling',17],['storia creativa',15],['racconto',13],['poesia',12],['script creativo',11],['idea creativa',10],['narrazione',13]]}
+      ]
+    },
+    {
+      key:'marketing',name:'Marketing, Strategia e Growth',icon:'📈',
+      terms:[['marketing',6],['mercato',7],['buyer persona',9],['funnel',9],['pricing',9],['growth',9],['posizionamento',9]],
+      subs:[
+        {name:'Analisi di mercato',terms:[['analisi di mercato',18],['market research',17],['dimensione mercato',13],['trend di mercato',13],['domanda di mercato',12],['settore mercato',9]]},
+        {name:'Analisi della concorrenza',terms:[['analisi concorrenti',17],['analisi concorrenza',17],['competitor analysis',17],['benchmark concorrenti',14],['vantaggio competitivo',11]]},
+        {name:'Buyer persona e segmentazione',terms:[['buyer persona',19],['target audience',15],['segmentazione',16],['cliente ideale',15],['profilo cliente',13],['pubblico target',12]]},
+        {name:'Posizionamento e proposta di valore',terms:[['posizionamento',18],['value proposition',18],['proposta di valore',18],['unique selling proposition',16],['usp',12],['differenziazione',12]]},
+        {name:'Funnel e customer journey',terms:[['funnel',18],['customer journey',18],['percorso cliente',15],['lead nurturing',13],['top middle bottom funnel',13],['touchpoint',11]]},
+        {name:'Offerte, pricing e monetizzazione',terms:[['pricing',18],['prezzo',10],['offerta commerciale',15],['monetizzazione',16],['pacchetto servizi',13],['preventivo',11],['upsell',11],['cross sell',11]]},
+        {name:'CRO e conversione',terms:[['cro',18],['conversion rate',17],['ottimizzazione conversioni',18],['ab test',13],['a b test',13],['tasso conversione',14],['ridurre abbandono',11]]},
+        {name:'Growth ed esperimenti',terms:[['growth hacking',18],['growth',14],['esperimento marketing',14],['north star metric',13],['acquisizione utenti',12],['viral loop',12]]},
+        {name:'Business model e validazione',terms:[['business model',18],['business plan',15],['validazione idea',16],['mvp',12],['lean canvas',15],['modello di business',17],['fattibilita',11]]}
+      ]
+    },
+    {
+      key:'social',name:'Social Media e Community',icon:'📱',
+      terms:[['social media',8],['instagram',9],['facebook',8],['linkedin',9],['youtube',8],['tiktok',8],['reel',8],['caption',8]],
+      subs:[
+        {name:'Strategia e piano editoriale',terms:[['strategia social',18],['piano editoriale',18],['calendario editoriale',15],['social media strategy',17],['rubriche social',13]]},
+        {name:'Post, caption e hook',terms:[['caption',17],['hook',14],['post social',15],['carosello',12],['hashtag',11],['copy social',13]]},
+        {name:'Instagram e Facebook',terms:[['instagram',16],['facebook',15],['meta business suite',12],['stories instagram',13],['post instagram',15],['post facebook',14]]},
+        {name:'LinkedIn',terms:[['linkedin',19],['post linkedin',18],['profilo linkedin',16],['company page linkedin',14]]},
+        {name:'YouTube e Shorts',terms:[['youtube',17],['youtube shorts',18],['canale youtube',14],['titolo youtube',13],['descrizione youtube',13]]},
+        {name:'Reel e video social',terms:[['reel',18],['short form video',16],['video social',15],['tiktok video',16],['instagram reel',18]]},
+        {name:'Influencer e community',terms:[['influencer',18],['community management',17],['creator',11],['ambassador',13],['engagement community',13]]},
+        {name:'Analisi delle performance',terms:[['social analytics',18],['performance social',16],['engagement rate',15],['insight instagram',14],['metriche social',14],['report social',13]]}
+      ]
+    },
+    {
+      key:'wordpress',name:'WordPress e Siti Web',icon:'🌐',
+      terms:[['wordpress',10],['elementor',12],['gutenberg',11],['plugin',7],['tema wordpress',10],['core web vitals',7]],
+      subs:[
+        {name:'WordPress e Gutenberg',terms:[['wordpress',14],['gutenberg',17],['blocchi wordpress',15],['wp admin',12],['wp cli',11]]},
+        {name:'Elementor e widget HTML',terms:[['elementor',20],['widget html',15],['container elementor',15],['template elementor',16],['elementor pro',18]]},
+        {name:'Plugin, temi e snippet',terms:[['plugin wordpress',19],['tema wordpress',18],['functions php',15],['snippet wordpress',17],['shortcode',14],['hook wordpress',14]]},
+        {name:'UX/UI e web design',terms:[['ux ui',17],['web design',16],['layout sito',13],['wireframe',14],['design system',13],['interfaccia sito',12]]},
+        {name:'Accessibilità e responsive',terms:[['accessibilita',18],['wcag',18],['responsive',15],['mobile first',13],['aria label',14],['contrasto colori',11]]},
+        {name:'Performance e Core Web Vitals',terms:[['core web vitals',19],['pagespeed',18],['lighthouse',15],['lcp',14],['cls',14],['inp',13],['cache wordpress',12],['ottimizza velocita',13]]},
+        {name:'Sicurezza e manutenzione',terms:[['sicurezza wordpress',18],['malware wordpress',16],['backup wordpress',14],['manutenzione sito',15],['hardening',15],['login security',12]]},
+        {name:'Debug dei siti WordPress',terms:[['debug wordpress',19],['errore wordpress',17],['fatal error',14],['conflitto plugin',16],['wp debug',16],['ripara wordpress',15]]}
+      ]
+    },
+    {
+      key:'code',name:'Codice e Web App',icon:'💻',
+      terms:[['html',7],['css',7],['javascript',8],['web app',10],['codice',7],['debug',7],['database',7],['github',7]],
+      subs:[
+        {name:'HTML, CSS e JavaScript',terms:[['html',13],['css',13],['javascript',14],['frontend code',13],['pagina html',12],['vanilla js',13]]},
+        {name:'Progettazione web app',terms:[['web app',17],['progetta app',16],['template generico app',13],['specifiche app',14],['requisiti app',15],['prototipo app',12],['scadenzario app',12]]},
+        {name:'Funzionalità e architettura',terms:[['architettura software',18],['funzionalita app',15],['user flow app',13],['moduli applicazione',13],['componenti software',13],['api design',12]]},
+        {name:'Debug, code review e refactoring',terms:[['debug codice',18],['code review',18],['refactoring',18],['bug javascript',16],['ripara codice',16],['analizza codice',14],['errore sintassi',14]]},
+        {name:'Estrazione e trasformazione del codice',terms:[['estrapola html',22],['estrai html',20],['extract html',19],['converti codice',15],['trasforma html',15],['parsing html',14],['minifica',11]]},
+        {name:'Database e salvataggio dati',terms:[['database',17],['indexeddb',18],['localstorage',16],['salvataggio dati',15],['sql',14],['persistenza dati',14]]},
+        {name:'Importazione ed esportazione',terms:[['import export codice',17],['importa json app',15],['esporta json app',15],['parser csv',13],['upload file app',13],['download file app',13]]},
+        {name:'GitHub, deployment e applicazioni desktop',terms:[['github',17],['deployment',16],['github pages',16],['electron app',16],['app desktop',15],['deploy',13],['repository',12]]},
+        {name:'No-code e strumenti frontend',terms:[['no code',17],['low code',16],['bubble io',15],['webflow',15],['framer',13],['tool frontend',12]]}
+      ]
+    },
+    {
+      key:'graphics',name:'Grafica e Immagini AI',icon:'🎨',
+      terms:[['immagine',8],['foto',6],['grafica',8],['branding',7],['thumbnail',10],['miniatura',10],['mockup',8]],
+      subs:[
+        {name:'Prompt per generazione immagini',terms:[['genera immagine',18],['crea immagine',17],['prompt immagine',17],['text to image',16],['midjourney',14],['dall e',13],['stable diffusion',13]]},
+        {name:'Editing e trasformazione immagini',terms:[['modifica immagine',18],['ritocca foto',17],['image editing',16],['rimuovi sfondo',14],['upscale',13],['trasforma immagine',15],['sostituisci oggetto',14]]},
+        {name:'Branding e identità visiva',terms:[['branding',17],['identita visiva',18],['logo',14],['brand identity',17],['palette colori',13],['linee guida visual',13]]},
+        {name:'Layout e materiali grafici',terms:[['layout grafico',16],['brochure',14],['volantino',14],['poster',14],['presentazione grafica',12],['banner',12]]},
+        {name:'Fotografia prodotto e still life',terms:[['still life',22],['packshot',19],['fotografia prodotto',18],['product photography',18],['ecommerce photo',14],['prodotto su sfondo',13]]},
+        {name:'Food photography',terms:[['food photography',20],['fotografia food',19],['piatto realistico',15],['ricetta immagine',15],['cibo fotografico',14],['torta vegana',11],['piatto gourmet',12]]},
+        {name:'Visual social e thumbnail',terms:[['miniatura youtube',23],['youtube thumbnail',23],['thumbnail',19],['visual social',16],['cover reel',15],['copertina youtube',18],['post grafico',13]]},
+        {name:'Illustrazioni, personaggi e mockup',terms:[['illustrazione',17],['personaggio',14],['character design',16],['mockup',16],['avatar',13],['mascotte',14],['fumetto',13]]}
+      ]
+    },
+    {
+      key:'video',name:'Video e Multimedia',icon:'🎬',
+      terms:[['video ai',10],['genera video',10],['storyboard',9],['voice over',8],['animazione',8],['text to video',10]],
+      subs:[
+        {name:'Generazione video AI',terms:[['genera video',18],['video ai',18],['text to video',17],['google flow',14],['veo',13],['sora video',13],['runway video',13]]},
+        {name:'Storyboard e pianificazione scene',terms:[['storyboard',19],['shot list',17],['pianificazione scene',16],['inquadrature video',14],['sequenza scene',14]]},
+        {name:'Script e voice-over',terms:[['voice over',18],['voiceover',18],['script video',17],['copione video',16],['narrazione video',14],['testo speaker',13]]},
+        {name:'Animazioni e motion design',terms:[['animazione',17],['motion design',18],['motion graphics',17],['logo animation',14],['transizione animata',13]]},
+        {name:'Reel, Shorts e video brevi',terms:[['reel video',18],['youtube shorts',17],['video breve',16],['short form video',17],['tiktok video',16]]},
+        {name:'Trasformazione testo o immagini in video',terms:[['image to video',19],['immagine in video',18],['foto in video',17],['testo in video',17],['animate image',15]]},
+        {name:'Analisi e miglioramento video',terms:[['analizza video',18],['migliora video',17],['audit video',15],['ottimizza video',15],['video critique',14]]}
+      ]
+    },
+    {
+      key:'productivity',name:'Produttività, Dati e Operations',icon:'⚙️',
+      terms:[['workflow',7],['sop',9],['meeting',8],['csv',8],['excel',8],['pdf',7],['checklist',7],['scadenze',8]],
+      subs:[
+        {name:'SOP e workflow',terms:[['sop',18],['standard operating procedure',18],['workflow operativo',17],['procedura operativa',16],['processo operativo',14],['automazione workflow',13]]},
+        {name:'Agenda, attività e scadenze',terms:[['scadenzario',18],['scadenze',17],['to do list',15],['agenda',14],['task manager',15],['promemoria',13],['pianifica giornata',12]]},
+        {name:'Meeting, verbali e sintesi',terms:[['meeting',17],['verbale riunione',18],['meeting notes',16],['trascrizione riunione',15],['sintesi riunione',16],['action item',13]]},
+        {name:'Apprendimento e studio',terms:[['studio',12],['apprendimento',16],['piano di studio',17],['quiz',13],['flashcard',14],['lezione',11],['programma scolastico',12]]},
+        {name:'PDF e documenti',terms:[['pdf',16],['documento word',14],['docx',14],['estrai da pdf',15],['analizza documento',12],['document management',13]]},
+        {name:'CSV, Excel e dati tabellari',terms:[['csv',17],['excel',17],['xlsx',17],['foglio di calcolo',16],['tabella dati',14],['spreadsheet',16],['pivot',12]]},
+        {name:'Checklist e pianificazione',terms:[['checklist',17],['piano d azione',16],['roadmap',14],['pianificazione',14],['priorita operative',13],['step operativi',13]]},
+        {name:'Backup, importazione ed esportazione',terms:[['backup dati',18],['ripristino backup',17],['importazione dati',14],['esportazione dati',14],['migrazione dati',13],['archivio dati',12]]},
+        {name:'Utility operative',terms:[['utility',15],['convertitore',13],['estrattore dati',13],['generatore elenco',12],['strumento operativo',12],['calcolatore',12]]}
+      ]
+    },
+    {
+      key:'clients',name:'Clienti e Progetti',icon:'🗂️',clientOnly:true,
+      terms:[],
+      subs:[
+        {name:'Roberto Zanoni / RZ',terms:[]},
+        {name:'Galbiati Dental Group',terms:[]},
+        {name:'Yoga / Pilates Buena Onda',terms:[]},
+        {name:'Sano in Tavola / I Buoni Sani',terms:[]},
+        {name:'Trova Esperti Digitali',terms:[]},
+        {name:'Zirafa',terms:[]},
+        {name:'Altri clienti',terms:[]}
+      ]
+    }
+  ];
+
+  const V301_QUEUE={key:'queue',name:PS_V301_QUEUE_NAME,icon:'🧭',subs:[{name:'Da revisionare',terms:[]}]};
+  const V301_CAT_BY_KEY=new Map(V301_TAXONOMY.map(c=>[c.key,c]));
+
+  function v301Clone(obj){
+    try{return structuredClone(obj)}catch(_){return JSON.parse(JSON.stringify(obj))}
+  }
+
+  function v301Plain(html){
+    const d=document.createElement('div');
+    d.innerHTML=String(html||'');
+    return (d.textContent||d.innerText||'').replace(/\s+/g,' ').trim();
+  }
+
+  function v301Norm(value){
+    return String(value||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9àèéìòù._:/\-\s]/gi,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function v301Slug(value){
+    return v301Norm(value).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,72)||'generale';
+  }
+
+  function v301Esc(value){
+    const m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(value??'').replace(/[&<>"']/g,c=>m[c]);
+  }
+
+  function v301CsvCell(value){
+    return '"'+String(value??'').replace(/"/g,'""').replace(/\r?\n/g,' ')+'"';
+  }
+
+  function v301DownloadBlob(filename,blob){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),800);
+  }
+
+  function v301DownloadText(filename,text,type='text/plain;charset=utf-8'){
+    v301DownloadBlob(filename,new Blob([text],{type}));
+  }
+
+  function v301IsTrash(cat){return /cestino|🗑️/i.test(String(cat?.name||''))}
+
+  function v301SourceEntries(data){
+    const out=[];
+    (data||[]).forEach((cat,ci)=>{
+      if(!cat||v301IsTrash(cat)) return;
+      const catName=String(cat.name||'Senza categoria');
+      (cat.subcategories||[]).forEach((sub,si)=>{
+        const subName=String(sub?.name||'Generale');
+        (sub?.prompts||[]).forEach((prompt,pi)=>{
+          if(!prompt) return;
+          out.push({
+            key:[cat.id||ci,sub.id||si,prompt.id||pi,pi].join('|'),
+            cat,sub,prompt,catName,subName,catIndex:ci,subIndex:si,promptIndex:pi
+          });
+        });
+      });
+      (cat.prompts||[]).forEach((prompt,pi)=>{
+        if(!prompt) return;
+        out.push({
+          key:[cat.id||ci,'root',prompt.id||pi,pi].join('|'),
+          cat,sub:null,prompt,catName,subName:'Generale',catIndex:ci,subIndex:-1,promptIndex:pi
+        });
+      });
+    });
+    return out;
+  }
+
+  function v301Corpus(entry){
+    const p=entry.prompt||{};
+    const title=v301Norm(p.title||p.name||'');
+    const purpose=v301Norm(p.purpose||p.goal||p.objective||'');
+    const body=v301Norm(v301Plain(p.description||p.text||p.plainText||''));
+    const tags=v301Norm((Array.isArray(p.tags)?p.tags:[p.tags]).filter(Boolean).join(' '));
+    const path=v301Norm(entry.catName+' '+entry.subName);
+    return {title,purpose,body,tags,path,all:[title,purpose,body,tags,path].filter(Boolean).join(' ')};
+  }
+
+  function v301Includes(text,phrase){
+    const p=v301Norm(phrase);
+    if(!p) return false;
+    return (' '+text+' ').includes(' '+p+' ') || text.includes(p);
+  }
+
+  function v301ScoreTerms(terms,corpus){
+    let score=0;
+    const reasons=[];
+    (terms||[]).forEach(item=>{
+      const phrase=Array.isArray(item)?item[0]:item;
+      const weight=Array.isArray(item)?Number(item[1]||1):1;
+      let local=0;
+      if(v301Includes(corpus.title,phrase)) local=Math.max(local,weight*2.35);
+      if(v301Includes(corpus.purpose,phrase)) local=Math.max(local,weight*1.95);
+      if(v301Includes(corpus.tags,phrase)) local=Math.max(local,weight*1.75);
+      if(v301Includes(corpus.path,phrase)) local=Math.max(local,weight*1.35);
+      if(v301Includes(corpus.body,phrase)) local=Math.max(local,weight);
+      if(local){score+=local;reasons.push(String(phrase));}
+    });
+    return {score,reasons};
+  }
+
+  function v301ClientMatch(corpus,entry){
+    const all=corpus.all;
+    const rules=[
+      {sub:'Roberto Zanoni / RZ',tag:'client:roberto-zanoni',tests:[/roberto\s*zanoni/,/robertozanoni\.it/,/tool\.zanoni/,/\brz\b.*(?:seo|sito|portfolio|servizi)/]},
+      {sub:'Galbiati Dental Group',tag:'client:galbiati-dental-group',tests:[/galbiati\s*dental/,/galbiati.*dent/ ]},
+      {sub:'Yoga / Pilates Buena Onda',tag:'client:buena-onda',tests:[/yoga\s*buena\s*onda/,/pilates\s*buena\s*onda/,/yogabuenaonda\.it/,/pilatesbuenaonda\.it/,/cinisello\s*balsamo.*(?:yoga|pilates)/]},
+      {sub:'Sano in Tavola / I Buoni Sani',tag:'client:sano-in-tavola',tests:[/sano\s*in\s*tavola/,/i\s*buoni\s*sani/,/sanointavola/,/ibuonisani/]},
+      {sub:'Trova Esperti Digitali',tag:'client:trova-esperti-digitali',tests:[/trova\s*esperti\s*digitali/,/trovaespertidigitali\.it/,/\bted\b.*(?:freelance|esperti|professionisti)/]},
+      {sub:'Zirafa',tag:'client:zirafa',tests:[/zirafa/,/studiodentisticozirafa\.com/,/metodo\s*sato.*bergamo/]}
+    ];
+    for(const r of rules){
+      const hits=r.tests.filter(rx=>rx.test(all)).length;
+      if(hits){return {catKey:'clients',sub:r.sub,confidence:Math.min(99,94+hits),reasons:['contesto proprietario: '+r.sub],tags:[r.tag]};}
+    }
+    const oldClient=/clienti|progetti specifici|cliente\s*[-:]/.test(v301Norm(entry.catName+' '+entry.subName));
+    const hasUrl=/https?:\/\/|\b[a-z0-9-]+\.(?:it|com|eu|org)\b/.test(String(entry.prompt?.description||entry.prompt?.text||''));
+    const namedProject=/\b(?:studio|azienda|brand|progetto|cliente)\s+[A-ZÀ-Ý][\p{L}0-9_-]+/u.test(String(entry.prompt?.title||'')+' '+v301Plain(entry.prompt?.description||''));
+    if(oldClient&&(hasUrl||namedProject)){
+      return {catKey:'clients',sub:'Altri clienti',confidence:88,reasons:['prompt con dati proprietari di un cliente'],tags:['client:altro']};
+    }
+    return null;
+  }
+
+  function v301ForcedMatch(corpus){
+    const a=corpus.all;
+    if(/analisi (?:dei )?(?:competitor|concorrent)|competitor analysis/.test(a)&&!/(seo|serp|keyword|search console|motore di ricerca)/.test(a)){
+      return {catKey:'marketing',sub:'Analisi della concorrenza',reason:'analisi competitiva non legata alla SERP',confidence:96,reasons:['analisi competitiva non legata alla SERP']};
+    }
+    const forced=[
+      {rx:/ai marketing operating system|operating system ai|sistema operativo ai|control tower.*ai|orchestrator.*ai/,catKey:'ai',sub:'AI Operating System e orchestrazione',reason:'sistema multi-agente o orchestrazione AI'},
+      {rx:/crea istruzioni.*(?:gem|gpt)|(?:gem|gpt) personalizzat|custom (?:gem|gpt)/,catKey:'ai',sub:'Agenti, GPT, GEM e chatbot',reason:'assistente AI personalizzato'},
+      {rx:/revisione qualita e limiti|anti allucinazioni|verifica allucinazioni|guardrail/,catKey:'ai',sub:'Qualità, verifica e anti-allucinazioni',reason:'controllo qualità delle risposte AI'},
+      {rx:/ricerca funzioni recenti ai|ultime funzioni.*(?:chatgpt|claude|gemini|ai)/,catKey:'ai',sub:'Ricerca e aggiornamenti AI',reason:'ricerca di aggiornamenti AI'},
+      {rx:/miniatura youtube|youtube thumbnail|copertina youtube/,catKey:'graphics',sub:'Visual social e thumbnail',reason:'output grafico per YouTube'},
+      {rx:/still life|packshot|fotografia prodotto/,catKey:'graphics',sub:'Fotografia prodotto e still life',reason:'fotografia di prodotto'},
+      {rx:/estrapola html|estrai html|extract html/,catKey:'code',sub:'Estrazione e trasformazione del codice',reason:'estrazione o trasformazione HTML'},
+      {rx:/\belementor\b/,catKey:'wordpress',sub:'Elementor e widget HTML',reason:'tecnologia Elementor'},
+      {rx:/torta vegana.*(?:immagine|foto|fotografia)|(?:immagine|foto).*torta vegana/,catKey:'graphics',sub:'Food photography',reason:'visual food'},
+      {rx:/scadenzario.*(?:app|html|javascript|codice|web app)|(?:crea|costruisci|sviluppa).*scadenzario/,catKey:'code',sub:'Progettazione web app',reason:'sviluppo di uno scadenzario software'}
+    ];
+    const f=forced.find(x=>x.rx.test(a));
+    return f?{...f,confidence:97,reasons:[f.reason]}:null;
+  }
+
+  function v301OutputBonuses(corpus,catKey){
+    const a=corpus.all;
+    let b=0;
+    if(catKey==='wordpress'&&/wordpress|elementor|gutenberg|plugin wordpress|tema wordpress/.test(a)) b+=22;
+    if(catKey==='code'&&/(crea|costruisci|sviluppa|ripara|debug|refactor).{0,45}(html|css|javascript|codice|web app|applicazione|script)/.test(a)) b+=20;
+    if(catKey==='graphics'&&/(crea|genera|modifica|ritocca).{0,45}(immagine|foto|grafica|visual|thumbnail|mockup)/.test(a)) b+=20;
+    if(catKey==='video'&&/(crea|genera|trasforma|monta).{0,45}(video|animazione|reel|short|storyboard)/.test(a)) b+=20;
+    if(catKey==='social'&&/(instagram|facebook|linkedin|tiktok|youtube|social media)/.test(a)) b+=14;
+    if(catKey==='seo'&&/(seo|serp|keyword|search console|schema|indicizzazione|link interni)/.test(a)) b+=15;
+    if(catKey==='content'&&/(articolo|landing page|email|newsletter|riscrivi|copy|cta)/.test(a)) b+=13;
+    if(catKey==='marketing'&&/(buyer persona|funnel|pricing|posizionamento|mercato|growth|business model)/.test(a)) b+=14;
+    if(catKey==='ai'&&/(prompt engineering|custom gpt|gem personalizzato|agente ai|allucinazioni|second brain|operating system ai)/.test(a)) b+=16;
+    if(catKey==='productivity'&&/(csv|excel|pdf|meeting|scadenze|workflow|sop|checklist)/.test(a)) b+=13;
+    return b;
+  }
+
+  function v301ControlledTags(entry,result,corpus){
+    const p=entry.prompt||{};
+    const noise=new Set(['riordinato','scremato','generico','copy','copia','prova','test','a','b','c','prompt']);
+    const tags=[];
+    (Array.isArray(p.tags)?p.tags:[p.tags]).filter(Boolean).forEach(t=>{
+      const raw=String(t).trim();
+      if(!raw||raw.length<2||noise.has(v301Norm(raw))) return;
+      tags.push(raw);
+    });
+    (result.tags||[]).forEach(t=>tags.push(t));
+    const channels=[['instagram','channel:instagram'],['facebook','channel:facebook'],['linkedin','channel:linkedin'],['youtube','channel:youtube'],['tiktok','channel:tiktok'],['whatsapp','channel:whatsapp']];
+    channels.forEach(([k,t])=>{if(corpus.all.includes(k))tags.push(t)});
+    const tools=[['elementor','tool:elementor'],['wordpress','tool:wordpress'],['canva','tool:canva'],['chatgpt','tool:chatgpt'],['claude','tool:claude'],['gemini','tool:gemini'],['codex','tool:codex'],['midjourney','tool:midjourney'],['google flow','tool:google-flow']];
+    tools.forEach(([k,t])=>{if(corpus.all.includes(k))tags.push(t)});
+    const formats=[['html','format:html'],['json','format:json'],['csv','format:csv'],['excel','format:xlsx'],['xlsx','format:xlsx'],['pdf','format:pdf'],['markdown','format:markdown'],['schema','format:schema']];
+    formats.forEach(([k,t])=>{if(corpus.all.includes(k))tags.push(t)});
+    tags.push('task:'+v301Slug(result.catName));
+    tags.push('content:'+v301Slug(result.subName));
+    tags.push('origin:'+v301Slug(entry.catName));
+    return [...new Map(tags.map(t=>[v301Norm(t),String(t).trim()])).values()].slice(0,28);
+  }
+
+  function v301Classify(entry){
+    const corpus=v301Corpus(entry);
+    const client=v301ClientMatch(corpus,entry);
+    if(client){
+      const cat=V301_CAT_BY_KEY.get(client.catKey);
+      const result={...client,catName:cat.name,catIcon:cat.icon,alternative:null};
+      result.tags=v301ControlledTags(entry,result,corpus);
+      return result;
+    }
+
+    const forced=v301ForcedMatch(corpus);
+    if(forced){
+      const cat=V301_CAT_BY_KEY.get(forced.catKey);
+      const result={...forced,catName:cat.name,catIcon:cat.icon,alternative:null};
+      result.tags=v301ControlledTags(entry,result,corpus);
+      return result;
+    }
+
+    const candidates=[];
+    V301_TAXONOMY.filter(c=>!c.clientOnly).forEach(cat=>{
+      const catBase=v301ScoreTerms(cat.terms,corpus);
+      cat.subs.forEach(sub=>{
+        const sr=v301ScoreTerms(sub.terms,corpus);
+        const score=catBase.score+sr.score+v301OutputBonuses(corpus,cat.key);
+        candidates.push({catKey:cat.key,catName:cat.name,catIcon:cat.icon,sub:sub.name,score,reasons:[...catBase.reasons,...sr.reasons]});
+      });
+    });
+
+    candidates.sort((a,b)=>b.score-a.score);
+    const best=candidates[0]||{score:0,catKey:'queue',catName:PS_V301_QUEUE_NAME,catIcon:'🧭',sub:'Da revisionare',reasons:[]};
+    const second=candidates.find(x=>x.catKey!==best.catKey||x.sub!==best.sub)||null;
+    const margin=Math.max(0,best.score-(second?.score||0));
+    let confidence=Math.round(24+Math.min(48,best.score*1.05)+Math.min(24,margin*1.65)+Math.min(8,new Set(best.reasons).size*2));
+    confidence=Math.max(35,Math.min(99,confidence));
+
+    let result={
+      catKey:best.catKey,catName:best.catName,catIcon:best.catIcon,sub:best.sub,
+      confidence,reasons:[...new Set(best.reasons)].slice(0,5),
+      alternative:second?{catKey:second.catKey,catName:second.catName,sub:second.sub,score:Math.round(second.score)}:null
+    };
+
+    if(best.score<14||confidence<60){
+      result={
+        catKey:'queue',catName:V301_QUEUE.name,catIcon:V301_QUEUE.icon,sub:'Da revisionare',
+        confidence:Math.min(59,confidence),
+        reasons:['segnali insufficienti o ambigui',...result.reasons].slice(0,5),
+        alternative:{catKey:best.catKey,catName:best.catName,sub:best.sub,score:Math.round(best.score)}
+      };
+    }else if(!result.reasons.length){
+      result.reasons=['corrispondenza semantica generale'];
+    }
+
+    result.tags=v301ControlledTags(entry,result,corpus);
+    return result;
+  }
+
+  function v301BuildPlan(){
+    return v301SourceEntries(S.allData||[]).map(entry=>{
+      const result=v301Classify(entry);
+      const current=entry.catName+' › '+entry.subName;
+      const proposed=result.catName+' › '+result.sub;
+      const level=result.confidence>=85?'high':result.confidence>=60?'medium':'low';
+      return {
+        ...entry,result,current,proposed,level,
+        selected:level!=='medium',
+        unchanged:v301Norm(entry.catName)===v301Norm(result.catName)&&v301Norm(entry.subName)===v301Norm(result.sub)
+      };
+    });
+  }
+
+  function v301PlanCsv(plan){
+    const headers=['prompt','categoria_origine','sottocategoria_origine','categoria_destinazione','sottocategoria_destinazione','confidenza','livello','motivazioni','alternativa','selezionato'];
+    const rows=[headers.map(v301CsvCell).join(';')];
+    plan.forEach(x=>rows.push([
+      x.prompt?.title||'',x.catName,x.subName,x.result.catName,x.result.sub,x.result.confidence,x.level,
+      (x.result.reasons||[]).join(', '),x.result.alternative?(x.result.alternative.catName+' › '+x.result.alternative.sub):'',x.selected?'si':'no'
+    ].map(v301CsvCell).join(';')));
+    return rows.join('\n');
+  }
+
+  function v301EnsureStyle(){
+    if($('v301TaxonomyStyle')) return;
+    const st=document.createElement('style');
+    st.id='v301TaxonomyStyle';
+    st.textContent=`
+      .v301-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:18px}
+      .v301-card{width:min(1500px,98vw);height:min(900px,94vh);background:var(--sf);border:1px solid var(--bd2);border-radius:24px;box-shadow:0 30px 100px rgba(0,0,0,.72);display:flex;flex-direction:column;overflow:hidden}
+      .v301-head{padding:20px 22px 16px;border-bottom:1px solid var(--bd);display:flex;gap:16px;align-items:flex-start;background:var(--sf2)}
+      .v301-head h2{font-family:var(--font-head);font-size:25px;line-height:1.1;margin:0 0 6px}.v301-head p{color:var(--t2);font-size:14px;line-height:1.5;margin:0;max-width:900px}
+      .v301-close{margin-left:auto;border:1px solid var(--bd);background:var(--el);color:var(--t1);width:38px;height:38px;border-radius:12px;cursor:pointer;font-size:18px}
+      .v301-summary{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:9px;padding:12px 18px;border-bottom:1px solid var(--bd);background:var(--bg)}
+      .v301-stat{background:var(--el);border:1px solid var(--bd);border-radius:14px;padding:10px 12px}.v301-stat b{display:block;font-size:22px;color:var(--ac);font-family:var(--font-head)}.v301-stat span{font-size:12px;color:var(--t2);font-weight:700}
+      .v301-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--bd);background:var(--sf2)}
+      .v301-tools input{min-width:240px;flex:1;padding:9px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--el);color:var(--t1);font-size:14px}
+      .v301-tools button,.v301-foot button,.v301-mini{border:1px solid var(--bd);background:var(--el);color:var(--t1);border-radius:11px;padding:8px 11px;font-weight:800;cursor:pointer;font-size:13px}.v301-tools button.ac{background:var(--ac);color:#fff;border-color:var(--ac)}
+      .v301-table-wrap{flex:1;overflow:auto;background:var(--bg)}.v301-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:1180px}.v301-table th{position:sticky;top:0;z-index:2;background:var(--sf);color:var(--t2);text-align:left;padding:10px;border-bottom:1px solid var(--bd2);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.v301-table td{padding:10px;border-bottom:1px solid var(--bd);vertical-align:top}.v301-table tr:hover td{background:var(--sf2)}
+      .v301-title{font-weight:900;max-width:330px}.v301-path{color:var(--t2);line-height:1.35}.v301-proposed{color:var(--t1);font-weight:800}.v301-reasons{color:var(--t3);font-size:12px;line-height:1.35;max-width:290px}.v301-alt{color:var(--t3);font-size:11px;margin-top:4px}
+      .v301-conf{display:inline-flex;padding:4px 8px;border-radius:999px;font-weight:900;font-size:12px;white-space:nowrap}.v301-conf.high{background:rgba(52,211,153,.15);color:#34d399}.v301-conf.medium{background:rgba(251,191,36,.16);color:#fbbf24}.v301-conf.low{background:rgba(248,113,113,.15);color:#f87171}
+      .v301-row-low td{background:rgba(248,113,113,.025)}.v301-row-medium td{background:rgba(251,191,36,.018)}.v301-check{width:18px;height:18px;accent-color:var(--ac)}
+      .v301-foot{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;align-items:center;justify-content:flex-end;background:var(--sf)}.v301-foot .note{margin-right:auto;color:var(--t3);font-size:12px;max-width:520px}.v301-foot .primary{background:var(--ac);border-color:var(--ac);color:#fff}.v301-foot .safe{background:#10b981;border-color:#10b981;color:#fff}.v301-foot .danger{color:var(--rd)}
+      .v301-progress{height:7px;background:var(--el);overflow:hidden}.v301-progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--cy));transition:width .25s}
+      .v301-taxonomy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px;padding:14px 18px;max-height:55vh;overflow:auto}.v301-tax-card{background:var(--el);border:1px solid var(--bd);border-radius:14px;padding:12px}.v301-tax-card b{font-size:14px}.v301-tax-card div{font-size:12px;color:var(--t2);margin-top:6px;line-height:1.45}
+      @media(max-width:850px){.v301-summary{grid-template-columns:repeat(2,1fr)}.v301-head{padding:16px}.v301-foot{flex-wrap:wrap}.v301-foot .note{width:100%;margin-right:0}.v301-card{height:96vh}}
+    `;
+    document.head.appendChild(st);
+  }
+
+  function v301CloseOverlay(){document.querySelector('.v301-overlay')?.remove()}
+
+  function v301TaxonomyOverview(){
+    v301EnsureStyle();v301CloseOverlay();
+    const ov=document.createElement('div');ov.className='v301-overlay';
+    ov.innerHTML='<div class="v301-card" style="height:auto;max-height:92vh"><div class="v301-head"><div><h2>Nuova tassonomia operativa</h2><p>Undici categorie primarie, sottocategorie per intento e una coda tecnica per i casi ambigui. Ogni prompt resta in una sola posizione e conserva l’origine nei metadati.</p></div><button class="v301-close">✕</button></div><div class="v301-taxonomy-grid">'+
+      [...V301_TAXONOMY,V301_QUEUE].map(c=>'<div class="v301-tax-card"><b>'+v301Esc(c.icon+' '+c.name)+'</b><div>'+c.subs.map(s=>v301Esc(s.name)).join('<br>')+'</div></div>').join('')+
+      '</div><div class="v301-foot"><span class="note">Le cartelle oltre 50 prompt vengono suddivise in gruppi alfabetici da massimo 35 elementi.</span><button class="primary" data-start>Analizza la libreria</button><button data-close>Chiudi</button></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelectorAll('[data-close],.v301-close').forEach(b=>b.onclick=v301CloseOverlay);
+    ov.querySelector('[data-start]').onclick=()=>{ov.remove();v301OpenRecategorization()};
+  }
+
+  function v301RenderPreview(plan){
+    v301EnsureStyle();v301CloseOverlay();
+    const ov=document.createElement('div');ov.className='v301-overlay';
+    const high=plan.filter(x=>x.level==='high').length,medium=plan.filter(x=>x.level==='medium').length,low=plan.filter(x=>x.level==='low').length,unchanged=plan.filter(x=>x.unchanged).length;
+    ov.innerHTML='<div class="v301-card">'+
+      '<div class="v301-head"><div><h2>Anteprima ricategorizzazione semantica</h2><p>Controlla origine, destinazione, confidenza e motivazioni. I prompt ambigui vengono inviati a “Da classificare”; quelli tra 60% e 84% richiedono revisione manuale.</p></div><button class="v301-close">✕</button></div>'+ 
+      '<div class="v301-progress"><div></div></div>'+ 
+      '<div class="v301-summary"><div class="v301-stat"><b>'+plan.length+'</b><span>Prompt analizzati</span></div><div class="v301-stat"><b>'+high+'</b><span>Alta confidenza</span></div><div class="v301-stat"><b>'+medium+'</b><span>Da verificare</span></div><div class="v301-stat"><b>'+low+'</b><span>In coda tecnica</span></div><div class="v301-stat"><b>'+unchanged+'</b><span>Già coerenti</span></div><div class="v301-stat"><b>'+V301_TAXONOMY.length+'</b><span>Categorie primarie</span></div></div>'+ 
+      '<div class="v301-tools"><input type="search" id="v301Search" placeholder="Cerca prompt, origine o destinazione…"><button class="ac" data-filter="all">Tutti</button><button data-filter="high">≥85%</button><button data-filter="medium">60–84%</button><button data-filter="low">&lt;60%</button><button data-filter="changed">Solo spostamenti</button><button data-select="high">Seleziona sicuri</button><button data-select="all">Seleziona tutti</button><button data-select="none">Deseleziona</button></div>'+ 
+      '<div class="v301-table-wrap"><table class="v301-table"><thead><tr><th>Applica</th><th>Prompt</th><th>Posizione attuale</th><th>Destinazione proposta</th><th>Confidenza</th><th>Motivazioni / alternativa</th><th>Modifica</th></tr></thead><tbody></tbody></table></div>'+ 
+      '<div class="v301-foot"><span class="note">Prima dell’applicazione viene creato un backup completo in IndexedDB. Al termine ricevi ZIP con backup, report spostamenti e casi da rivedere.</span><button data-export>Esporta anteprima CSV</button><button data-taxonomy>Vedi tassonomia</button><button class="safe" data-selected>Applica selezionati</button><button class="primary" data-all>Applica tutta la ricategorizzazione</button><button data-close>Annulla</button></div>'+ 
+      '</div>';
+    document.body.appendChild(ov);
+    const tbody=ov.querySelector('tbody');
+    let activeFilter='all';
+
+    function draw(){
+      const q=v301Norm(ov.querySelector('#v301Search').value);
+      tbody.innerHTML='';
+      plan.forEach(x=>{
+        const hay=v301Norm((x.prompt?.title||'')+' '+x.current+' '+x.proposed+' '+(x.result.reasons||[]).join(' '));
+        const filterOk=activeFilter==='all'||x.level===activeFilter||(activeFilter==='changed'&&!x.unchanged);
+        if(!filterOk||(q&&!hay.includes(q))) return;
+        const tr=document.createElement('tr');
+        tr.className='v301-row-'+x.level;
+        tr.dataset.key=x.key;
+        tr.innerHTML='<td><input class="v301-check" type="checkbox" '+(x.selected?'checked':'')+'></td>'+ 
+          '<td><div class="v301-title">'+v301Esc(x.prompt?.title||'Senza titolo')+'</div><div class="v301-alt">'+v301Esc((x.prompt?.tags||[]).slice(0,4).join(', '))+'</div></td>'+ 
+          '<td><div class="v301-path">'+v301Esc(x.current)+'</div></td>'+ 
+          '<td><div class="v301-proposed">'+v301Esc(x.proposed)+'</div></td>'+ 
+          '<td><span class="v301-conf '+x.level+'">'+x.result.confidence+'%</span></td>'+ 
+          '<td><div class="v301-reasons">'+v301Esc((x.result.reasons||[]).join(', '))+'</div>'+(x.result.alternative?'<div class="v301-alt">Alternativa: '+v301Esc(x.result.alternative.catName+' › '+x.result.alternative.sub)+'</div>':'')+'</td>'+ 
+          '<td><button class="v301-mini">Cambia</button></td>';
+        tr.querySelector('input').onchange=e=>{x.selected=e.target.checked};
+        tr.querySelector('button').onclick=()=>v301ManualTarget(x,draw);
+        tbody.appendChild(tr);
+      });
+    }
+
+    ov.querySelector('#v301Search').oninput=draw;
+    ov.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{
+      activeFilter=b.dataset.filter;
+      ov.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('ac',x===b));draw();
+    });
+    ov.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{
+      const mode=b.dataset.select;
+      plan.forEach(x=>{x.selected=mode==='all'||(mode==='high'&&(x.level==='high'||x.level==='low'))});draw();
+    });
+    ov.querySelectorAll('[data-close],.v301-close').forEach(b=>b.onclick=v301CloseOverlay);
+    ov.querySelector('[data-export]').onclick=()=>v301DownloadText('anteprima_ricategorizzazione_'+new Date().toISOString().slice(0,10)+'.csv',v301PlanCsv(plan),'text/csv;charset=utf-8');
+    ov.querySelector('[data-taxonomy]').onclick=v301TaxonomyOverview;
+    ov.querySelector('[data-selected]').onclick=()=>v301ApplyPlan(plan,plan.filter(x=>x.selected).map(x=>x.key),ov);
+    ov.querySelector('[data-all]').onclick=()=>v301ApplyPlan(plan,plan.map(x=>x.key),ov);
+    draw();
+  }
+
+  async function v301ManualTarget(row,redraw){
+    const catLabels=[...V301_TAXONOMY,V301_QUEUE].map(c=>c.icon+' '+c.name);
+    const currentCat=[...V301_TAXONOMY,V301_QUEUE].find(c=>c.key===row.result.catKey)||V301_QUEUE;
+    const r1=await Modal.prompt('Correggi categoria',[{label:'Categoria primaria',type:'select',options:catLabels,default:currentCat.icon+' '+currentCat.name}]);
+    if(!r1) return;
+    const cat=[...V301_TAXONOMY,V301_QUEUE][Math.max(0,catLabels.indexOf(r1.f0))];
+    const subLabels=cat.subs.map(s=>s.name);
+    const r2=await Modal.prompt('Correggi sottocategoria',[{label:'Sottocategoria',type:'select',options:subLabels,default:subLabels.includes(row.result.sub)?row.result.sub:subLabels[0]}]);
+    if(!r2) return;
+    row.result.catKey=cat.key;row.result.catName=cat.name;row.result.catIcon=cat.icon;row.result.sub=r2.f0;
+    row.result.confidence=100;row.result.reasons=['destinazione scelta manualmente'];row.result.alternative=null;
+    row.proposed=cat.name+' › '+r2.f0;row.level='high';row.selected=true;row.unchanged=v301Norm(row.catName)===v301Norm(cat.name)&&v301Norm(row.subName)===v301Norm(r2.f0);
+    row.result.tags=v301ControlledTags(row,row.result,v301Corpus(row));
+    redraw();
+  }
+
+  async function v301OpenRecategorization(){
+    if(!await dirtyCheck()) return;
+    const total=v301SourceEntries(S.allData||[]).length;
+    if(!total){Toast.show('Nessun prompt da ricategorizzare.','er');return;}
+    Loader.show();
+    try{
+      await new Promise(r=>setTimeout(r,25));
+      const plan=v301BuildPlan();
+      v301RenderPreview(plan);
+    }catch(err){console.error(err);Toast.show('Errore durante l’analisi semantica.','er',6000)}
+    finally{Loader.hide()}
+  }
+
+  function v301CanonicalDataSkeleton(preserveData=[]){
+    const existing=new Map((preserveData||[]).map(c=>[v301Norm(c.name),c]));
+    const cats=[];
+    V301_TAXONOMY.forEach(def=>{
+      let cat=existing.get(v301Norm(def.name));
+      if(cat){cat=v301Clone(cat);cat.name=def.name;cat.icon=def.icon;if(!Array.isArray(cat.subcategories))cat.subcategories=[];}
+      else cat={id:uid(),name:def.name,icon:def.icon,subcategories:[]};
+      cats.push(cat);
+    });
+    return cats;
+  }
+
+  function v301FindOrCreateSub(cat,name){
+    let sub=(cat.subcategories||[]).find(s=>v301Norm(s.name)===v301Norm(name));
+    if(!sub){sub={id:uid(),name,icon:'',prompts:[]};cat.subcategories.push(sub)}
+    if(!Array.isArray(sub.prompts))sub.prompts=[];
+    return sub;
+  }
+
+  function v301PromptSignature(p){
+    const title=v301Norm(p?.title||'');
+    const body=v301Norm(v301Plain(p?.description||p?.text||p?.plainText||''));
+    if(!body&&title.length<5) return 'id:'+String(p?.id||uid());
+    return title+'|'+body.slice(0,2400);
+  }
+
+  function v301MergeDuplicate(target,source){
+    target.favorite=!!(target.favorite||source.favorite);
+    target.pinned=!!(target.pinned||source.pinned);
+    target.copyCount=Math.max(Number(target.copyCount||0),Number(source.copyCount||0));
+    target.tags=[...new Map([...(target.tags||[]),...(source.tags||[])].map(t=>[v301Norm(t),t])).values()];
+    target.related=[...new Set([...(target.related||[]),...(source.related||[])])];
+    target.versions=[...(target.versions||[]),...(source.versions||[])].sort((a,b)=>(a.ts||0)-(b.ts||0)).slice(-30);
+    target.updatedAt=Math.max(target.updatedAt||0,source.updatedAt||0,Date.now());
+    const histories=[...(target.originHistory||[]),...(source.originHistory||[])];
+    target.originHistory=histories.filter((x,i,a)=>a.findIndex(y=>JSON.stringify(y)===JSON.stringify(x))===i).slice(-20);
+  }
+
+  function v301PruneOldData(data,selectedKeys){
+    const out=v301Clone(data||[]);
+    const keySet=new Set(selectedKeys);
+    (out||[]).forEach((cat,ci)=>{
+      if(v301IsTrash(cat)) return;
+      (cat.subcategories||[]).forEach((sub,si)=>{
+        sub.prompts=(sub.prompts||[]).filter((p,pi)=>!keySet.has([cat.id||ci,sub.id||si,p.id||pi,pi].join('|')));
+      });
+      cat.prompts=(cat.prompts||[]).filter((p,pi)=>!keySet.has([cat.id||ci,'root',p.id||pi,pi].join('|')));
+      cat.subcategories=(cat.subcategories||[]).filter(s=>(s.prompts||[]).length);
+    });
+    return out.filter(c=>v301IsTrash(c)||(c.prompts||[]).length||(c.subcategories||[]).some(s=>(s.prompts||[]).length));
+  }
+
+  function v301SplitOversizedSubcategories(data,report){
+    (data||[]).forEach(cat=>{
+      if(v301IsTrash(cat)) return;
+      const next=[];
+      (cat.subcategories||[]).forEach(sub=>{
+        const prompts=[...(sub.prompts||[])].sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base',numeric:true}));
+        if(prompts.length<=50){sub.prompts=prompts;next.push(sub);return;}
+        for(let i=0;i<prompts.length;i+=35){
+          const chunk=prompts.slice(i,i+35);
+          const a=(chunk[0]?.title||'#').trim().charAt(0).toUpperCase();
+          const z=(chunk[chunk.length-1]?.title||'#').trim().charAt(0).toUpperCase();
+          const name=sub.name+' — '+a+'–'+z;
+          next.push({id:i===0?sub.id:uid(),name,icon:sub.icon||'',prompts:chunk});
+          report.push({action:'split_overflow',prompt:'',from:cat.name+' › '+sub.name,to:cat.name+' › '+name,confidence:100,reasons:'sottocategoria oltre 50 prompt'});
+        }
+      });
+      cat.subcategories=next;
+    });
+  }
+
+  function v301BuildMigratedData(plan,selectedKeys){
+    const selectedSet=new Set(selectedKeys);
+    const allSelected=selectedSet.size===plan.length;
+    const trash=(S.allData||[]).filter(v301IsTrash).map(v301Clone);
+    let base=allSelected?[]:v301PruneOldData(S.allData,selectedKeys).filter(c=>!v301IsTrash(c));
+    const canonical=v301CanonicalDataSkeleton(base);
+    const canonMap=new Map(canonical.map(c=>[v301Norm(c.name),c]));
+    const queueNeeded=plan.some(x=>selectedSet.has(x.key)&&x.result.catKey==='queue');
+    let queue=null;
+    if(queueNeeded){
+      queue=base.find(c=>v301Norm(c.name)===v301Norm(V301_QUEUE.name));
+      queue=queue?v301Clone(queue):{id:uid(),name:V301_QUEUE.name,icon:V301_QUEUE.icon,subcategories:[]};
+    }
+
+    const usedIds=new Set();
+    [...canonical,...base,...trash,queue].filter(Boolean).forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>usedIds.add(p.id))));
+    const signatures=new Map();
+    [...canonical,queue].filter(Boolean).forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>signatures.set(v301PromptSignature(p),p))));
+    const idMap=new Map();
+    const locationMap=new Map();
+    const report=[];
+
+    plan.filter(x=>selectedSet.has(x.key)).forEach(row=>{
+      const targetCat=row.result.catKey==='queue'?queue:canonMap.get(v301Norm(row.result.catName));
+      if(!targetCat) return;
+      const targetSub=v301FindOrCreateSub(targetCat,row.result.sub);
+      const p=v301Clone(row.prompt||{});
+      const oldId=p.id;
+      if(!p.id||usedIds.has(p.id)) p.id=uid();
+      usedIds.add(p.id);
+      p.title=String(p.title||'Prompt senza titolo');
+      p.description=typeof p.description==='string'?p.description:String(p.description||p.text||p.plainText||'');
+      p.tags=row.result.tags||[];
+      p.favorite=!!p.favorite;p.pinned=!!p.pinned;p.copyCount=Number(p.copyCount||0);
+      p.versions=Array.isArray(p.versions)?p.versions:[];p.related=Array.isArray(p.related)?p.related:[];
+      p.createdAt=Number(p.createdAt||Date.now());p.updatedAt=Date.now();p.noAutoVars=!!p.noAutoVars;
+      p.originCategory=p.originCategory||row.catName;
+      p.originSubcategory=p.originSubcategory||row.subName;
+      p.originHistory=[...(p.originHistory||[]),{category:row.catName,subcategory:row.subName,at:Date.now()}].slice(-20);
+      p.classificationVersion=PS_V301_CLASSIFIER;
+      p.classificationScore=row.result.confidence;
+      p.classificationReasons=[...(row.result.reasons||[])];
+      p.classificationAlternative=row.result.alternative||null;
+      p.classifiedAt=Date.now();
+
+      const sig=v301PromptSignature(p);
+      const duplicate=signatures.get(sig);
+      if(duplicate){
+        v301MergeDuplicate(duplicate,p);
+        if(oldId) idMap.set(oldId,duplicate.id);
+        report.push({action:'merged_exact_duplicate',prompt:p.title,from:row.current,to:row.proposed,confidence:row.result.confidence,reasons:(row.result.reasons||[]).join(', ')});
+      }else{
+        targetSub.prompts.push(p);
+        signatures.set(sig,p);
+        if(oldId) idMap.set(oldId,p.id);
+        locationMap.set(p.id,{catId:targetCat.id,subId:targetSub.id});
+        report.push({action:row.unchanged?'kept':'moved',prompt:p.title,from:row.current,to:row.proposed,confidence:row.result.confidence,reasons:(row.result.reasons||[]).join(', ')});
+      }
+    });
+
+    let result;
+    if(allSelected){
+      result=[...canonical];
+    }else{
+      const canonicalNames=new Set(canonical.map(c=>v301Norm(c.name)));
+      const oldNonCanonical=base.filter(c=>!canonicalNames.has(v301Norm(c.name))&&v301Norm(c.name)!==v301Norm(V301_QUEUE.name));
+      result=[...canonical,...oldNonCanonical];
+    }
+    if(queue) result.push(queue);
+    result.push(...trash);
+
+    result.forEach(c=>{
+      c.subcategories=(c.subcategories||[]).filter(s=>(s.prompts||[]).length).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base',numeric:true}));
+      c.subcategories.forEach(s=>s.prompts.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'it',{sensitivity:'base',numeric:true})));
+    });
+    v301SplitOversizedSubcategories(result,report);
+
+    const taxonomyOrder=new Map(V301_TAXONOMY.map((c,i)=>[v301Norm(c.name),i]));
+    result.sort((a,b)=>{
+      if(v301IsTrash(a))return 1;if(v301IsTrash(b))return -1;
+      if(v301Norm(a.name)===v301Norm(V301_QUEUE.name))return 1;if(v301Norm(b.name)===v301Norm(V301_QUEUE.name))return -1;
+      const ai=taxonomyOrder.has(v301Norm(a.name))?taxonomyOrder.get(v301Norm(a.name)):999;
+      const bi=taxonomyOrder.has(v301Norm(b.name))?taxonomyOrder.get(v301Norm(b.name)):999;
+      return ai-bi||String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'});
+    });
+
+    result.forEach(c=>(c.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>{
+      p.related=[...new Set((p.related||[]).map(id=>idMap.get(id)||id).filter(Boolean).filter(id=>id!==p.id))];
+      locationMap.set(p.id,{catId:c.id,subId:s.id});
+    })));
+
+    return {data:result,idMap,locationMap,report};
+  }
+
+  async function v301SnapshotRollback(){
+    const snap={data:v301Clone(S.allData||[]),recents:v301Clone(S.recents||[]),ts:Date.now(),version:PS_V301_VERSION};
+    if(DB?._put) await DB._put(PS_V301_ROLLBACK_KEY,snap);
+    if(DB?.bk) DB.bk(S.allData||[]);
+    return snap;
+  }
+
+  async function v301DownloadMigrationPackage(snapshot,plan,report,data){
+    const date=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const reportCsv=['azione','prompt','origine','destinazione','confidenza','motivazioni'].map(v301CsvCell).join(';')+'\n'+report.map(r=>[r.action,r.prompt,r.from,r.to,r.confidence,r.reasons].map(v301CsvCell).join(';')).join('\n');
+    const review=plan.filter(x=>x.result.confidence<85);
+    const reviewCsv=v301PlanCsv(review);
+    const manifest={
+      type:'prompt-studio-semantic-recategorization',version:PS_V301_VERSION,classifier:PS_V301_CLASSIFIER,
+      generatedAt:new Date().toISOString(),promptCount:plan.length,moved:report.filter(r=>r.action==='moved').length,
+      mergedExactDuplicates:report.filter(r=>r.action==='merged_exact_duplicate').length,
+      reviewCases:review.length,categories:data.filter(c=>!v301IsTrash(c)).map(c=>({name:c.name,prompts:(c.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0)}))
+    };
+    if(typeof JSZip!=='undefined'){
+      const zip=new JSZip();
+      zip.file('backup_prima_ricategorizzazione.json',JSON.stringify(snapshot.data,null,2));
+      zip.file('report_spostamenti.csv',reportCsv);
+      zip.file('casi_da_rivedere.csv',reviewCsv);
+      zip.file('nuova_libreria_ricategorizzata.json',JSON.stringify(data,null,2));
+      zip.file('manifest.json',JSON.stringify(manifest,null,2));
+      const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+      v301DownloadBlob('prompt_studio_ricategorizzazione_'+date+'.zip',blob);
+    }else{
+      v301DownloadText('backup_prima_ricategorizzazione_'+date+'.json',JSON.stringify(snapshot.data,null,2),'application/json');
+      v301DownloadText('report_spostamenti_'+date+'.csv',reportCsv,'text/csv;charset=utf-8');
+      v301DownloadText('casi_da_rivedere_'+date+'.csv',reviewCsv,'text/csv;charset=utf-8');
+    }
+  }
+
+  async function v301ApplyPlan(plan,selectedKeys,overlay){
+    if(!selectedKeys.length){Toast.show('Seleziona almeno un prompt.','er');return;}
+    const full=selectedKeys.length===plan.length;
+    const ok=await Modal.confirm(
+      full?'Applicare tutta la nuova tassonomia?':'Applicare gli spostamenti selezionati?',
+      (full?'Tutti i prompt non presenti nel cestino verranno ricostruiti nelle 11 categorie operative. ':'Verranno spostati '+selectedKeys.length+' prompt; gli altri resteranno nella posizione attuale. ')+
+      'Verrà creato un backup completo e potrai usare il rollback.'
+    );
+    if(!ok)return;
+    const progress=overlay?.querySelector('.v301-progress>div');
+    if(progress)progress.style.width='12%';
+    Loader.show();
+    try{
+      const snapshot=await v301SnapshotRollback();
+      if(progress)progress.style.width='30%';
+      const built=v301BuildMigratedData(plan,selectedKeys);
+      if(typeof validate==='function'&&!validate(built.data)) throw new Error('Dataset ricategorizzato non valido');
+      if(progress)progress.style.width='55%';
+
+      const newRecents=[];
+      (S.recents||[]).forEach(r=>{
+        const nid=built.idMap.get(r.pid)||r.pid;
+        const loc=built.locationMap.get(nid);
+        if(loc&&!newRecents.some(x=>x.pid===nid)) newRecents.push({...r,pid:nid,cid:loc.catId,catId:loc.catId,sid:loc.subId,subId:loc.subId});
+      });
+      S.recents=newRecents.slice(0,30);
+      await DB.saveR(S.recents);
+
+      const first=built.data.find(c=>!v301IsTrash(c)&&(c.subcategories||[]).some(s=>(s.prompts||[]).length)) || built.data.find(c=>!v301IsTrash(c));
+      const firstSub=(first?.subcategories||[]).find(s=>(s.prompts||[]).length) || first?.subcategories?.[0];
+      const firstPrompt=firstSub?.prompts?.[0];
+      const saved=await save(built.data,{ids:{view:'dashboard',catId:first?.id||null,subId:firstSub?.id||null,pid:firstPrompt?.id||null},hist:true});
+      if(!saved)throw new Error('Salvataggio non riuscito');
+      if(progress)progress.style.width='82%';
+      await v301DownloadMigrationPackage(snapshot,plan.filter(x=>selectedKeys.includes(x.key)),built.report,built.data);
+      try{localStorage.setItem('PS_TAXONOMY_APPLIED',PS_V301_CLASSIFIER)}catch(_){ }
+      if(progress)progress.style.width='100%';
+      setTimeout(()=>overlay?.remove(),250);
+      Toast.show('Ricategorizzazione completata. Backup, report e casi da rivedere sono nello ZIP.','ok',8000);
+    }catch(err){
+      console.error(err);Toast.show('Ricategorizzazione annullata: '+(err.message||'errore sconosciuto'),'er',8000);
+    }finally{Loader.hide()}
+  }
+
+  async function v301Rollback(){
+    const snap=DB?._get?await DB._get(PS_V301_ROLLBACK_KEY,null):null;
+    if(!snap?.data){Toast.show('Nessun rollback di ricategorizzazione disponibile.','er');return;}
+    const ok=await Modal.confirm('Ripristinare la libreria precedente?','Verrà ripristinato il backup del '+fmtD(snap.ts)+'. La libreria attuale sarà sostituita.');
+    if(!ok)return;
+    Loader.show();
+    try{
+      S.recents=Array.isArray(snap.recents)?snap.recents:[];await DB.saveR(S.recents);
+      const first=snap.data.find(c=>!v301IsTrash(c)&&(c.subcategories||[]).some(s=>(s.prompts||[]).length))||snap.data.find(c=>!v301IsTrash(c))||snap.data[0];const sub=(first?.subcategories||[]).find(s=>(s.prompts||[]).length)||first?.subcategories?.[0];const p=sub?.prompts?.[0];
+      await save(v301Clone(snap.data),{ids:{view:'dashboard',catId:first?.id||null,subId:sub?.id||null,pid:p?.id||null},hist:true});
+      Toast.show('Rollback completato.','ok',5000);
+    }catch(err){console.error(err);Toast.show('Rollback non riuscito.','er',6000)}finally{Loader.hide()}
+  }
+
+  function v301CategoryBaseName(name){
+    return String(name||'').replace(/^\s*(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF]\uFE0F?\s*)+/gu,'').replace(/\s*\((?:\d+|Importata(?:\s+\d+)?)\)\s*$/i,'').trim()||'Categoria senza nome';
+  }
+
+  async function v301DeduplicateNamesOnly(){
+    if(!await dirtyCheck())return;
+    const data=v301Clone(S.allData||[]);
+    const groups=new Map();
+    data.forEach((c,i)=>{
+      if(v301IsTrash(c))return;
+      const key=v301Norm(v301CategoryBaseName(c.name));
+      if(!groups.has(key))groups.set(key,[]);
+      groups.get(key).push({c,i});
+    });
+    const dups=[...groups.values()].filter(g=>g.length>1);
+    if(!dups.length){
+      data.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base',numeric:true}));
+      await save(data,{hist:true});Toast.show('Nessun doppione nominale. Categorie ordinate A–Z.','ok');return;
+    }
+    const ok=await Modal.confirm('Deduplicare solo i nomi delle categorie?','Saranno uniti '+dups.length+' gruppi con lo stesso nome normalizzato. Tutti i prompt verranno conservati; nessun duplicato di prompt sarà eliminato.');
+    if(!ok)return;
+    await v301SnapshotRollback();
+    const remove=new Set();
+    dups.forEach(group=>{
+      group.sort((a,b)=>((b.c.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0))-((a.c.subcategories||[]).reduce((n,s)=>n+(s.prompts||[]).length,0)));
+      const keep=group[0].c;keep.name=v301CategoryBaseName(keep.name);if(!Array.isArray(keep.subcategories))keep.subcategories=[];
+      const targetIds=new Set();
+      (keep.subcategories||[]).forEach(s=>(s.prompts||[]).forEach(p=>{if(p.id)targetIds.add(p.id)}));
+      (keep.prompts||[]).forEach(p=>{if(p.id)targetIds.add(p.id)});
+      group.slice(1).forEach(({c})=>{
+        (c.subcategories||[]).forEach(src=>{
+          let dst=keep.subcategories.find(s=>v301Norm(s.name)===v301Norm(src.name));
+          if(!dst){dst={id:uid(),name:src.name||'Generale',icon:src.icon||'',prompts:[]};keep.subcategories.push(dst)}
+          (src.prompts||[]).forEach(p=>{const q=v301Clone(p);if(!q.id||targetIds.has(q.id))q.id=uid();targetIds.add(q.id);dst.prompts.push(q)});
+        });
+        (c.prompts||[]).forEach(p=>{let dst=keep.subcategories.find(s=>v301Norm(s.name)==='generale');if(!dst){dst={id:uid(),name:'Generale',icon:'',prompts:[]};keep.subcategories.push(dst)}const q=v301Clone(p);if(!q.id||targetIds.has(q.id))q.id=uid();targetIds.add(q.id);dst.prompts.push(q)});
+        remove.add(c.id);
+      });
+    });
+    const cleaned=data.filter(c=>!remove.has(c.id)).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base',numeric:true}));
+    await save(cleaned,{ids:{view:'dashboard',pid:null},hist:true});
+    Toast.show('Nomi deduplicati. Tutti i prompt sono stati conservati.','ok',6000);
+  }
+
+  function v301OpenPromptDuplicates(){S.view='duplicates';S.pid=null;render()}
+
+  function v301AddButton(parent,id,label,icon,bg,handler,before){
+    let b=$(id);
+    if(!b){b=document.createElement('button');b.id=id;b.type='button';if(parent.classList.contains('tm-grid'))b.className='tb';b.style.background=bg||'';b.innerHTML='<i class="fa-solid '+icon+'"></i>'+label;(before||parent).insertBefore?parent.insertBefore(b,before||null):parent.appendChild(b)}
+    b.onclick=handler;return b;
+  }
+
+  function v301Bind(){
+    const badge=document.querySelector('.logo-badge');if(badge)badge.textContent=PS_V301_VERSION;
+    document.title='Prompt Studio '+PS_V301_VERSION;
+
+    const tools=document.querySelector('#toM .tm-grid');
+    if(tools){
+      const old=$('v298DedupTools');
+      if(old){old.innerHTML='<i class="fa-solid fa-layer-group"></i>Deduplica nomi';old.title='Unisce solo categorie con lo stesso nome, senza eliminare prompt';old.style.background='#0f766e';old.onclick=async()=>{$('toM')?.classList.remove('show');await v301DeduplicateNamesOnly()}}
+      v301AddButton(tools,'v301PromptDuplicates','Trova duplicati','fa-clone','#7c3aed',()=>{$('toM')?.classList.remove('show');v301OpenPromptDuplicates()},tools.children[3]||null);
+      v301AddButton(tools,'v301SemanticTaxonomy','Ricategorizza','fa-diagram-project','#2563eb',()=>{$('toM')?.classList.remove('show');v301OpenRecategorization()},tools.children[4]||null);
+      v301AddButton(tools,'v301TaxonomyOverview','Tassonomia','fa-sitemap','#0369a1',()=>{$('toM')?.classList.remove('show');v301TaxonomyOverview()},tools.children[5]||null);
+      v301AddButton(tools,'v301Rollback','Rollback','fa-clock-rotate-left','#b45309',()=>{$('toM')?.classList.remove('show');v301Rollback()},tools.children[6]||null);
+    }
+
+    const menu=$('v294BackupMenu');
+    if(menu&&!$('v301SemanticFromBackup')){
+      const sec=document.createElement('div');sec.className='v294-menu-section';sec.textContent='Tassonomia e classificazione';menu.appendChild(sec);
+      const actions=[
+        ['v301SemanticFromBackup','fa-diagram-project','Ricategorizza semanticamente',v301OpenRecategorization],
+        ['v301DuplicatesFromBackup','fa-clone','Trova prompt duplicati',v301OpenPromptDuplicates],
+        ['v301RollbackFromBackup','fa-clock-rotate-left','Rollback ricategorizzazione',v301Rollback]
+      ];
+      actions.forEach(([id,icon,label,fn])=>{const b=document.createElement('button');b.id=id;b.type='button';b.innerHTML='<i class="fa-solid '+icon+'"></i>'+label;b.onclick=e=>{e.stopPropagation();menu.classList.remove('show');fn()};menu.appendChild(b)});
+    }
+
+    const dashNew=document.querySelector('[data-dash="new"]');
+    if(dashNew){
+      dashNew.onclick=async()=>{
+        let cat=(S.allData||[]).find(c=>!v301IsTrash(c)&&(c.subcategories||[]).length);
+        if(!cat){
+          const data=v301Clone(S.allData||[]);
+          cat=data.find(c=>v301Norm(c.name)===v301Norm(V301_TAXONOMY[0].name));
+          if(!cat){cat={id:uid(),name:V301_TAXONOMY[0].name,icon:V301_TAXONOMY[0].icon,subcategories:[]};data.unshift(cat)}
+          const sub={id:uid(),name:V301_TAXONOMY[0].subs[0].name,icon:'',prompts:[]};cat.subcategories.push(sub);
+          await save(data,{ids:{view:'columns',catId:cat.id,subId:sub.id,pid:null},hist:true});
+          setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80);return;
+        }
+        const sub=cat.subcategories[0];S.view='columns';S.catId=cat.id;S.subId=sub.id;S.pid=sub.prompts?.[0]?.id||null;render();setTimeout(()=>document.querySelector('[data-a="ap"]')?.click(),80);
+      };
+    }
+
+    if(!window.__v301Keys){
+      window.__v301Keys=true;
+      document.addEventListener('keydown',e=>{
+        if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='r'){e.preventDefault();v301OpenRecategorization()}
+      });
+    }
+  }
+
+  const __v301Setup=typeof setup==='function'?setup:null;
+  if(__v301Setup){setup=function(){__v301Setup();v301Bind()}}
+  const __v301RenderDD=typeof renderDD==='function'?renderDD:null;
+  if(__v301RenderDD){renderDD=function(){__v301RenderDD();v301Bind()}}
+  const __v301RenderDashboard=typeof renderDashboard==='function'?renderDashboard:null;
+  if(__v301RenderDashboard){renderDashboard=function(){__v301RenderDashboard();v301Bind()}}
+
+  window.PS_SEMANTIC_TAXONOMY_PATCH=PS_V301_VERSION;
+  window.PS_openSemanticRecategorization=v301OpenRecategorization;
+  window.PS_rollbackSemanticRecategorization=v301Rollback;
+  window.PS_classifySemanticEntry=v301Classify;
+  window.PS_buildSemanticPlan=v301BuildPlan;
 })();
 
 init();
